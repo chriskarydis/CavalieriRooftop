@@ -63,3 +63,4 @@ npm run lint
 - [docs/TABLE_ALLOCATION.md](docs/TABLE_ALLOCATION.md): allocation algorithm and combinations
 - [docs/DATABASE.md](docs/DATABASE.md): data model
 - [docs/SECURITY.md](docs/SECURITY.md): authentication, authorisation, booking integrity
+- [docs/STATUS.md](docs/STATUS.md): what is done, what is next, what is needed from the owner

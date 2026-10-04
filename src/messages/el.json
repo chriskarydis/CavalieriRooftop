@@ -1,0 +1,22 @@
+{
+  "site": {
+    "name": "Cavalieri Roof Garden",
+    "tagline": "Δείπνο στην ταράτσα, πάνω από την Παλιά Πόλη της Κέρκυρας",
+    "underConstruction": "Η νέα ιστοσελίδα είναι υπό κατασκευή."
+  },
+  "floorPlan": {
+    "title": "Κάτοψη",
+    "previewNote": "Προεπισκόπηση της αρχικής διάταξης. Οι θέσεις είναι κατά προσέγγιση και διορθώνονται από τον επεξεργαστή.",
+    "tableLabel": "Τραπέζι {number}, {capacity, plural, one {# άτομο} other {# άτομα}}, {category}",
+    "seats": "{capacity, plural, one {# θέση} other {# θέσεις}}",
+    "areas": {
+      "toilets": "Τουαλέτες",
+      "entrance": "Είσοδος",
+      "kitchen": "Κουζίνα",
+      "bar": "Μπαρ"
+    },
+    "legend": "Κατηγορίες τραπεζιών",
+    "noFee": "χωρίς επιπλέον χρέωση",
+    "fee": "+{amount}"
+  }
+}

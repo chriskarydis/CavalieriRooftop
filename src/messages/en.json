@@ -1,0 +1,22 @@
+{
+  "site": {
+    "name": "Cavalieri Roof Garden",
+    "tagline": "Rooftop dining above Corfu Old Town",
+    "underConstruction": "The new website is being built."
+  },
+  "floorPlan": {
+    "title": "Floor plan",
+    "previewNote": "Preview of the seeded layout. Positions are approximate and can be corrected in the editor.",
+    "tableLabel": "Table {number}, {capacity, plural, one {# guest} other {# guests}}, {category}",
+    "seats": "{capacity, plural, one {# seat} other {# seats}}",
+    "areas": {
+      "toilets": "Toilets",
+      "entrance": "Entrance",
+      "kitchen": "Kitchen",
+      "bar": "Bar"
+    },
+    "legend": "Table categories",
+    "noFee": "no extra fee",
+    "fee": "+{amount}"
+  }
+}

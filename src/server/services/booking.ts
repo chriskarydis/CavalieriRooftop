@@ -12,6 +12,7 @@ import {
   isOverlapViolation,
   loadFloorConfig,
   loadSettings,
+  lockAllocations,
   releaseExpiredHolds,
   SYSTEM,
   type Actor,
@@ -178,6 +179,7 @@ async function holdInTransaction(
   request: SlotRequest & { selection: Selection; locale: string },
   now: Date,
 ): Promise<HoldResult> {
+  await lockAllocations(tx);
   await releaseExpiredHolds(tx, now);
   const settings = await loadSettings(tx);
   const slot = await resolveSlot(tx, request, settings, now);

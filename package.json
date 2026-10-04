@@ -13,7 +13,8 @@
     "db:up": "docker compose up -d",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx src/server/db/seed.ts"
+    "db:seed": "tsx src/server/db/seed.ts",
+    "staff:create": "tsx scripts/create-staff.ts"
   },
   "dependencies": {
     "better-auth": "^1.7.7",

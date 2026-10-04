@@ -10,6 +10,7 @@ import {
   isOverlapViolation,
   loadFloorConfig,
   loadSettings,
+  lockAllocations,
   releaseAllocations,
   SYSTEM,
   transition,
@@ -37,6 +38,7 @@ export async function seatReservation(db: Db, reservationId: string, actor: Acto
       const seated = await transition(tx, reservationId, "SEATED", actor, now);
 
       if (before.status === "NO_SHOW") {
+        await lockAllocations(tx);
         const settings = await loadSettings(tx);
         const previous = await tx
           .selectDistinct({ tableId: schema.tableAllocation.tableId })
@@ -224,6 +226,7 @@ export async function createWalkIn(
   }
   try {
     return await db.transaction(async (tx) => {
+      await lockAllocations(tx);
       const tables = await tx.select().from(schema.diningTable).where(inArray(schema.diningTable.id, input.tableIds));
       if (tables.length !== input.tableIds.length || tables.some((table) => table.status !== "ACTIVE")) {
         throw new BookingError("INVALID_SELECTION");

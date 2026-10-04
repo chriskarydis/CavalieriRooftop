@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   check,
   customType,
@@ -464,3 +465,68 @@ export const auditLog = pgTable(
   },
   (t) => [index("audit_log_entity").on(t.entityType, t.entityId)],
 );
+
+// ── Staff authentication (Better Auth) ──────────────────────────────────────
+
+export const staffRole = pgEnum("staff_role", ["MANAGER", "DEVELOPER"]);
+
+export const staffUser = pgTable("staff_user", {
+  id: text().primaryKey(),
+  name: text().notNull(),
+  email: text().notNull().unique(),
+  emailVerified: boolean().notNull().default(false),
+  image: text(),
+  role: staffRole().notNull().default("MANAGER"),
+  createdAt: createdAt(),
+  updatedAt: instant().notNull().defaultNow(),
+});
+
+export const staffSession = pgTable("staff_session", {
+  id: text().primaryKey(),
+  userId: text()
+    .notNull()
+    .references(() => staffUser.id, { onDelete: "cascade" }),
+  token: text().notNull().unique(),
+  expiresAt: instant().notNull(),
+  ipAddress: text(),
+  userAgent: text(),
+  createdAt: createdAt(),
+  updatedAt: instant().notNull().defaultNow(),
+});
+
+/** Credential record; the password column holds the hash, never the password. */
+export const staffAccount = pgTable("staff_account", {
+  id: text().primaryKey(),
+  userId: text()
+    .notNull()
+    .references(() => staffUser.id, { onDelete: "cascade" }),
+  accountId: text().notNull(),
+  providerId: text().notNull(),
+  password: text(),
+  accessToken: text(),
+  refreshToken: text(),
+  idToken: text(),
+  accessTokenExpiresAt: instant(),
+  refreshTokenExpiresAt: instant(),
+  scope: text(),
+  createdAt: createdAt(),
+  updatedAt: instant().notNull().defaultNow(),
+});
+
+export const staffVerification = pgTable("staff_verification", {
+  id: text().primaryKey(),
+  identifier: text().notNull(),
+  value: text().notNull(),
+  expiresAt: instant().notNull(),
+  createdAt: createdAt(),
+  updatedAt: instant().notNull().defaultNow(),
+});
+
+export const authRateLimit = pgTable("auth_rate_limit", {
+  id: text().primaryKey(),
+  key: text().notNull().unique(),
+  count: integer().notNull(),
+  lastRequest: bigint({ mode: "number" }).notNull(),
+});
+
+export type ReservationStatusValue = (typeof reservationStatus.enumValues)[number];

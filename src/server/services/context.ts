@@ -39,12 +39,33 @@ export class BookingError extends Error {
   }
 }
 
-/** True when Postgres rejected an insert because the table is already allocated for that time. */
+const EXCLUSION_VIOLATION = "23P01";
+const DEADLOCK_DETECTED = "40P01";
+
+/**
+ * True when Postgres refused an allocation because the table is already taken
+ * for that time. Two transactions inserting conflicting rows at the same
+ * instant can also be resolved by Postgres as a deadlock, which aborts one of
+ * them; for the caller that is the same outcome.
+ */
 export function isOverlapViolation(error: unknown): boolean {
   for (let current = error; current instanceof Error; current = current.cause) {
-    if ((current as { code?: string }).code === "23P01") return true;
+    const code = (current as { code?: string }).code;
+    if (code === EXCLUSION_VIOLATION || code === DEADLOCK_DETECTED) return true;
   }
   return false;
+}
+
+const ALLOCATION_LOCK_KEY = 727001;
+
+/**
+ * Serialises transactions that allocate tables, so each one sees the
+ * allocations committed before it and answers with a clean business error.
+ * The exclusion constraint remains the guarantee; this only keeps concurrent
+ * attempts from colliding inside the database. Held until the transaction ends.
+ */
+export async function lockAllocations(tx: Tx): Promise<void> {
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(${ALLOCATION_LOCK_KEY})`);
 }
 
 export async function loadSettings(tx: Tx | Db): Promise<Settings> {

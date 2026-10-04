@@ -3,29 +3,33 @@
 Newest first. "Owner" means the project owner's explicit instruction; "Engineering" means a
 technical choice made during implementation.
 
-## Open questions (need the owner)
+## Open questions
 
-1. **Table fee on an in-policy cancellation.** When a guest cancels 24 hours or more ahead, is the
-   table selection fee refunded together with the deposit, or only the deposit?
-2. **Two-table joins in the middle columns.** The specification lists 2+7, 3+8 and 4+9, but on the
-   floor plan tables 70, 80 and 90 sit between them (2, 70, 7 from top to bottom). Seeded as
-   specified until confirmed.
-3. **Other neighbouring group pairs.** Only the two pairings the owner named are seeded
-   (1+6 with 2+7+70, and 4+9+90 with 5+11).
+None blocking. Still to come from the owner: Stripe test keys, Greek menu text, photography, DNS
+access (once the site is nearly ready).
+
+## 2026-10-04 (second round): business rules (Owner)
+
+- **Cancellation 24 hours or more ahead refunds everything paid online**, deposit and table fee.
+- **Two-table joins are 2+70, 3+80 and 4+90**; the three-table joins add 7, 8 and 9. This corrects
+  the original specification and matches the floor plan.
+- **Pairings for parties of 13 to 16** are only between physically neighbouring groups:
+  (1+6)-(2+70+7), (2+70+7)-(3+80+8), (3+80+8)-(4+90+9), (4+90+9)-(5+11).
+- **Table 29** is visible to guests and can be chosen online, but is never auto-assigned.
+  *Engineering consequence:* because it is not a regular dinner table it does not count as the
+  "smallest table type" for a party of 3, so 3 guests at a 4-seat table still pay 90. Two guests who
+  choose table 29 pay for its 3 seats (90), by the same rule as any larger table.
 
 ## 2026-10-04: business rules (Owner)
 
 - A party of 3 at a 4-seat table pays 3 x 30 = 90.
-- Table 29 (3 seats) is mostly for drinks: never auto-assigned for dinner. *Engineering
-  interpretation:* it is also not offered on the public floor plan; staff can still use it. Both are
-  per-table switches (`online_bookable`, `auto_assignable`).
 - "Let us choose" charges by party size and no table fee, and avoids fee-carrying tables unless
   nothing else is free.
 - Combinations and large parties: no table fee; deposit = guests x 30.
 - Tables 1, 5, 17 and 18 seat 4, or 5 with an extra chair. Two guests choosing one pay the
   minimum spend of 4. Five guests pay 150. *Engineering interpretation:* 17 and 18 are therefore
   modelled as capacity 4 / max 5, replacing the original "5-seat" listing.
-- Combination capacities confirmed as proposed (see TABLE_ALLOCATION.md).
+- Combination capacities confirmed (see TABLE_ALLOCATION.md).
 - Cancellation under 24 hours: no refund. A manager can refund manually in an emergency
   (illness with proof, restaurant closed); every such refund is audited.
 - Staff do not move guests to another table on their own initiative. If the guest asks to move, no
@@ -42,12 +46,27 @@ technical choice made during implementation.
 ## 2026-10-04: engineering
 
 - **"Larger table" rule.** A chosen table is billed on its seats only when it has more standard
-  seats than the smallest online-bookable table type that fits the party. The comparison uses the
+  seats than the smallest regular table type that fits the party. The comparison uses the
   restaurant's configuration, not what happens to be free that evening, so a table's price does not
   change with other guests' bookings.
+- **A hold exists before the guest's details do.** The 10-minute hold starts when the table is
+  selected; name, email and phone are attached afterwards and are required before payment.
+- **A payment landing just after the hold's expiry is honoured** if the table has not yet been
+  released to anyone else. If it has, confirmation reports `HOLD_EXPIRED` and the payment layer
+  refunds in full.
+- **Late and no-show.** The system marks a reservation LATE after the grace period and keeps the
+  table. Staff decide: seat the guests (no time limit) or mark no-show (frees the table). If nobody
+  decides, it becomes NO_SHOW when the table block ends. NO_SHOW can still be seated if the table is
+  free.
+- **Walk-in before a reservation.** Placing a walk-in on a table with a later reservation is refused
+  unless staff confirm an override; the walk-in is then recorded as ending when the reservation
+  starts.
+- **Staff accounts** are created only with `npm run staff:create`; there is no sign-up. Sign-in is
+  rate-limited to 5 attempts per minute per client.
+- **Management UI is English only** for now; the public site is bilingual.
 - **Drizzle ORM** instead of Prisma, for first-class range types and custom constraints.
 - **Double booking** is prevented by a PostgreSQL exclusion constraint on `table_allocation`,
-  verified by an integration test with 20 simultaneous inserts.
+  verified by integration tests with simultaneous bookings.
 - **Reservation status and payment status are separate columns.**
 - **next-intl without its build plugin.** The plugin eagerly loads `@swc/core`, whose native binding
   refuses to load on this Windows machine. `next.config.ts` sets the one alias the plugin provides.

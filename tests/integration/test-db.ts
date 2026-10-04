@@ -7,6 +7,14 @@ import * as schema from "@/server/db/schema";
 const TEST_DATABASE = "cavalieri_test";
 
 /** Creates (if needed) and migrates a dedicated test database, then empties it. */
+const ALL_TABLES = `audit_log, email_log, notification, refund, payment, stripe_event, reservation_event,
+  table_allocation, reservation, walk_in, customer, combination_pairing, table_combination_member,
+  table_combination, dining_table, floor_plan, table_category, closure, restaurant_settings`;
+
+export async function resetTestDatabase(client: postgres.Sql): Promise<void> {
+  await client.unsafe(`TRUNCATE ${ALL_TABLES} CASCADE`);
+}
+
 export async function openTestDatabase() {
   const baseUrl = process.env.DATABASE_URL;
   if (!baseUrl) throw new Error("DATABASE_URL is not set");
@@ -21,10 +29,6 @@ export async function openTestDatabase() {
   const client = postgres(url.toString(), { max: 25, onnotice: () => {} });
   const db = drizzle(client, { schema, casing: "snake_case" });
   await migrate(db, { migrationsFolder: "./drizzle" });
-  await client.unsafe(`
-    TRUNCATE table_allocation, reservation_event, payment, reservation, walk_in, customer,
-      combination_pairing, table_combination_member, table_combination, dining_table,
-      floor_plan, table_category CASCADE
-  `);
+  await resetTestDatabase(client);
   return { db, client, close: () => client.end() };
 }

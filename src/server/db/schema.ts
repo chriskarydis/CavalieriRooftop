@@ -236,9 +236,10 @@ export const reservation = pgTable(
     reference: text().notNull().unique(),
     /** SHA-256 of the secret token in the guest's manage link. */
     manageTokenHash: text().notNull(),
-    customerId: uuid()
-      .notNull()
-      .references(() => customer.id),
+    /** Null while the table is held and the guest has not entered their details yet. */
+    customerId: uuid().references(() => customer.id),
+    /** When the unpaid hold lapses; kept for reference after confirmation. */
+    holdExpiresAt: instant(),
     startsAt: instant().notNull(),
     partySize: integer().notNull(),
     status: reservationStatus().notNull(),

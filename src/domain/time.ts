@@ -42,6 +42,13 @@ export function zonedDate(instant: Date, timeZone: string): string {
   );
 }
 
+/** 24-hour wall-clock time (HH:mm) shown in `timeZone` at `instant`. */
+export function zonedTime(instant: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(
+    instant,
+  );
+}
+
 /** ISO weekday of a calendar date: 1 = Monday ... 7 = Sunday. */
 export function isoWeekday(date: string): number {
   const [year, month, day] = date.split("-").map(Number);

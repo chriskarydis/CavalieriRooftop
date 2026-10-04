@@ -7,6 +7,7 @@ export interface FloorTableView {
   maxCapacity: number;
   isSpare: boolean;
   categoryId: string;
+  viewDescription: Record<string, string> | null;
   x: number;
   y: number;
   width: number;

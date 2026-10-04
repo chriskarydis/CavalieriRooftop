@@ -1,0 +1,56 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+import { useActionState } from "react";
+import { submitDetails, type DetailsState } from "../actions";
+
+const INITIAL: DetailsState = { error: null };
+
+export function DetailsForm({
+  token,
+  locale,
+  refundHours,
+  graceMinutes,
+}: {
+  token: string;
+  locale: string;
+  refundHours: number;
+  graceMinutes: number;
+}) {
+  const t = useTranslations("checkout");
+  const [state, action, pending] = useActionState(submitDetails.bind(null, token, locale), INITIAL);
+  const inputClass = "mt-1 w-full rounded-md border border-stone-300 px-3 py-2";
+
+  return (
+    <form action={action} className="space-y-3">
+      <label className="block text-sm font-medium">
+        {t("name")}
+        <input name="name" required minLength={2} maxLength={120} autoComplete="name" className={inputClass} />
+      </label>
+      <label className="block text-sm font-medium">
+        {t("email")}
+        <input name="email" type="email" required maxLength={200} autoComplete="email" className={inputClass} />
+      </label>
+      <label className="block text-sm font-medium">
+        {t("phone")}
+        <input name="phone" type="tel" required minLength={6} maxLength={40} autoComplete="tel" className={inputClass} />
+      </label>
+      <label className="block text-sm font-medium">
+        {t("notes")}
+        <textarea name="notes" maxLength={500} rows={2} className={inputClass} />
+      </label>
+      <label className="flex items-start gap-2 text-sm">
+        <input name="acceptPolicy" type="checkbox" required className="mt-1" />
+        <span>{t("acceptPolicy", { hours: refundHours, minutes: graceMinutes })}</span>
+      </label>
+      {state.error && (
+        <p role="alert" className="text-sm text-red-700">
+          {t(`detailsError.${state.error}`)}
+        </p>
+      )}
+      <button type="submit" disabled={pending} className="w-full rounded-md bg-stone-900 px-4 py-3 font-medium text-white disabled:opacity-60">
+        {t("continue")}
+      </button>
+    </form>
+  );
+}

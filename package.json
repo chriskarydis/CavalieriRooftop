@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/server/db/seed.ts",
-    "staff:create": "tsx scripts/create-staff.ts"
+    "staff:create": "tsx scripts/create-staff.ts",
+    "test:e2e": "next build && playwright test"
   },
   "dependencies": {
     "better-auth": "^1.7.7",
@@ -27,6 +28,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

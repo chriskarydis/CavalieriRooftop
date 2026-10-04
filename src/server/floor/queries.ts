@@ -30,6 +30,7 @@ export async function getFloorPlanView(): Promise<FloorPlanView | null> {
       maxCapacity: table.maxCapacity,
       isSpare: table.isSpare,
       categoryId: table.categoryId,
+      viewDescription: table.viewDescription,
       x: table.x,
       y: table.y,
       width: table.width,

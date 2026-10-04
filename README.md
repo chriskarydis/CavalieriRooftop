@@ -4,12 +4,18 @@ Website, reservation system and management dashboard for Cavalieri Roof Garden, 
 
 ## Status
 
-Built so far: database schema and seeded floor configuration; pricing, allocation and reservation
-engines (availability, holds, confirmation, late/no-show, cancellation, walk-ins); staff sign-in with
-roles; a read-only live floor view at `/manage`; English/Greek routing; floor plan preview.
+Built so far:
 
-Not built yet: guest booking pages, Stripe payments, public content pages, dashboard actions
-(seat, move, walk-in forms), table and menu editors, analytics, emails.
+- Database schema and seeded floor configuration.
+- Pricing, allocation and reservation engines (availability, holds, confirmation, late/no-show,
+  cancellation, walk-ins).
+- Guest booking in English and Greek: search, interactive floor plan, 10-minute hold with countdown,
+  details, confirmation page, self-service cancellation (`/en/reserve`, `/el/reserve`).
+- Staff sign-in with roles and a live floor at `/manage`, in English and Greek: seat, no-show,
+  table free, cancel, walk-ins.
+
+Not built yet: Stripe payments (a development stand-in confirms the booking), emails, public content
+pages and design, table/category/menu editors, moving a reservation, manual blocks, analytics.
 
 ## Run locally
 
@@ -21,7 +27,7 @@ npm install
 npm run db:up        # PostgreSQL on localhost:5433
 npm run db:migrate
 npm run db:seed      # tables, categories, combinations, settings
-npm run dev          # http://localhost:3000  (floor plan preview: /en/floor-plan)
+npm run dev          # http://localhost:3000  (booking: /en/reserve)
 
 # create a staff account, then sign in at http://localhost:3000/manage
 STAFF_PASSWORD="at-least-12-characters" npm run staff:create -- you@example.com "Your Name" DEVELOPER
@@ -31,6 +37,7 @@ STAFF_PASSWORD="at-least-12-characters" npm run staff:create -- you@example.com 
 
 ```bash
 npm test             # unit tests + database integration tests (needs the database running)
+npm run test:e2e     # builds, then runs browser tests on desktop and mobile against a separate database
 npm run typecheck
 npm run lint
 ```

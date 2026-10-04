@@ -8,6 +8,22 @@ technical choice made during implementation.
 None blocking. Still to come from the owner: Stripe test keys, Greek menu text, photography, DNS
 access (once the site is nearly ready).
 
+## 2026-10-04 (third round)
+
+- **Owner:** every page is available in Greek and English, including the management application.
+  *Engineering:* public pages carry the language in the URL (`/en`, `/el`); the management
+  application has no language in its URL and remembers the staff member's choice in a cookie.
+- **Owner:** the code lives at https://github.com/chriskarydis/CavalieriRooftop.
+- **Engineering: payment stand-in.** Until Stripe keys exist, a "Pay (test)" button confirms the
+  reservation. It only works when `ALLOW_SIMULATED_PAYMENTS=true`, no Stripe key is set, and the
+  deployment is not production.
+- **Engineering: scheduled jobs** (expire holds, mark late, close out no-shows) run from
+  `/api/cron/tick`, protected by `CRON_SECRET`. The scheduler itself is configured at deployment.
+- **Engineering: the hold link is the manage link.** After selecting a table the guest is sent to
+  `/reserve/<secret token>`; the same token later opens `/reservation/<token>`. Both pages are
+  marked noindex.
+- **Not yet done:** rate limiting of hold creation, so one visitor cannot keep many tables held.
+
 ## 2026-10-04 (second round): business rules (Owner)
 
 - **Cancellation 24 hours or more ahead refunds everything paid online**, deposit and table fee.
@@ -63,7 +79,6 @@ access (once the site is nearly ready).
   starts.
 - **Staff accounts** are created only with `npm run staff:create`; there is no sign-up. Sign-in is
   rate-limited to 5 attempts per minute per client.
-- **Management UI is English only** for now; the public site is bilingual.
 - **Drizzle ORM** instead of Prisma, for first-class range types and custom constraints.
 - **Double booking** is prevented by a PostgreSQL exclusion constraint on `table_allocation`,
   verified by integration tests with simultaneous bookings.

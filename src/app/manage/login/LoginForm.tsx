@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/ui/auth-client";
@@ -7,6 +8,7 @@ import { authClient } from "@/ui/auth-client";
 const TOO_MANY_REQUESTS = 429;
 
 export function LoginForm() {
+  const t = useTranslations("manage");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -23,11 +25,7 @@ export function LoginForm() {
     });
     setPending(false);
     if (result.error) {
-      setError(
-        result.error.status === TOO_MANY_REQUESTS
-          ? "Too many attempts. Please wait a minute and try again."
-          : "The email or password is incorrect.",
-      );
+      setError(result.error.status === TOO_MANY_REQUESTS ? t("tooManyAttempts") : t("badCredentials"));
       return;
     }
     router.replace("/manage");
@@ -40,11 +38,11 @@ export function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <label className="block text-sm font-medium">
-        Email
+        {t("email")}
         <input name="email" type="email" autoComplete="username" required className={inputClass} />
       </label>
       <label className="block text-sm font-medium">
-        Password
+        {t("password")}
         <input name="password" type="password" autoComplete="current-password" required className={inputClass} />
       </label>
       {error && (
@@ -57,7 +55,7 @@ export function LoginForm() {
         disabled={pending}
         className="w-full rounded-md bg-slate-900 px-3 py-2 font-medium text-white disabled:opacity-60"
       >
-        {pending ? "Signing in…" : "Sign in"}
+        {pending ? t("signingIn") : t("signIn")}
       </button>
     </form>
   );

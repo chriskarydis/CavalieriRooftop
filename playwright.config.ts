@@ -17,7 +17,7 @@ export default defineConfig({
   use: { baseURL: BASE_URL, trace: "retain-on-failure" },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /booking\.spec\.ts/ },
+    { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /(booking|public)\.spec\.ts/ },
   ],
   webServer: {
     command: `npx next start -p ${PORT}`,

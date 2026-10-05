@@ -8,10 +8,38 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  /* Terracotta of Corfu Old Town roofs; white text on it meets WCAG AA. */
+  --color-accent: #a8481f;
+  --color-accent-dark: #8a3a18;
+  /* Ionian sea at dusk. */
+  --color-sea: #17323f;
+  --color-sand: #f1e9dc;
+  /* --font-inter and --font-noto are set by next/font on the public pages. */
+  --font-sans: var(--font-inter, system-ui), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: var(--font-noto, Georgia), "Times New Roman", serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-inter, system-ui), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Stand-in for the hero photograph: sky after sunset over the sea. */
+.hero-sunset {
+  background:
+    linear-gradient(to top, rgb(23 50 63 / 0.85) 0%, rgb(23 50 63 / 0) 45%),
+    linear-gradient(to bottom, #1d2f4f 0%, #5b4a78 32%, #c2644a 62%, #eda65a 82%, #f6cf8a 100%);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-sea);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
 }

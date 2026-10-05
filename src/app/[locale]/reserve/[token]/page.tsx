@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { zonedDate, zonedTime } from "@/domain/time";
+import { formatLongDate } from "@/i18n/intl-locale";
 import { Link, redirect } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
 import { simulatedPaymentsEnabled } from "@/server/payments/mode";
@@ -65,7 +66,7 @@ export default async function CheckoutPage({ params }: PageProps<"/[locale]/rese
         <h2 className="mb-2 font-semibold">{t("summaryTitle")}</h2>
         <dl className="mb-4 grid grid-cols-2 gap-y-1 text-sm">
           <dt className="text-stone-600">{t("date")}</dt>
-          <dd>{format.dateTime(reservation.startsAt, { dateStyle: "full", timeZone: settings.timezone })}</dd>
+          <dd>{formatLongDate(reservation.startsAt, locale, settings.timezone)}</dd>
           <dt className="text-stone-600">{t("time")}</dt>
           <dd>{time}</dd>
           <dt className="text-stone-600">{t("guests")}</dt>

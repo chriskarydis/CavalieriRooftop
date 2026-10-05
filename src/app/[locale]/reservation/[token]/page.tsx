@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { zonedTime } from "@/domain/time";
+import { formatLongDate, intlLocale } from "@/i18n/intl-locale";
 import { redirect } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
 import { getReservationByToken } from "@/server/services/guest-reservation";
@@ -37,7 +38,7 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
       <section className="rounded-xl border border-stone-300 bg-white p-4">
         <dl className="mb-4 grid grid-cols-2 gap-y-1 text-sm">
           <dt className="text-stone-600">{t("date")}</dt>
-          <dd>{format.dateTime(reservation.startsAt, { dateStyle: "full", timeZone: settings.timezone })}</dd>
+          <dd>{formatLongDate(reservation.startsAt, locale, settings.timezone)}</dd>
           <dt className="text-stone-600">{t("time")}</dt>
           <dd>{zonedTime(reservation.startsAt, settings.timezone)}</dd>
           <dt className="text-stone-600">{t("guests")}</dt>
@@ -80,11 +81,12 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
             {cancellation.refundable
               ? t("cancelRefund", {
                   amount: euro(cancellation.refundCents),
-                  deadline: format.dateTime(cancellation.refundDeadline, {
+                  deadline: new Intl.DateTimeFormat(intlLocale(locale), {
                     dateStyle: "medium",
                     timeStyle: "short",
+                    hourCycle: "h23",
                     timeZone: settings.timezone,
-                  }),
+                  }).format(cancellation.refundDeadline),
                 })
               : t("cancelNoRefund", { hours: settings.refundCutoffHours })}
           </p>

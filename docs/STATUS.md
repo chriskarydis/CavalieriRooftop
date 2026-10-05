@@ -16,25 +16,27 @@ Last updated: 2026-10-05. Update this file at the end of every working session.
 | Staff | Sign-in, roles, rate limit; live floor; seat, no-show, table free, cancel, walk-in (EN/EL) |
 | Settings screens | Tables, categories and fees, joined tables, neighbouring groups, reservation settings, closed dates (EN/EL) |
 | Dashboard | Table details on click, manual blocks, move a reservation with price preview, reservations list with date, status and search |
-| Tests | 139 unit/integration, 17 browser tests (desktop and mobile) |
+| Menu | Seeded from the current site (spelling corrected) with the 14 EU allergens; management screens; public menu page, prices hidden by default |
+| Public pages | Home, contact, reservation policy, privacy and cookies, header and footer, sitemap, robots, structured data; policy and hours read the live settings |
+| Tests | 144 unit/integration, 31 browser tests (desktop and mobile) |
 | Docs | PROJECT_ANALYSIS, DECISIONS, BOOKING_LOGIC, TABLE_ALLOCATION, DATABASE, SECURITY |
 
 ## To do, in order
 
-1. **Dashboard, remaining:** phone reservation by staff (needs the owner's deposit rule), disable
+1. **Stripe:** Payment Element, webhook, refunds on cancellation, manager discretionary refund,
+   cancel the payment when a hold expires. Remove reliance on the test stand-in. Needs test keys.
+2. **Emails:** confirmation, reminder, cancellation, refund; restaurant notifications (EN/EL).
+3. **Dashboard, remaining:** phone reservation by staff (needs the owner's deposit rule), disable
    tables in bulk (weather), extend a walk-in, timeline view, notifications, creating a new table.
-2. **Floor-plan editor:** drag tables, edit position and shape.
-3. **Menu:** management screens and public menu (prices hidden by default).
-4. **Public site:** home, experience, gallery, about, contact, terms, privacy, cookies; real design;
-   SEO (metadata, sitemap, robots, structured data).
-5. **Stripe:** Payment Element, webhook, refunds on cancellation, manager discretionary refund,
-   cancel the payment when a hold expires. Remove reliance on the test stand-in.
-6. **Emails:** confirmation, reminder, cancellation, refund; restaurant notifications (EN/EL).
-7. **Analytics.**
-8. **Hardening:** rate limit on hold creation, security headers, error monitoring, data retention,
-   accessibility pass, browser tests for dashboard reservation actions.
-9. **Deployment:** Vercel + Neon (EU), scheduler for `/api/cron/tick` every minute, production
-    configuration script, DEPLOYMENT.md, TESTING.md, ARCHITECTURE.md, domain cut-over.
+4. **Floor-plan editor:** drag tables, edit position and shape.
+5. **Public site, remaining:** photography (the hero is a colour gradient stand-in), gallery and
+   experience pages once photos exist, photo upload for dishes and tables (needs file storage),
+   page caching.
+6. **Analytics.**
+7. **Hardening:** rate limit on hold creation, security headers, error monitoring, data retention,
+   accessibility pass.
+8. **Deployment:** Vercel + Neon (EU), scheduler for `/api/cron/tick` every minute, production
+   configuration script, DEPLOYMENT.md, TESTING.md, ARCHITECTURE.md, domain cut-over.
 
 ## Needed from the owner
 
@@ -42,12 +44,22 @@ Last updated: 2026-10-05. Update this file at the end of every working session.
 |---|---|
 | Stripe test keys (publishable, secret, webhook secret) | Stripe |
 | Rule for reservations taken by phone: is a deposit required, and how is it paid? | Phone reservations |
-| Greek menu text; confirm the English menu from the current site is still right | Menu |
+| Greek names and descriptions for the dishes (can be typed in at /manage/menu) | Menu |
 | Photography: hero sunset (wide and vertical), the views, terrace at dusk, view from tables 1-5, 6/11/12/16 and 70/80/90, 8-12 dishes, cocktails; logo file | Public site |
-| View descriptions for the paid tables (one line each) | Table settings (can be typed in at /manage/tables) |
+| View descriptions for the paid tables (can be typed in at /manage/tables) | Booking page |
 | Restaurant email address for notifications; sender address | Emails |
 | Contact with whoever manages DNS for cavalieriroofgarden.com | Deployment |
 | Vercel and Neon accounts | Deployment |
+
+## Text the owner should read and correct
+
+- Home and contact pages: "on the roof of the Cavalieri Hotel, at the edge of the Spianada", "take the
+  lift to the top floor", and the cuisine and bar descriptions. Written from the current site and
+  general knowledge, not verified.
+- Privacy page: describes what the system does. It needs the restaurant's legal adviser to review,
+  especially how long reservation records are kept.
+- Menu: dish spellings were corrected (for example Prosciutto, Cuttlefish, Parmesan, Soufflé). Dietary
+  labels and allergens are only those the old site showed and are incomplete.
 
 ## Rules worth re-confirming when convenient
 
@@ -61,6 +73,7 @@ Last updated: 2026-10-05. Update this file at the end of every working session.
 ```bash
 cd C:\dev\cavalieri-roof-garden
 npm run db:up
+npm run db:migrate && npm run db:seed
 npm run dev
 npm test && npm run test:e2e
 ```

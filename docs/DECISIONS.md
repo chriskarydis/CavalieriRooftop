@@ -8,6 +8,22 @@ technical choice made during implementation.
 None blocking. Still to come from the owner: Stripe test keys, Greek menu text, photography, DNS
 access (once the site is nearly ready).
 
+## 2026-10-05: engineering
+
+- **Configuration changes never touch existing reservations.** Fees, deposit, capacity and time
+  settings apply to new bookings; a reservation keeps the price and time block it was booked with.
+- **Disabling a table does not cancel its reservations.** The manager is told how many upcoming
+  reservations remain on it and moves them or contacts the guests.
+- **A category in use cannot be deactivated**; its tables must be moved first.
+- **Moving a reservation** keeps what the guest paid. The screen shows what the new table would have
+  cost and records the difference; nothing is charged or refunded (owner's rule).
+- **Phone reservations by staff are not built** because the deposit rule for them is unknown.
+- **Dish photos are given as a web address** until file storage is set up at deployment.
+- **Dates in English read day-first** (12 August 2027), as in Greece.
+- **robots.txt does not list private paths**, since that would advertise them. Private pages carry
+  a noindex tag and are protected by sign-in or secret tokens.
+- **No cookie banner**: only strictly necessary cookies are used (language, staff session).
+
 ## 2026-10-04 (third round)
 
 - **Owner:** every page is available in Greek and English, including the management application.

@@ -2,10 +2,20 @@
   "site": {
     "name": "Cavalieri Roof Garden",
     "tagline": "Rooftop dining above Corfu Old Town",
-    "underConstruction": "The new website is being built.",
     "reserveCta": "Reserve a table",
     "language": "Language",
-    "menu": "Menu"
+    "menu": "Menu",
+    "description": "Rooftop restaurant in Corfu Town with views of the Old Town, the Old Fortress and Garitsa bay. Mediterranean dinner. Reserve online and choose your table.",
+    "skipToContent": "Skip to content",
+    "mainNav": "Main",
+    "footerNav": "Site",
+    "contact": "Contact",
+    "policy": "Reservation policy",
+    "privacy": "Privacy and cookies",
+    "vat": "VAT {number}",
+    "season": "Open {from} to {to}",
+    "hours": "{opens} – {closes}",
+    "closedOn": "Closed on {days}"
   },
   "floorPlan": {
     "title": "Floor plan",
@@ -420,5 +430,97 @@
     "createDish": "Add dish",
     "newCategory": "New section",
     "createCategory": "Add section"
+  },
+  "home": {
+    "eyebrow": "Corfu Town · Rooftop restaurant",
+    "title": "Dinner above the Old Town, as the sun goes down",
+    "lead": "The Old Fortress, Garitsa bay and the rooftops of Corfu at your table. Reserve online and choose exactly where you sit.",
+    "chooseTable": "Choose your table",
+    "view": {
+      "title": "The view",
+      "text": "From the roof you look across the Old Town of Corfu to the Old Fortress and the bay of Garitsa. Come before sunset and stay as the lights come on."
+    },
+    "cuisine": {
+      "title": "Mediterranean cuisine",
+      "text": "Black Angus steaks, fresh fish and seafood, pasta and salads, with Corfiot and Greek classics. Cocktails and wine from the bar."
+    },
+    "table": {
+      "title": "Your table, your choice",
+      "text": "See the roof on a floor plan, pick the table you want and know the price before you pay. Or let us choose the best free table for you."
+    },
+    "bookTitle": "Reserve for dinner",
+    "bookText": "Reservations are for dinner. A deposit per person confirms your table and is deducted in full from your bill.",
+    "bookPoint1": "Pick your table on the floor plan, or let us choose.",
+    "bookPoint2": "Full refund if you cancel at least {hours} hours before.",
+    "bookPoint3": "For drinks, simply come up: no reservation needed.",
+    "visitTitle": "Visit us",
+    "walkIns": "Walk-ins are welcome for food and drinks when tables are free."
+  },
+  "contact": {
+    "title": "Contact",
+    "intro": "Find us on the roof of the Cavalieri Hotel, at the edge of the Spianada in Corfu Town.",
+    "find": "Find us",
+    "directions": "Take the lift to the top floor.",
+    "openMap": "Open in Google Maps",
+    "reach": "Call or write",
+    "largeParties": "For parties of more than {max} guests or special requests, please call or email us.",
+    "hours": "Opening hours",
+    "walkIns": "Online reservations are for dinner. For drinks, walk-ins are welcome."
+  },
+  "policy": {
+    "title": "Reservation policy",
+    "intro": "The terms that apply to every online reservation.",
+    "reservations": {
+      "title": "Online reservations",
+      "text": "Online reservations are accepted for dinner only, for up to {max} guests. A reservation is for two hours at the table. For larger parties please contact us."
+    },
+    "deposit": {
+      "title": "Deposit and minimum spend",
+      "text": "A deposit of {deposit} per person is paid online to confirm the reservation. It is deducted in full from your bill on the day of your visit. The same amount is the minimum spend per person; if your order comes to less, the difference is not refunded or credited. A reservation for one guest is charged as for two."
+    },
+    "tables": {
+      "title": "Choosing a table",
+      "text": "You may choose your table. Some tables carry a selection fee, shown before you pay; this fee is separate from the deposit and is not deducted from your bill. If you choose a table that seats more guests than a regular table for your party, the minimum spend is that of the table's seats; this too is shown before you pay. If you let us choose, no selection fee applies."
+    },
+    "arrival": {
+      "title": "Arrival",
+      "text": "Your table is kept for {minutes} minutes after the reservation time. After that we may give it to other guests and the amount paid is not refunded."
+    },
+    "cancellation": {
+      "title": "Cancellation",
+      "text": "If you cancel at least {hours} hours before your reservation, everything you paid online is refunded. If you cancel later, the amount paid is not refunded. You can cancel from the link in your confirmation."
+    },
+    "payment": {
+      "title": "Payment",
+      "text": "Online payments are made by credit or debit card through Stripe. We never see or store your card details."
+    }
+  },
+  "privacy": {
+    "title": "Privacy and cookies",
+    "intro": "How {company} handles your personal data when you use this website.",
+    "collect": {
+      "title": "What we collect",
+      "text": "When you reserve a table we collect your name, email address, phone number, the details of your reservation and any notes you add. We do not ask you to create an account."
+    },
+    "use": {
+      "title": "Why we use it",
+      "text": "We use this information only to manage your reservation: to hold your table, to contact you about it and to handle payment, cancellation and refunds."
+    },
+    "share": {
+      "title": "Who receives it",
+      "text": "Card payments are processed by Stripe; your card details go directly to Stripe and never reach us. Our hosting and email providers process data on our behalf. We do not sell your data or use it for advertising."
+    },
+    "keep": {
+      "title": "How long we keep it",
+      "text": "Reservation records are kept for as long as tax and accounting law requires and are then deleted or anonymised."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "text": "This website uses only cookies that are necessary for it to work, such as remembering your language. It uses no advertising or tracking cookies, so no cookie consent is requested."
+    },
+    "rights": {
+      "title": "Your rights",
+      "text": "You may ask to see, correct or delete your personal data, or object to its use, by writing to {email}. You also have the right to complain to the Hellenic Data Protection Authority."
+    }
   }
 }

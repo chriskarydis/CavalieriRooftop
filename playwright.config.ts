@@ -21,12 +21,15 @@ export default defineConfig({
   ],
   webServer: {
     command: `npx next start -p ${PORT}`,
-    url: `${BASE_URL}/en`,
+    // A page that needs no database: the test database is only rebuilt after the server is up.
+    url: `${BASE_URL}/robots.txt`,
     reuseExistingServer: false,
     env: {
       DATABASE_URL: E2E_DATABASE_URL,
       BETTER_AUTH_URL: BASE_URL,
       ALLOW_SIMULATED_PAYMENTS: "true",
+      // Every test browser shares this machine's address; the per-address cap is covered by integration tests.
+      MAX_HOLDS_PER_ADDRESS: "1000",
     },
   },
 });

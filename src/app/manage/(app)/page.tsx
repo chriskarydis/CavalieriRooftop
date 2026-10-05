@@ -12,7 +12,14 @@ import { listUnreadNotifications } from "@/server/services/notifications";
 import { previewMove, type MovePreview } from "@/server/services/table-ops";
 import type { FloorPlanTable } from "@/ui/floor-plan/FloorPlan";
 import type { FloorPlanView } from "@/ui/floor-plan/types";
-import { blockAction, completeWalkInAction, markNotificationsReadAction, moveAction, unblockAction } from "../actions";
+import {
+  blockAction,
+  completeWalkInAction,
+  extendWalkInAction,
+  markNotificationsReadAction,
+  moveAction,
+  unblockAction,
+} from "../actions";
 import { AutoRefresh } from "./AutoRefresh";
 import { LiveFloorPlan } from "./LiveFloorPlan";
 import { ReservationActions } from "./ReservationActions";
@@ -291,9 +298,14 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
                             <ReservationActions reservationId={row.reservationId} status={row.reservationStatus} returnTo="/manage" />
                           )}
                           {row.walkInId && (
-                            <form action={completeWalkInAction.bind(null, row.walkInId, "/manage")}>
-                              <button className={secondaryButton}>{t("actions.complete")}</button>
-                            </form>
+                            <div className="flex flex-wrap gap-1.5">
+                              <form action={completeWalkInAction.bind(null, row.walkInId, "/manage")}>
+                                <button className={secondaryButton}>{t("actions.complete")}</button>
+                              </form>
+                              <form action={extendWalkInAction.bind(null, row.walkInId, "/manage")}>
+                                <button className={secondaryButton}>{t("actions.extend")}</button>
+                              </form>
+                            </div>
                           )}
                           {row.kind === "BLOCK" && (
                             <form action={unblockAction.bind(null, row.allocationId, "/manage")}>

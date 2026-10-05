@@ -159,6 +159,7 @@ export async function saveSettings(form: FormData): Promise<void> {
         closedWeekdays: form.getAll("closedWeekdays").map(Number),
         seasonStart: text(form, "seasonStart"),
         seasonEnd: text(form, "seasonEnd"),
+        retentionMonths: text(form, "retentionMonths").trim() === "" ? null : number(form, "retentionMonths"),
       },
       staffId,
     );

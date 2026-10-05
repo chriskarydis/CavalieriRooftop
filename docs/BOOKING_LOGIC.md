@@ -117,7 +117,7 @@ Every change goes through one function that validates the transition and writes 
 
 A visitor holds one seating at a time. Choosing another table releases their previous unpaid hold;
 a party of 16 holds the five tables of its one seating and nothing else. The visitor is recognised by
-a random id in a cookie. As a backstop against someone clearing cookies, at most 3 unpaid holds may
+a random id in a cookie. As a backstop against someone clearing cookies, at most 10 unpaid holds may
 exist at once from one network address (stored as a keyed hash, never the address).
 
 ## Payment

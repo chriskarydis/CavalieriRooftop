@@ -302,6 +302,35 @@ export async function createWalkIn(
   }
 }
 
+/**
+ * The walk-in party is staying longer: pushes the end of their stay back.
+ * Refused with TABLE_UNAVAILABLE when the table is needed by then.
+ */
+export async function extendWalkIn(db: Db, walkInId: string, minutes: number, actor: Actor): Promise<void> {
+  if (!Number.isInteger(minutes) || minutes < 1) throw new BookingError("INVALID_SELECTION");
+  try {
+    await db.transaction(async (tx) => {
+      await lockAllocations(tx);
+      const extended = await tx
+        .update(schema.tableAllocation)
+        .set({
+          period: sql`tstzrange(lower(${schema.tableAllocation.period}), upper(${schema.tableAllocation.period}) + make_interval(mins => ${minutes}))`,
+        })
+        .where(and(eq(schema.tableAllocation.walkInId, walkInId), isNull(schema.tableAllocation.releasedAt)))
+        .returning({ id: schema.tableAllocation.id });
+      if (extended.length === 0) throw new BookingError("NOT_FOUND");
+      await tx
+        .update(schema.walkIn)
+        .set({ expectedMinutes: sql`${schema.walkIn.expectedMinutes} + ${minutes}` })
+        .where(eq(schema.walkIn.id, walkInId));
+      await audit(tx, { actor, action: "walk_in.extended", entityType: "walk_in", entityId: walkInId, after: { minutes } });
+    });
+  } catch (error) {
+    if (isOverlapViolation(error)) throw new BookingError("TABLE_UNAVAILABLE");
+    throw error;
+  }
+}
+
 /** The walk-in party has left; the table is free from now. */
 export async function completeWalkIn(db: Db, walkInId: string, now = new Date()): Promise<void> {
   await db.transaction(async (tx) => {

@@ -312,6 +312,7 @@ const settingsSchema = z
     closedWeekdays: z.array(z.number().int().min(1).max(7)).max(6),
     seasonStart: monthDay,
     seasonEnd: monthDay,
+    retentionMonths: z.number().int().min(1).max(240).nullable(),
   })
   .refine(
     (settings) =>

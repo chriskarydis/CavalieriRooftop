@@ -86,6 +86,8 @@ export const restaurantSettings = pgTable(
     /** MM-DD, inclusive. */
     seasonStart: text().notNull(),
     seasonEnd: text().notNull(),
+    /** Months after a guest's last reservation when their details are erased; null keeps them. */
+    retentionMonths: integer(),
     updatedAt: instant().notNull().defaultNow(),
   },
   (t) => [check("restaurant_settings_single_row", sql`${t.id} = 1`)],
@@ -224,6 +226,8 @@ export const customer = pgTable(
     locale: text().notNull().default("en"),
     marketingConsent: boolean().notNull().default(false),
     notes: text(),
+    /** Set when the guest's details were erased under the retention period. */
+    anonymisedAt: instant(),
     createdAt: createdAt(),
   },
   (t) => [index("customer_email").on(t.email)],

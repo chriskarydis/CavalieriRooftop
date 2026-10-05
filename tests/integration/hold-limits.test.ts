@@ -101,7 +101,7 @@ describe("one hold per guest", () => {
 
   it("caps simultaneous holds from one network address, and frees the cap as holds expire", async () => {
     const address = "hash-of-one-address";
-    const tables = [19, 20, 21, 22];
+    const tables = [19, 20, 21, 22, 25, 26, 27, 28, 30, 31, 32];
     for (let index = 0; index < MAX_HOLDS_PER_ADDRESS; index++) {
       await hold(visitor(`guest-${index}`, address), table(tables[index]));
     }
@@ -110,7 +110,7 @@ describe("one hold per guest", () => {
     await expect(refused).rejects.toMatchObject({ code: "TOO_MANY_HOLDS" });
 
     // Someone at a different address is unaffected.
-    await hold(visitor("elsewhere", "another-address"), table(25));
+    await hold(visitor("elsewhere", "another-address"), table(33));
 
     const later = addMinutes(NOW, 11);
     const afterExpiry = await hold(visitor("one-more", address), table(tables[MAX_HOLDS_PER_ADDRESS]), 2, later);

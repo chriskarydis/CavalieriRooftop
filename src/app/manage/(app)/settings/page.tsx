@@ -101,6 +101,15 @@ export default async function SettingsPage({ searchParams }: PageProps<"/manage/
           </div>
         </section>
 
+        <section className={cardClass}>
+          <h2 className="mb-1 font-semibold">{t("settings.privacy")}</h2>
+          <p className="mb-3 text-sm text-slate-600">{t("settings.privacyNote")}</p>
+          <label className="block max-w-xs text-sm font-medium">
+            {t("settings.retentionMonths")}
+            <input name="retentionMonths" type="number" min={1} max={240} defaultValue={settings.retentionMonths ?? ""} className={inputClass} />
+          </label>
+        </section>
+
         <button type="submit" className={primaryButton}>
           {t("save")}
         </button>

@@ -12,7 +12,7 @@ Last updated: 2026-10-05. Update this file at the end of every working session.
 | Pricing engine | All owner rules, tested |
 | Allocation engine | Ranking, combinations, pairings up to 16 guests, tested |
 | Reservation engine | Availability, 10-minute holds, confirmation, late/no-show, cancellation outcome, walk-ins |
-| Hold limits | One unpaid hold per visitor; cap of 3 per network address |
+| Hold limits | One unpaid hold per visitor; cap of 10 per network address |
 | Guest booking pages | Search, floor plan, hold with countdown, details, confirmation, cancel (EN/EL) |
 | Staff | Sign-in, roles, rate limit; live floor; seat, no-show, table free, cancel, walk-in (EN/EL) |
 | Settings screens | Tables, categories and fees, joined tables, neighbouring groups, reservation settings, closed dates |
@@ -72,7 +72,7 @@ Later, if wanted: photos of the view from each paid table (the data model has th
 - A chosen larger table is billed on its seats even when every smaller table is booked that evening
   (the guest can use "let us choose" to pay by party size).
 - "Offered from" party sizes for combinations (TABLE_ALLOCATION.md) are engineering defaults.
-- The cap of 3 unpaid holds per network address (a hotel's guests share one address).
+- The cap of 10 unpaid holds per network address (hotels and mobile networks share addresses).
 - Reminder email 24 hours before the reservation.
 
 ## Resuming work

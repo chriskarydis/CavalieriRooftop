@@ -169,8 +169,18 @@ export interface Holder {
   ipHash: string | null;
 }
 
-/** Unpaid holds allowed at once from one network address (a hotel or café shares one). */
-export const MAX_HOLDS_PER_ADDRESS = 3;
+/**
+ * Unpaid holds allowed at once from one network address. Deliberately generous:
+ * a hotel, a café and most mobile networks put many people behind one address,
+ * and the one-hold-per-visitor rule already does the real work. This only
+ * stops a single machine from holding the whole floor.
+ */
+export const MAX_HOLDS_PER_ADDRESS = 10;
+
+function maxHoldsPerAddress(): number {
+  const configured = Number(process.env.MAX_HOLDS_PER_ADDRESS);
+  return Number.isInteger(configured) && configured > 0 ? configured : MAX_HOLDS_PER_ADDRESS;
+}
 
 export type HoldRequest = SlotRequest & { selection: Selection; locale: string; holder?: Holder };
 
@@ -227,7 +237,7 @@ async function enforceHoldLimits(tx: Tx, holder: Holder, now: Date): Promise<voi
       .select({ count: sql<number>`count(*)::int` })
       .from(schema.reservation)
       .where(and(active, eq(schema.reservation.holderIpHash, holder.ipHash)));
-    if (count >= MAX_HOLDS_PER_ADDRESS) throw new BookingError("TOO_MANY_HOLDS");
+    if (count >= maxHoldsPerAddress()) throw new BookingError("TOO_MANY_HOLDS");
   }
 }
 

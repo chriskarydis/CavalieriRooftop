@@ -207,7 +207,8 @@
       "cancel": "Cancel",
       "confirmCancel": "Confirm cancellation",
       "move": "Move",
-      "unblock": "Remove block"
+      "unblock": "Remove block",
+      "extend": "+30 min"
     },
     "noShows": "No-shows tonight",
     "seatAnyway": "Guests arrived: seat",
@@ -406,7 +407,10 @@
         "6": "Saturday",
         "7": "Sunday"
       },
-      "showMenuPrices": "Show menu prices on the website"
+      "showMenuPrices": "Show menu prices on the website",
+      "privacy": "Guest data",
+      "privacyNote": "After this many months from a guest's last reservation, their name, email, phone and notes are erased. The reservation figures are kept. Leave empty to keep guest details. Ask your accountant how long records must be kept.",
+      "retentionMonths": "Erase guest details after (months)"
     },
     "closures": {
       "title": "Closed dates",
@@ -690,5 +694,16 @@
     "capacity": "Seats",
     "category": "Category",
     "addTable": "Add table"
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "text": "The page could not be shown. Nothing was charged. Please try again; if it keeps happening, call us on +30 26610 39041.",
+    "staffText": "The page could not be shown. Try again; if it keeps happening, note the code below for the developer.",
+    "retry": "Try again",
+    "reference": "Code: {code}",
+    "notFoundTitle": "Page not found",
+    "notFoundText": "This page does not exist, or the link is no longer valid.",
+    "home": "Home",
+    "reserve": "Reserve a table"
   }
 }

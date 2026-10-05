@@ -17,6 +17,7 @@ import {
   completeReservation,
   completeWalkIn,
   createWalkIn,
+  extendWalkIn,
   markNoShow,
   seatReservation,
 } from "@/server/services/floor-service";
@@ -89,6 +90,12 @@ export async function cancelAction(reservationId: string, returnTo: string): Pro
 
 export async function completeWalkInAction(walkInId: string, returnTo: string): Promise<void> {
   await floorAction(returnTo, () => completeWalkIn(db, walkInId));
+}
+
+const WALK_IN_EXTENSION_MINUTES = 30;
+
+export async function extendWalkInAction(walkInId: string, returnTo: string): Promise<void> {
+  await floorAction(returnTo, (staffId) => extendWalkIn(db, walkInId, WALK_IN_EXTENSION_MINUTES, staffId));
 }
 
 const blockSchema = z.object({

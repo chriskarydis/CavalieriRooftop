@@ -8,10 +8,12 @@ import { SignOutButton } from "./SignOutButton";
 const OPERATIONS = [
   { href: "/manage", key: "floor" },
   { href: "/manage/reservations", key: "reservations" },
+  { href: "/manage/timeline", key: "timeline" },
 ] as const;
 
 const CONFIGURATION = [
   { href: "/manage/tables", key: "tables" },
+  { href: "/manage/floor", key: "floor_editor" },
   { href: "/manage/categories", key: "categories" },
   { href: "/manage/combinations", key: "combinations" },
   { href: "/manage/menu", key: "menu" },
@@ -21,7 +23,11 @@ const CONFIGURATION = [
 export default async function ManageAppLayout({ children }: { children: React.ReactNode }) {
   const staff = await requireStaff();
   const t = await getTranslations("manage");
-  const links = [...OPERATIONS, ...(hasPermission(staff.role, "configuration") ? CONFIGURATION : [])];
+  const links = [
+    ...OPERATIONS,
+    ...(hasPermission(staff.role, "analytics") ? [{ href: "/manage/analytics", key: "analytics" } as const] : []),
+    ...(hasPermission(staff.role, "configuration") ? CONFIGURATION : []),
+  ];
 
   return (
     <>

@@ -21,7 +21,10 @@ Last updated: 2026-10-05. Update this file at the end of every working session.
 | Public pages | Home, contact, reservation policy, privacy and cookies, header and footer, sitemap, robots, structured data |
 | Emails | Guest confirmation, reminder, cancellation; restaurant new, cancelled, no-show; EN/EL; sent once each and recorded. Not sent anywhere until an email provider key is set |
 | Stripe | Payment form, webhook, automatic refund on in-policy cancellation, automatic refund of late payments, manager refund with reason. Tested against a stand-in for Stripe; **not yet run against Stripe itself** |
-| Tests | 177 unit/integration, 34 browser tests (desktop and mobile) |
+| Timeline | Every table's evening for any date: reservations, walk-ins, blocks, holds |
+| Analytics | Reservations, guests, cancellations, no-shows, deposits, table fees, kept and refunded amounts, chosen tables, walk-ins, by time and weekday |
+| Floor tools | Close or reopen several tables at once; floor-plan editor (drag or arrow keys, size, rotation, shape); add a table |
+| Tests | 187 unit/integration, 37 browser tests (desktop and mobile) |
 | Docs | PROJECT_ANALYSIS, DECISIONS, BOOKING_LOGIC, TABLE_ALLOCATION, DATABASE, SECURITY |
 
 ## To do, in order
@@ -29,14 +32,12 @@ Last updated: 2026-10-05. Update this file at the end of every working session.
 1. **Run payments against Stripe test mode** once test keys are in `.env` (see README): pay, fail a
    card, 3-D Secure card, cancel with refund, manager refund, late payment.
 2. **Send real emails:** needs an email provider key (Resend) and a sender address on a domain.
-3. **Dashboard, remaining:** disable tables in bulk (weather), extend a walk-in, timeline view,
-   creating a new table.
-4. **Floor-plan editor:** drag tables, edit position and shape.
-5. **Analytics.**
-6. **Public site, remaining:** photography (the hero is a colour gradient stand-in), gallery and
+3. **Public site, remaining:** photography (the hero is a colour gradient stand-in), gallery and
    experience pages once photos exist, page caching.
-7. **Hardening:** security headers, error monitoring, data retention, accessibility pass.
-8. **Deployment:** Vercel + Neon (EU), scheduler for `/api/cron/tick` every minute, production
+4. **Hardening:** security headers, error monitoring, data retention, accessibility pass.
+5. **Small dashboard items:** extend a walk-in's stay; drag a reservation to another table on the
+   live floor (moving already works from the Move button).
+6. **Deployment:** Vercel + Neon (EU), scheduler for `/api/cron/tick` every minute, production
    configuration script, DEPLOYMENT.md, TESTING.md, ARCHITECTURE.md, domain cut-over.
 
 Later, if wanted: photos of the view from each paid table (the data model has the field).

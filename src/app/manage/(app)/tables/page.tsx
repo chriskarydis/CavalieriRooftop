@@ -5,7 +5,8 @@ import { requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import * as schema from "@/server/db/schema";
 import { saveTable } from "../config-actions";
-import { cardClass, inputClass, Notice, primaryButton } from "../ui";
+import { setTablesStatusAction } from "../floor-actions";
+import { cardClass, inputClass, Notice, primaryButton, secondaryButton } from "../ui";
 
 const STATUSES = ["ACTIVE", "INACTIVE", "OUT_OF_SERVICE"] as const;
 
@@ -27,6 +28,36 @@ export default async function TablesPage({ searchParams }: PageProps<"/manage/ta
         <p className="text-sm text-slate-600">{t("tables.intro")}</p>
       </header>
       <Notice query={query} />
+
+      <section className={cardClass}>
+        <h2 className="font-semibold">{t("tables.bulkTitle")}</h2>
+        <p className="mb-3 text-sm text-slate-600">{t("tables.bulkIntro")}</p>
+        <form className="space-y-3 text-sm">
+          <fieldset>
+            <legend className="sr-only">{t("tables.title")}</legend>
+            <div className="flex flex-wrap gap-x-3 gap-y-1">
+              {tables.map((table) => (
+                <label key={table.id} className={`flex items-center gap-1 ${table.status === "ACTIVE" ? "" : "text-red-700"}`}>
+                  <input type="checkbox" name="tableIds" value={table.id} />
+                  {table.isSpare ? t("tables.spare") : table.number}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <label className="block font-medium">
+            {t("tables.statusReason")}
+            <input name="reason" maxLength={200} className={inputClass} />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button formAction={setTablesStatusAction.bind(null, "OUT_OF_SERVICE")} className={primaryButton}>
+              {t("tables.bulkClose")}
+            </button>
+            <button formAction={setTablesStatusAction.bind(null, "ACTIVE")} className={secondaryButton}>
+              {t("tables.bulkOpen")}
+            </button>
+          </div>
+        </form>
+      </section>
 
       <ul className="space-y-2">
         {tables.map((table) => (

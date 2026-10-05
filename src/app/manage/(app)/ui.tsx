@@ -12,6 +12,8 @@ export async function Notice({ query }: { query: Record<string, string | string[
   const t = await getTranslations("config");
   const error = first(query.error);
   const upcoming = first(query.upcoming);
+  const upcomingMany = first(query.upcomingMany);
+  const changed = first(query.changed);
 
   if (error) {
     return (
@@ -24,8 +26,13 @@ export async function Notice({ query }: { query: Record<string, string | string[
   return (
     <div className="space-y-2">
       <p role="status" className="rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900">
-        {t("saved")}
+        {changed ? t("tables.bulkChanged", { count: Number(changed) }) : t("saved")}
       </p>
+      {upcomingMany && (
+        <p role="alert" className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          {t("tables.bulkUpcomingWarning", { count: Number(upcomingMany) })}
+        </p>
+      )}
       {upcoming && (
         <p role="alert" className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
           {t("tables.upcomingWarning", { count: Number(upcoming), table: first(query.table) ?? "" })}

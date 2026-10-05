@@ -8,6 +8,27 @@ technical choice made during implementation.
 None blocking. Still to come from the owner: Stripe test keys, Greek menu text, photography, DNS
 access (once the site is nearly ready).
 
+## 2026-10-05 (second round): owner
+
+- **No phone reservations.** In an exceptional case staff keep a table by hand by blocking it for the
+  date and time, with no deposit. Replaces the earlier "phone reservations are not built" note.
+- **No dish photos.** Photos of the view from each table may be added later; not now.
+- **One hold per guest.** A guest holds one seating at a time; for a party of 16 that is all the
+  tables the party needs. *Engineering:* a new selection releases the previous hold, and at most 3
+  unpaid holds may exist per network address.
+- **Test notification address** is the developer's own, set only in the local .
+
+## 2026-10-05 (second round): engineering
+
+- **Manage tokens are derived** (HMAC of the reservation id with a server key) so that emails can
+  carry the link; the database still stores only a hash.
+- **Emails go through Resend** when a key is set; without one nothing is sent and each message is
+  only recorded.
+- **Stripe sits behind a small gateway interface**, so payment and refund logic is tested without
+  calling Stripe. It has not yet been run against Stripe itself.
+- **A late payment is refunded automatically** when the table has been released, as agreed.
+- **Manager refunds** are limited to cancelled and no-show reservations and need a written reason.
+
 ## 2026-10-05: engineering
 
 - **Configuration changes never touch existing reservations.** Fees, deposit, capacity and time

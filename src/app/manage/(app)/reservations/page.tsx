@@ -6,7 +6,8 @@ import { db } from "@/server/db/client";
 import { loadSettings } from "@/server/services/context";
 import { listReservations } from "@/server/services/reservation-list";
 import { listBlocks } from "@/server/services/table-ops";
-import { unblockAction } from "../../actions";
+import { hasPermission } from "@/domain/permissions";
+import { refundAction, unblockAction } from "../../actions";
 import { ReservationActions } from "../ReservationActions";
 import { cardClass, inputClass, primaryButton, secondaryButton } from "../ui";
 
@@ -15,7 +16,8 @@ const DAY_MINUTES = 24 * 60;
 const first = (value: string | string[] | undefined): string | undefined => (Array.isArray(value) ? value[0] : value);
 
 export default async function ReservationsPage({ searchParams }: PageProps<"/manage/reservations">) {
-  await requirePermission("operations");
+  const staff = await requirePermission("operations");
+  const mayRefund = hasPermission(staff.role, "refunds");
   const t = await getTranslations("manage");
   const format = await getFormatter();
   const query = await searchParams;
@@ -112,9 +114,45 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                   <td className="px-3 py-2">{t(`booking.${reservation.status}`)}</td>
                   <td className="px-3 py-2 tabular-nums">
                     {euro(reservation.depositCents)} / {euro(reservation.tableFeeCents)}
+                    {reservation.refundedCents > 0 && (
+                      <span className="block text-xs text-slate-500">
+                        {t("reservations.refunded", { amount: euro(reservation.refundedCents) })}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2">
                     <ReservationActions reservationId={reservation.id} status={reservation.status} returnTo={returnTo} />
+                    {mayRefund &&
+                      (reservation.status === "CANCELLED" || reservation.status === "NO_SHOW") &&
+                      reservation.paidCents > reservation.refundedCents && (
+                        <details className="mt-1.5">
+                          <summary className={`${secondaryButton} inline-block cursor-pointer list-none`}>
+                            {t("reservations.refund")}
+                          </summary>
+                          <form action={refundAction.bind(null, reservation.id, returnTo)} className="mt-2 space-y-2">
+                            <label className="block">
+                              {t("reservations.refundAmount")}
+                              <input
+                                name="amount"
+                                type="number"
+                                min={0.01}
+                                step="0.01"
+                                max={(reservation.paidCents - reservation.refundedCents) / 100}
+                                defaultValue={(reservation.paidCents - reservation.refundedCents) / 100}
+                                required
+                                className={inputClass}
+                              />
+                            </label>
+                            <label className="block">
+                              {t("reservations.refundReason")}
+                              <input name="reason" required minLength={3} maxLength={300} className={inputClass} />
+                            </label>
+                            <button className="rounded-md bg-red-700 px-2 py-1 text-sm text-white">
+                              {t("reservations.refundConfirm")}
+                            </button>
+                          </form>
+                        </details>
+                      )}
                   </td>
                 </tr>
               ))}

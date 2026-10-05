@@ -12,42 +12,45 @@ Last updated: 2026-10-05. Update this file at the end of every working session.
 | Pricing engine | All owner rules, tested |
 | Allocation engine | Ranking, combinations, pairings up to 16 guests, tested |
 | Reservation engine | Availability, 10-minute holds, confirmation, late/no-show, cancellation outcome, walk-ins |
+| Hold limits | One unpaid hold per visitor; cap of 3 per network address |
 | Guest booking pages | Search, floor plan, hold with countdown, details, confirmation, cancel (EN/EL) |
 | Staff | Sign-in, roles, rate limit; live floor; seat, no-show, table free, cancel, walk-in (EN/EL) |
-| Settings screens | Tables, categories and fees, joined tables, neighbouring groups, reservation settings, closed dates (EN/EL) |
-| Dashboard | Table details on click, manual blocks, move a reservation with price preview, reservations list with date, status and search |
-| Menu | Seeded from the current site (spelling corrected) with the 14 EU allergens; management screens; public menu page, prices hidden by default |
-| Public pages | Home, contact, reservation policy, privacy and cookies, header and footer, sitemap, robots, structured data; policy and hours read the live settings |
-| Tests | 144 unit/integration, 31 browser tests (desktop and mobile) |
+| Settings screens | Tables, categories and fees, joined tables, neighbouring groups, reservation settings, closed dates |
+| Dashboard | Table details, blocks from now or for a future date and time, move a reservation with price preview, reservations list, notifications |
+| Menu | Seeded from the current site with the 14 EU allergens; management screens; public menu page, prices hidden by default; no dish photos (owner's decision) |
+| Public pages | Home, contact, reservation policy, privacy and cookies, header and footer, sitemap, robots, structured data |
+| Emails | Guest confirmation, reminder, cancellation; restaurant new, cancelled, no-show; EN/EL; sent once each and recorded. Not sent anywhere until an email provider key is set |
+| Stripe | Payment form, webhook, automatic refund on in-policy cancellation, automatic refund of late payments, manager refund with reason. Tested against a stand-in for Stripe; **not yet run against Stripe itself** |
+| Tests | 177 unit/integration, 34 browser tests (desktop and mobile) |
 | Docs | PROJECT_ANALYSIS, DECISIONS, BOOKING_LOGIC, TABLE_ALLOCATION, DATABASE, SECURITY |
 
 ## To do, in order
 
-1. **Stripe:** Payment Element, webhook, refunds on cancellation, manager discretionary refund,
-   cancel the payment when a hold expires. Remove reliance on the test stand-in. Needs test keys.
-2. **Emails:** confirmation, reminder, cancellation, refund; restaurant notifications (EN/EL).
-3. **Dashboard, remaining:** phone reservation by staff (needs the owner's deposit rule), disable
-   tables in bulk (weather), extend a walk-in, timeline view, notifications, creating a new table.
+1. **Run payments against Stripe test mode** once test keys are in `.env` (see README): pay, fail a
+   card, 3-D Secure card, cancel with refund, manager refund, late payment.
+2. **Send real emails:** needs an email provider key (Resend) and a sender address on a domain.
+3. **Dashboard, remaining:** disable tables in bulk (weather), extend a walk-in, timeline view,
+   creating a new table.
 4. **Floor-plan editor:** drag tables, edit position and shape.
-5. **Public site, remaining:** photography (the hero is a colour gradient stand-in), gallery and
-   experience pages once photos exist, photo upload for dishes and tables (needs file storage),
-   page caching.
-6. **Analytics.**
-7. **Hardening:** rate limit on hold creation, security headers, error monitoring, data retention,
-   accessibility pass.
+5. **Analytics.**
+6. **Public site, remaining:** photography (the hero is a colour gradient stand-in), gallery and
+   experience pages once photos exist, page caching.
+7. **Hardening:** security headers, error monitoring, data retention, accessibility pass.
 8. **Deployment:** Vercel + Neon (EU), scheduler for `/api/cron/tick` every minute, production
    configuration script, DEPLOYMENT.md, TESTING.md, ARCHITECTURE.md, domain cut-over.
+
+Later, if wanted: photos of the view from each paid table (the data model has the field).
 
 ## Needed from the owner
 
 | Item | Needed for |
 |---|---|
-| Stripe test keys (publishable, secret, webhook secret) | Stripe |
-| Rule for reservations taken by phone: is a deposit required, and how is it paid? | Phone reservations |
+| Stripe test keys from any Stripe account (free; see README) | Running real test payments |
+| A Resend account key and a sender address | Sending real emails |
 | Greek names and descriptions for the dishes (can be typed in at /manage/menu) | Menu |
-| Photography: hero sunset (wide and vertical), the views, terrace at dusk, view from tables 1-5, 6/11/12/16 and 70/80/90, 8-12 dishes, cocktails; logo file | Public site |
+| Photography: hero sunset (wide and vertical), the views, terrace at dusk, cocktails; logo file | Public site |
 | View descriptions for the paid tables (can be typed in at /manage/tables) | Booking page |
-| Restaurant email address for notifications; sender address | Emails |
+| The restaurant's real notification address (the developer's own is used locally for now) | Emails |
 | Contact with whoever manages DNS for cavalieriroofgarden.com | Deployment |
 | Vercel and Neon accounts | Deployment |
 
@@ -60,6 +63,7 @@ Last updated: 2026-10-05. Update this file at the end of every working session.
   especially how long reservation records are kept.
 - Menu: dish spellings were corrected (for example Prosciutto, Cuttlefish, Parmesan, Soufflé). Dietary
   labels and allergens are only those the old site showed and are incomplete.
+- Email wording, in both languages.
 
 ## Rules worth re-confirming when convenient
 
@@ -67,6 +71,8 @@ Last updated: 2026-10-05. Update this file at the end of every working session.
 - A chosen larger table is billed on its seats even when every smaller table is booked that evening
   (the guest can use "let us choose" to pay by party size).
 - "Offered from" party sizes for combinations (TABLE_ALLOCATION.md) are engineering defaults.
+- The cap of 3 unpaid holds per network address (a hotel's guests share one address).
+- Reminder email 24 hours before the reservation.
 
 ## Resuming work
 

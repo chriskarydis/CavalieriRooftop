@@ -1,7 +1,9 @@
 import { timingSafeEqual } from "node:crypto";
 import { db } from "@/server/db/client";
 import { expireHolds } from "@/server/services/booking";
+import { stripeGateway } from "@/server/payments/gateway";
 import { closeOutLateReservations, flagLateReservations } from "@/server/services/floor-service";
+import { cancelAbandonedPayments } from "@/server/services/payments";
 import { notifyReservationEvent, sendDueReminders } from "@/server/services/notifications";
 
 function authorised(request: Request): boolean {
@@ -24,6 +26,8 @@ export async function GET(request: Request): Promise<Response> {
     await flagLateReservations(db, now),
     await closeOutLateReservations(db, now),
   ];
+  const gateway = stripeGateway();
+  if (gateway) await cancelAbandonedPayments(db, gateway, expired, now);
   for (const reservationId of noShow) await notifyReservationEvent(db, reservationId, "NO_SHOW");
   const reminders = await sendDueReminders(db, now);
   return Response.json({ expired: expired.length, late: late.length, noShow: noShow.length, reminders });

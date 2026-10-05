@@ -22,6 +22,9 @@ export interface ReservationListItem {
   depositCents: number;
   tableFeeCents: number;
   totalCents: number;
+  /** Card payment captured online, if any. */
+  paidCents: number;
+  refundedCents: number;
   /** Tables currently allocated; empty once released (cancelled, no-show, completed). */
   tableNumbers: number[];
 }
@@ -80,6 +83,22 @@ export async function listReservations(db: Db, filter: ReservationFilter): Promi
       ),
     );
 
+  const payments = await db
+    .select()
+    .from(schema.payment)
+    .where(
+      inArray(
+        schema.payment.reservationId,
+        rows.map((row) => row.reservation.id),
+      ),
+    );
+  const captured = (reservationId: string) =>
+    payments.find(
+      (payment) =>
+        payment.reservationId === reservationId &&
+        ["SUCCEEDED", "PARTIALLY_REFUNDED", "REFUNDED"].includes(payment.status),
+    );
+
   return rows.map(({ reservation, customer }) => ({
     id: reservation.id,
     reference: reservation.reference,
@@ -95,6 +114,8 @@ export async function listReservations(db: Db, filter: ReservationFilter): Promi
     depositCents: reservation.depositCents,
     tableFeeCents: reservation.tableFeeCents,
     totalCents: reservation.totalCents,
+    paidCents: captured(reservation.id)?.amountCents ?? 0,
+    refundedCents: captured(reservation.id)?.refundedCents ?? 0,
     tableNumbers: tables
       .filter((table) => table.reservationId === reservation.id)
       .map((table) => table.number)

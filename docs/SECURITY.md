@@ -29,6 +29,20 @@ phases and documented here as they land.
 - Double booking is prevented by a database constraint, not only by application checks.
 - The guest's manage link carries a 256-bit random token; only its SHA-256 hash is stored.
 
+## Payments
+
+- No card data touches this application: the card form is served by Stripe.
+- The webhook rejects any request whose Stripe signature does not verify, before reading its body.
+- The amount is taken from the server's price snapshot; a refund can never exceed the payment.
+- Refunds outside the policy require the "refunds" permission and a written reason, and are audited.
+
+## Guest links and holds
+
+- Manage tokens are derived from a server-side key (HMAC of the reservation id). The database stores
+  only their hash, so a copy of the database alone opens no reservation.
+- One unpaid hold per visitor, and a cap per network address, so tables cannot be kept out of sale.
+- The visitor's IP address is never stored, only a keyed hash used for that cap.
+
 ## Secrets
 
 - Only in environment variables (`.env` locally, never committed). `.env.example` lists the names.

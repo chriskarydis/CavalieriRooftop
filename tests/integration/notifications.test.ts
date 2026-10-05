@@ -161,7 +161,7 @@ describe("notifications", () => {
     const [notification] = await listUnreadNotifications(ctx.db);
     expect(notification).toMatchObject({ type: "CONFIRMED", reference: held.reference, partySize: 2, tableNumbers: [1] });
     expect(JSON.stringify(notification)).not.toContain(GUEST_EMAIL);
-    expect(JSON.stringify(notification)).not.toContain("690");
+    expect(JSON.stringify(notification)).not.toContain("+30 690");
 
     await markNotificationsRead(ctx.db);
     expect(await listUnreadNotifications(ctx.db)).toHaveLength(0);

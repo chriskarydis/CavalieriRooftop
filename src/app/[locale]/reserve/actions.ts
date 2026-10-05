@@ -5,6 +5,7 @@ import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { redirect } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
+import { stripeGateway } from "@/server/payments/gateway";
 import { simulatedPaymentsEnabled } from "@/server/payments/mode";
 import {
   attachGuestDetails,
@@ -17,6 +18,7 @@ import { BookingError, GUEST } from "@/server/services/context";
 import { cancelReservation } from "@/server/services/floor-service";
 import { getReservationByToken } from "@/server/services/guest-reservation";
 import { notifyReservationEvent } from "@/server/services/notifications";
+import { refundPayment } from "@/server/services/payments";
 
 const holdSchema = z.object({
   locale: z.string(),
@@ -130,6 +132,14 @@ export async function cancelByGuest(token: string, locale: string): Promise<void
   const found = await getReservationByToken(db, token);
   if (found && (found.reservation.status === "CONFIRMED" || found.reservation.status === "LATE")) {
     const { outcome } = await cancelReservation(db, found.reservation.id, GUEST, new Date(), "Cancelled by guest");
+    const gateway = stripeGateway();
+    if (gateway && outcome.refundCents > 0) {
+      await refundPayment(db, gateway, found.reservation.id, {
+        amountCents: outcome.refundCents,
+        reason: "POLICY",
+        initiatedBy: GUEST,
+      });
+    }
     await notifyReservationEvent(db, found.reservation.id, "CANCELLED", { refundCents: outcome.refundCents });
   }
   return redirect({ href: `/reservation/${token}`, locale });

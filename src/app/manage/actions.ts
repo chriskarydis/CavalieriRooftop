@@ -20,7 +20,9 @@ import {
   markNoShow,
   seatReservation,
 } from "@/server/services/floor-service";
+import { stripeGateway } from "@/server/payments/gateway";
 import { markNotificationsRead, notifyReservationEvent } from "@/server/services/notifications";
+import { discretionaryRefund, refundPayment } from "@/server/services/payments";
 import { blockTables, moveReservation, releaseBlock } from "@/server/services/table-ops";
 
 const YEAR_SECONDS = 60 * 60 * 24 * 365;
@@ -73,6 +75,14 @@ export async function completeAction(reservationId: string, returnTo: string): P
 export async function cancelAction(reservationId: string, returnTo: string): Promise<void> {
   await floorAction(returnTo, async (staffId) => {
     const { outcome } = await cancelReservation(db, reservationId, staffId, new Date(), "Cancelled by staff");
+    const gateway = stripeGateway();
+    if (gateway && outcome.refundCents > 0) {
+      await refundPayment(db, gateway, reservationId, {
+        amountCents: outcome.refundCents,
+        reason: "POLICY",
+        initiatedBy: staffId,
+      });
+    }
     await notifyReservationEvent(db, reservationId, "CANCELLED", { refundCents: outcome.refundCents });
   });
 }
@@ -112,6 +122,33 @@ export async function unblockAction(allocationId: string, returnTo: string): Pro
 /** Moves a reservation after staff confirmed the preview. `tableIds` is comma-separated. */
 export async function moveAction(reservationId: string, tableIds: string, returnTo: string): Promise<void> {
   await floorAction(returnTo, (staffId) => moveReservation(db, reservationId, tableIds.split(","), staffId));
+}
+
+const refundSchema = z.object({ amount: z.coerce.number().positive().max(100_000), reason: z.string().trim().min(3).max(300) });
+
+/** A manager's refund outside the cancellation policy. Needs the "refunds" permission and a reason. */
+export async function refundAction(reservationId: string, returnTo: string, formData: FormData): Promise<void> {
+  const target = new URL(returnTo.startsWith("/manage") ? returnTo : "/manage", "http://local");
+  let failure: string | null = null;
+  try {
+    const staff = await requirePermission("refunds");
+    const parsed = refundSchema.safeParse(Object.fromEntries(formData));
+    const gateway = stripeGateway();
+    if (!parsed.success || !gateway) throw new BookingError("INVALID_SELECTION");
+    await discretionaryRefund(
+      db,
+      gateway,
+      reservationId,
+      { amountCents: Math.round(parsed.data.amount * 100), reason: parsed.data.reason },
+      staff.id,
+    );
+  } catch (error) {
+    failure = errorCode(error);
+  }
+  if (failure) target.searchParams.set("error", failure === "INVALID_SELECTION" ? "REFUND_FAILED" : failure);
+  else target.searchParams.delete("error");
+  revalidatePath("/manage", "layout");
+  redirect(target.pathname + target.search);
 }
 
 export async function markNotificationsReadAction(): Promise<void> {

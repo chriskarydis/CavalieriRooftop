@@ -6,6 +6,7 @@ import { formatLongDate, intlLocale } from "@/i18n/intl-locale";
 import { redirect } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
 import { getReservationByToken } from "@/server/services/guest-reservation";
+import { getPaymentSummary } from "@/server/services/payments";
 import { cancelByGuest } from "../../reserve/actions";
 import { PriceSummary } from "../../reserve/PriceSummary";
 
@@ -27,6 +28,7 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
   const format = await getFormatter();
   const euro = (cents: number) => format.number(cents / 100, { style: "currency", currency: "EUR" });
   const canCancel = reservation.status === "CONFIRMED" || reservation.status === "LATE";
+  const payment = await getPaymentSummary(db, reservation.id);
 
   return (
     <main className="mx-auto w-full max-w-xl space-y-5 p-4 pb-16">
@@ -63,6 +65,11 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
             creditTowardBillCents: reservation.creditTowardBillCents,
           }}
         />
+        {payment && payment.refundedCents > 0 && (
+          <p className="mt-3 rounded-md bg-emerald-50 p-2 text-sm text-emerald-900">
+            {t("refunded", { amount: euro(payment.refundedCents) })}
+          </p>
+        )}
       </section>
 
       <section className="rounded-xl border border-stone-300 bg-white p-4 text-sm">

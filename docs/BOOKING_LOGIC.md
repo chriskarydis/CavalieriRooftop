@@ -113,7 +113,48 @@ Every change goes through one function that validates the transition and writes 
   confirm an override. The walk-in is then recorded as ending when that reservation starts.
 - A table that is occupied, held or out of service is always refused.
 
+## One hold per guest
+
+A visitor holds one seating at a time. Choosing another table releases their previous unpaid hold;
+a party of 16 holds the five tables of its one seating and nothing else. The visitor is recognised by
+a random id in a cookie. As a backstop against someone clearing cookies, at most 3 unpaid holds may
+exist at once from one network address (stored as a keyed hash, never the address).
+
+## Payment
+
+- The card form is Stripe's Payment Element. Card details go from the browser to Stripe.
+- The amount charged is the price snapshot on the reservation. The browser never supplies it.
+- A reservation is confirmed only when Stripe's signed webhook reports the payment succeeded. The
+  page the guest returns to just waits and re-asks the server.
+- Each webhook event is processed once; a failure makes Stripe deliver it again.
+- If a payment succeeds after the hold expired and the table was released, it is refunded in full
+  automatically and the guest is told. If the table was not yet released, the booking is honoured.
+- Unpaid payments of expired holds are cancelled at Stripe by the scheduled job.
+
+## Refunds
+
+- Cancelling in time (guest or staff) refunds everything paid, through Stripe, automatically.
+- A manager can refund part or all of a cancelled or no-show reservation with a written reason. It
+  can never exceed what is left on the payment and is audited.
+
+## Keeping a table by hand
+
+The restaurant takes no phone reservations. For an exception, staff block the table for the date and
+time and write the guest's name as the reason. No deposit, no online reservation.
+
+## Emails and notifications
+
+| Event | Guest | Restaurant | Dashboard |
+|---|---|---|---|
+| Reservation confirmed | Confirmation with breakdown, policy and manage link | New reservation | Yes |
+| 24 hours before | Reminder (not for bookings made inside 24 hours) | | |
+| Cancelled | Cancellation with the refund, or that there is none | Cancelled | Yes |
+| No-show | | No-show | Yes |
+
+Guest emails are in the guest's language. Each email is sent at most once per reservation and is
+recorded with its outcome. Without an email provider key nothing is sent; messages are only recorded.
+
 ## Not built yet
 
-Stripe payment and refunds, moving a reservation to another table, manual table blocks, extending a
-walk-in, scheduling of the automatic jobs, and all guest-facing screens.
+Extending a walk-in, a timeline view, the floor-plan editor, analytics, and scheduling of the
+automatic jobs at deployment.

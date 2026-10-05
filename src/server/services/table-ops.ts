@@ -57,6 +57,38 @@ export async function blockTables(
   }
 }
 
+export interface BlockListItem {
+  allocationId: string;
+  tableNumber: number;
+  startsAt: Date;
+  endsAt: Date;
+  reason: string | null;
+}
+
+/** Live manual blocks that overlap [from, until), earliest first. */
+export async function listBlocks(db: Db, from: Date, until: Date): Promise<BlockListItem[]> {
+  const rows = await db
+    .select({
+      allocationId: schema.tableAllocation.id,
+      tableNumber: schema.diningTable.number,
+      startsAt: sql<string>`lower(${schema.tableAllocation.period})`,
+      endsAt: sql<string>`upper(${schema.tableAllocation.period})`,
+      reason: schema.tableAllocation.reason,
+    })
+    .from(schema.tableAllocation)
+    .innerJoin(schema.diningTable, eq(schema.tableAllocation.tableId, schema.diningTable.id))
+    .where(
+      and(
+        eq(schema.tableAllocation.kind, "BLOCK"),
+        isNull(schema.tableAllocation.releasedAt),
+        sql`${schema.tableAllocation.period} && ${toRange(from, until)}::tstzrange`,
+      ),
+    );
+  return rows
+    .map((row) => ({ ...row, startsAt: new Date(row.startsAt), endsAt: new Date(row.endsAt) }))
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime() || a.tableNumber - b.tableNumber);
+}
+
 /** Ends a manual block now. */
 export async function releaseBlock(db: Db, allocationId: string, actor: Actor, now = new Date()): Promise<void> {
   await db.transaction(async (tx) => {

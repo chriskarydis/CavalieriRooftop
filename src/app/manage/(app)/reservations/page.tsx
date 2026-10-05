@@ -1,14 +1,17 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 import { RESERVATION_STATUSES, type ReservationStatus } from "@/domain/reservation-state";
-import { zonedDate, zonedTime } from "@/domain/time";
+import { addMinutes, zonedDate, zonedTime, zonedToInstant } from "@/domain/time";
 import { requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import { loadSettings } from "@/server/services/context";
 import { listReservations } from "@/server/services/reservation-list";
+import { listBlocks } from "@/server/services/table-ops";
+import { unblockAction } from "../../actions";
 import { ReservationActions } from "../ReservationActions";
-import { cardClass, inputClass, primaryButton } from "../ui";
+import { cardClass, inputClass, primaryButton, secondaryButton } from "../ui";
 
 const LISTED_STATUSES = RESERVATION_STATUSES.filter((status) => status !== "PENDING_PAYMENT" && status !== "EXPIRED");
+const DAY_MINUTES = 24 * 60;
 const first = (value: string | string[] | undefined): string | undefined => (Array.isArray(value) ? value[0] : value);
 
 export default async function ReservationsPage({ searchParams }: PageProps<"/manage/reservations">) {
@@ -25,7 +28,11 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
   const search = first(query.q) ?? "";
   const error = first(query.error);
 
-  const reservations = await listReservations(db, { date, status, search });
+  const dayStart = zonedToInstant(date, "00:00", settings.timezone);
+  const [reservations, blocks] = await Promise.all([
+    listReservations(db, { date, status, search }),
+    listBlocks(db, dayStart, addMinutes(dayStart, DAY_MINUTES)),
+  ]);
   const returnTo = `/manage/reservations?${new URLSearchParams({ date, ...(status ? { status } : {}), ...(search ? { q: search } : {}) })}`;
   const euro = (cents: number) =>
     format.number(cents / 100, { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -114,6 +121,29 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
             </tbody>
           </table>
         </div>
+      )}
+      {blocks.length > 0 && (
+        <section aria-labelledby="blocks-heading">
+          <h2 id="blocks-heading" className="mb-2 font-semibold">
+            {t("reservations.blocks")}
+          </h2>
+          <ul className="space-y-2 text-sm">
+            {blocks.map((block) => (
+              <li key={block.allocationId} className={`${cardClass} flex flex-wrap items-center justify-between gap-2 py-2`}>
+                <span>
+                  {t("details.title", { number: block.tableNumber })} ·{" "}
+                  <span className="tabular-nums">
+                    {zonedTime(block.startsAt, settings.timezone)}–{zonedTime(block.endsAt, settings.timezone)}
+                  </span>
+                  {block.reason && ` · ${block.reason}`}
+                </span>
+                <form action={unblockAction.bind(null, block.allocationId, returnTo)}>
+                  <button className={secondaryButton}>{t("actions.unblock")}</button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </main>
   );

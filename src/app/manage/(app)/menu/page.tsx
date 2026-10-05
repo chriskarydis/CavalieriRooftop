@@ -80,10 +80,6 @@ async function ItemFields({
         {t("displayOrder")}
         <input name="displayOrder" type="number" min={0} max={1000} required defaultValue={item?.displayOrder ?? 0} className={inputClass} />
       </label>
-      <label>
-        {t("imageUrl")}
-        <input name="imageUrl" type="url" maxLength={500} placeholder="https://" defaultValue={item?.imageUrl ?? ""} className={inputClass} />
-      </label>
       <fieldset className="sm:col-span-4">
         <legend>{t("tags")}</legend>
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 font-normal">

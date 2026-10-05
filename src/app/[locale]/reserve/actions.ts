@@ -1,13 +1,22 @@
 "use server";
 
+import { createHmac, randomUUID } from "node:crypto";
+import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { redirect } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
 import { simulatedPaymentsEnabled } from "@/server/payments/mode";
-import { attachGuestDetails, confirmReservation, createHold, type Selection } from "@/server/services/booking";
+import {
+  attachGuestDetails,
+  confirmReservation,
+  createHold,
+  type Holder,
+  type Selection,
+} from "@/server/services/booking";
 import { BookingError, GUEST } from "@/server/services/context";
 import { cancelReservation } from "@/server/services/floor-service";
 import { getReservationByToken } from "@/server/services/guest-reservation";
+import { notifyReservationEvent } from "@/server/services/notifications";
 
 const holdSchema = z.object({
   locale: z.string(),
@@ -18,6 +27,33 @@ const holdSchema = z.object({
   tableId: z.string().uuid().optional(),
   combinationIds: z.string().optional(),
 });
+
+const HOLDER_COOKIE = "crg_guest";
+const HOLDER_COOKIE_DAYS = 30;
+
+/**
+ * Identifies the visitor for the one-hold-at-a-time rule: a random id in an
+ * HttpOnly cookie, plus a keyed hash of their IP address (never the address
+ * itself) for the per-address cap.
+ */
+async function currentHolder(): Promise<Holder> {
+  const jar = await cookies();
+  let id = jar.get(HOLDER_COOKIE)?.value;
+  if (!id || !/^[0-9a-f-]{36}$/.test(id)) {
+    id = randomUUID();
+    jar.set(HOLDER_COOKIE, id, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: HOLDER_COOKIE_DAYS * 24 * 60 * 60,
+      path: "/",
+    });
+  }
+  const forwarded = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim();
+  const secret = process.env.MANAGE_TOKEN_SECRET ?? process.env.BETTER_AUTH_SECRET ?? "";
+  const ipHash = forwarded ? createHmac("sha256", secret).update(`ip:${forwarded}`).digest("hex") : null;
+  return { id, ipHash };
+}
 
 /** Step 2 -> 3: hold the selection for the guest and move to checkout. */
 export async function startHold(formData: FormData): Promise<void> {
@@ -38,6 +74,7 @@ export async function startHold(formData: FormData): Promise<void> {
       partySize: input.guests,
       selection,
       locale: input.locale,
+      holder: await currentHolder(),
     });
     token = hold.manageToken;
   } catch (error) {
@@ -84,6 +121,7 @@ export async function simulatePayment(token: string, locale: string): Promise<vo
   if (!found) return redirect({ href: "/reserve", locale });
   const result = await confirmReservation(db, found.reservation.id, "simulated-payment");
   if (!result.confirmed) return redirect({ href: `/reserve/${token}`, locale });
+  if (!result.alreadyConfirmed) await notifyReservationEvent(db, found.reservation.id, "CONFIRMED");
   return redirect({ href: `/reservation/${token}`, locale });
 }
 
@@ -91,7 +129,8 @@ export async function simulatePayment(token: string, locale: string): Promise<vo
 export async function cancelByGuest(token: string, locale: string): Promise<void> {
   const found = await getReservationByToken(db, token);
   if (found && (found.reservation.status === "CONFIRMED" || found.reservation.status === "LATE")) {
-    await cancelReservation(db, found.reservation.id, GUEST, new Date(), "Cancelled by guest");
+    const { outcome } = await cancelReservation(db, found.reservation.id, GUEST, new Date(), "Cancelled by guest");
+    await notifyReservationEvent(db, found.reservation.id, "CANCELLED", { refundCents: outcome.refundCents });
   }
   return redirect({ href: `/reservation/${token}`, locale });
 }

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { hasLocale } from "next-intl";
 import { InvalidTransitionError } from "@/domain/reservation-state";
-import { addMinutes, zonedTime } from "@/domain/time";
+import { addMinutes, zonedTime, zonedToInstant } from "@/domain/time";
 import { STAFF_LOCALE_COOKIE } from "@/i18n/request";
 import { routing } from "@/i18n/routing";
 import { ForbiddenError, requirePermission } from "@/server/auth/session";
@@ -20,6 +20,7 @@ import {
   markNoShow,
   seatReservation,
 } from "@/server/services/floor-service";
+import { markNotificationsRead, notifyReservationEvent } from "@/server/services/notifications";
 import { blockTables, moveReservation, releaseBlock } from "@/server/services/table-ops";
 
 const YEAR_SECONDS = 60 * 60 * 24 * 365;
@@ -59,7 +60,10 @@ export async function seatAction(reservationId: string, returnTo: string): Promi
 }
 
 export async function noShowAction(reservationId: string, returnTo: string): Promise<void> {
-  await floorAction(returnTo, (staffId) => markNoShow(db, reservationId, staffId));
+  await floorAction(returnTo, async (staffId) => {
+    await markNoShow(db, reservationId, staffId);
+    await notifyReservationEvent(db, reservationId, "NO_SHOW");
+  });
 }
 
 export async function completeAction(reservationId: string, returnTo: string): Promise<void> {
@@ -67,20 +71,36 @@ export async function completeAction(reservationId: string, returnTo: string): P
 }
 
 export async function cancelAction(reservationId: string, returnTo: string): Promise<void> {
-  await floorAction(returnTo, (staffId) => cancelReservation(db, reservationId, staffId, new Date(), "Cancelled by staff"));
+  await floorAction(returnTo, async (staffId) => {
+    const { outcome } = await cancelReservation(db, reservationId, staffId, new Date(), "Cancelled by staff");
+    await notifyReservationEvent(db, reservationId, "CANCELLED", { refundCents: outcome.refundCents });
+  });
 }
 
 export async function completeWalkInAction(walkInId: string, returnTo: string): Promise<void> {
   await floorAction(returnTo, () => completeWalkIn(db, walkInId));
 }
 
-const blockSchema = z.object({ minutes: z.coerce.number().int().min(15).max(24 * 60), reason: z.string().max(200).optional() });
+const blockSchema = z.object({
+  minutes: z.coerce.number().int().min(15).max(24 * 60),
+  reason: z.string().max(200).optional(),
+  /** YYYY-MM-DD and HH:mm in the restaurant's timezone; both empty means "from now". */
+  date: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional(),
+  start: z.union([z.literal(""), z.string().regex(/^\d{2}:\d{2}$/)]).optional(),
+});
 
-/** Blocks one table from now for the chosen duration. */
+/**
+ * Blocks one table for the chosen duration, from now or from a given date and
+ * time. This is also how the restaurant keeps a table for a guest by hand,
+ * with no online reservation and no deposit.
+ */
 export async function blockAction(tableId: string, returnTo: string, formData: FormData): Promise<void> {
   await floorAction(returnTo, async (staffId) => {
-    const input = blockSchema.parse(Object.fromEntries(formData));
-    const from = new Date();
+    const parsed = blockSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) throw new BookingError("INVALID_SELECTION");
+    const input = parsed.data;
+    const settings = await loadSettings(db);
+    const from = input.date && input.start ? zonedToInstant(input.date, input.start, settings.timezone) : new Date();
     await blockTables(db, { tableIds: [tableId], from, until: addMinutes(from, input.minutes), reason: input.reason }, staffId);
   });
 }
@@ -92,6 +112,10 @@ export async function unblockAction(allocationId: string, returnTo: string): Pro
 /** Moves a reservation after staff confirmed the preview. `tableIds` is comma-separated. */
 export async function moveAction(reservationId: string, tableIds: string, returnTo: string): Promise<void> {
   await floorAction(returnTo, (staffId) => moveReservation(db, reservationId, tableIds.split(","), staffId));
+}
+
+export async function markNotificationsReadAction(): Promise<void> {
+  await floorAction("/manage", () => markNotificationsRead(db));
 }
 
 const walkInSchema = z.object({

@@ -21,6 +21,7 @@ export type BookingErrorCode =
   | "IN_THE_PAST"
   | "PARTY_SIZE"
   | "TABLE_UNAVAILABLE"
+  | "TOO_MANY_HOLDS"
   | "NO_AVAILABILITY"
   | "INVALID_SELECTION"
   | "UPCOMING_RESERVATION"

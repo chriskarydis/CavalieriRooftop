@@ -1,5 +1,5 @@
-import { createHash, randomBytes } from "node:crypto";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { createHash, createHmac, randomUUID } from "node:crypto";
+import { and, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import { findCandidates, type Candidate } from "@/domain/allocation";
 import { price, smallestSuitableCapacity, type PriceBreakdown } from "@/domain/pricing";
 import { addMinutes, closedReason, toRange, zonedToInstant } from "@/domain/time";
@@ -139,7 +139,7 @@ export async function getAvailability(db: Db, request: SlotRequest, now = new Da
 export interface HoldResult {
   reservationId: string;
   reference: string;
-  /** Secret for the guest's manage link. Returned once; only its hash is stored. */
+  /** Secret for the guest's manage link. Only its hash is stored. */
   manageToken: string;
   expiresAt: Date;
   tableIds: string[];
@@ -150,18 +150,40 @@ export function hashManageToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+/**
+ * The secret in a reservation's manage link. Derived from a server-side key,
+ * so the server can put the link in an email at any time while the database
+ * holds only a hash: a copy of the database alone opens no reservation.
+ */
+export function manageTokenFor(reservationId: string): string {
+  const secret = process.env.MANAGE_TOKEN_SECRET ?? process.env.BETTER_AUTH_SECRET;
+  if (!secret) throw new Error("MANAGE_TOKEN_SECRET is not set");
+  return createHmac("sha256", secret).update(`manage:${reservationId}`).digest("base64url");
+}
+
+/** Who is making the hold, so one visitor cannot keep several tables out of sale. */
+export interface Holder {
+  /** Random id from the visitor's browser cookie. */
+  id: string;
+  /** Keyed hash of the visitor's IP address, if known. */
+  ipHash: string | null;
+}
+
+/** Unpaid holds allowed at once from one network address (a hotel or café shares one). */
+export const MAX_HOLDS_PER_ADDRESS = 3;
+
+export type HoldRequest = SlotRequest & { selection: Selection; locale: string; holder?: Holder };
+
 /** Two "let us choose" guests can race for the same best table; the loser simply gets the next one. */
 const AUTO_ASSIGN_ATTEMPTS = 3;
 
 /**
  * Holds a table for `holdMinutes` while the guest enters details and pays.
- * Throws TABLE_UNAVAILABLE when someone else holds or has booked the selection.
+ * A visitor holds one seating at a time: a new selection releases their
+ * previous unpaid hold. Throws TABLE_UNAVAILABLE when someone else holds or
+ * has booked the selection.
  */
-export async function createHold(
-  db: Db,
-  request: SlotRequest & { selection: Selection; locale: string },
-  now = new Date(),
-): Promise<HoldResult> {
+export async function createHold(db: Db, request: HoldRequest, now = new Date()): Promise<HoldResult> {
   for (let attempt = 1; ; attempt++) {
     try {
       return await db.transaction((tx) => holdInTransaction(tx, request, now));
@@ -174,13 +196,45 @@ export async function createHold(
   }
 }
 
-async function holdInTransaction(
-  tx: Tx,
-  request: SlotRequest & { selection: Selection; locale: string },
-  now: Date,
-): Promise<HoldResult> {
+/** Releases the visitor's earlier unpaid holds and enforces the per-address cap. */
+async function enforceHoldLimits(tx: Tx, holder: Holder, now: Date): Promise<void> {
+  const active = and(eq(schema.reservation.status, "PENDING_PAYMENT"), gt(schema.reservation.holdExpiresAt, now));
+
+  const replaced = await tx
+    .update(schema.reservation)
+    .set({ status: "EXPIRED", updatedAt: now })
+    .where(and(active, eq(schema.reservation.holderId, holder.id)))
+    .returning({ id: schema.reservation.id });
+  if (replaced.length > 0) {
+    const ids = replaced.map((row) => row.id);
+    await tx
+      .update(schema.tableAllocation)
+      .set({ releasedAt: now })
+      .where(and(inArray(schema.tableAllocation.reservationId, ids), isNull(schema.tableAllocation.releasedAt)));
+    await tx.insert(schema.reservationEvent).values(
+      ids.map((reservationId) => ({
+        reservationId,
+        fromStatus: "PENDING_PAYMENT" as const,
+        toStatus: "EXPIRED" as const,
+        actor: GUEST,
+        reason: "Replaced by the guest's new selection",
+      })),
+    );
+  }
+
+  if (holder.ipHash) {
+    const [{ count }] = await tx
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.reservation)
+      .where(and(active, eq(schema.reservation.holderIpHash, holder.ipHash)));
+    if (count >= MAX_HOLDS_PER_ADDRESS) throw new BookingError("TOO_MANY_HOLDS");
+  }
+}
+
+async function holdInTransaction(tx: Tx, request: HoldRequest, now: Date): Promise<HoldResult> {
   await lockAllocations(tx);
   await releaseExpiredHolds(tx, now);
+  if (request.holder) await enforceHoldLimits(tx, request.holder, now);
   const settings = await loadSettings(tx);
   const slot = await resolveSlot(tx, request, settings, now);
   const config = await loadFloorConfig(tx);
@@ -220,15 +274,20 @@ async function holdInTransaction(
   const breakdown = priceCandidate(chosen, mode, partySize, config, settings, tableById);
 
   const [{ next }] = await tx.execute<{ next: string }>(sql`SELECT nextval('reservation_reference_seq') AS next`);
-  const manageToken = randomBytes(32).toString("base64url");
+  const reservationId = randomUUID();
+  const manageToken = manageTokenFor(reservationId);
   const expiresAt = addMinutes(now, settings.holdMinutes);
 
   const [reservation] = await tx
     .insert(schema.reservation)
     .values({
+      id: reservationId,
       reference: `CRG-${next}`,
       manageTokenHash: hashManageToken(manageToken),
+      holderId: request.holder?.id,
+      holderIpHash: request.holder?.ipHash,
       holdExpiresAt: expiresAt,
+      createdAt: now,
       startsAt: slot.startsAt,
       partySize,
       status: "PENDING_PAYMENT",

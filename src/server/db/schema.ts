@@ -241,6 +241,10 @@ export const reservation = pgTable(
     customerId: uuid().references(() => customer.id),
     /** When the unpaid hold lapses; kept for reference after confirmation. */
     holdExpiresAt: instant(),
+    /** Random id from the visitor's browser cookie; lets a new selection replace their previous hold. */
+    holderId: text(),
+    /** Keyed hash of the visitor's IP address, used only to cap simultaneous holds. */
+    holderIpHash: text(),
     startsAt: instant().notNull(),
     partySize: integer().notNull(),
     status: reservationStatus().notNull(),

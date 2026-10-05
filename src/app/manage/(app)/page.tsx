@@ -8,10 +8,11 @@ import { db } from "@/server/db/client";
 import { getFloorPlanView } from "@/server/floor/queries";
 import { BookingError, loadFloorConfig, loadSettings, type FloorConfig } from "@/server/services/context";
 import { getLiveFloor, getRecentNoShows, type LiveBooking, type LiveTable } from "@/server/services/live-floor";
+import { listUnreadNotifications } from "@/server/services/notifications";
 import { previewMove, type MovePreview } from "@/server/services/table-ops";
 import type { FloorPlanTable } from "@/ui/floor-plan/FloorPlan";
 import type { FloorPlanView } from "@/ui/floor-plan/types";
-import { blockAction, completeWalkInAction, moveAction, unblockAction } from "../actions";
+import { blockAction, completeWalkInAction, markNotificationsReadAction, moveAction, unblockAction } from "../actions";
 import { AutoRefresh } from "./AutoRefresh";
 import { LiveFloorPlan } from "./LiveFloorPlan";
 import { ReservationActions } from "./ReservationActions";
@@ -81,12 +82,13 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
   const moveId = first(query.move);
   const moveTo = first(query.to);
 
-  const [plan, live, noShows, config, settings] = await Promise.all([
+  const [plan, live, noShows, config, settings, notifications] = await Promise.all([
     getFloorPlanView(),
     getLiveFloor(db),
     getRecentNoShows(db),
     loadFloorConfig(db),
     loadSettings(db),
+    listUnreadNotifications(db),
   ]);
   if (!plan) return <p>{t("noFloorPlan")}</p>;
 
@@ -156,6 +158,30 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
           <p role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-red-900">
             {t.has(`errors.${error ?? moveError}`) ? t(`errors.${error ?? moveError}`, { time: "" }) : t("errors.GENERIC")}
           </p>
+        )}
+
+        {notifications.length > 0 && (
+          <section aria-labelledby="notifications-heading" className={cardClass}>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <h2 id="notifications-heading" className="text-lg font-semibold">
+                {t("notifications.title", { count: notifications.length })}
+              </h2>
+              <form action={markNotificationsReadAction}>
+                <button className={secondaryButton}>{t("notifications.markRead")}</button>
+              </form>
+            </div>
+            <ul className="space-y-1 text-sm">
+              {notifications.map((notification) => (
+                <li key={notification.id}>
+                  <strong>{t.has(`notifications.type.${notification.type}`) ? t(`notifications.type.${notification.type}`) : notification.type}</strong>
+                  {" · "}
+                  {notification.guestName} · {notification.partySize} ·{" "}
+                  {format.dateTime(notification.startsAt, { day: "numeric", month: "short", timeZone: settings.timezone })}{" "}
+                  {time(notification.startsAt)} · {notification.tableNumbers.join(" + ") || "—"} · {notification.reference}
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         {moveId && (
@@ -389,6 +415,14 @@ async function TableDetails({
       {usable && (
         <form action={blockAction.bind(null, table.tableId, returnTo)} className="mt-4 flex flex-wrap items-end gap-3 text-sm font-medium">
           <label>
+            {t("details.blockDate")}
+            <input name="date" type="date" className={inputClass} />
+          </label>
+          <label>
+            {t("details.blockStart")}
+            <input name="start" type="time" className={inputClass} />
+          </label>
+          <label>
             {t("details.blockFor")}
             <select name="minutes" defaultValue={BLOCK_DURATIONS[1]} className={inputClass}>
               {BLOCK_DURATIONS.map((minutes) => (
@@ -405,6 +439,7 @@ async function TableDetails({
           <button type="submit" className={secondaryButton}>
             {t("details.block")}
           </button>
+          <p className="basis-full text-xs font-normal text-slate-600">{t("details.blockHint")}</p>
         </form>
       )}
     </section>

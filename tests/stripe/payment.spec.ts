@@ -40,6 +40,9 @@ async function fillCard(page: Page, number: string): Promise<void> {
   // About a second after the card is complete Stripe expands its form, moving the pay button.
   // A click issued during that movement misses the button, so let the form finish first.
   await page.waitForTimeout(2500);
+  // Leave Stripe's frame, as a person does when moving to the pay button: with the keyboard focus still
+  // inside the frame, the first click outside it is swallowed.
+  await page.getByRole("heading", { name: "Payment" }).click();
 }
 
 /**
@@ -56,7 +59,9 @@ async function pay(page: Page, label: string): Promise<void> {
     previous = top;
     await page.waitForTimeout(400);
   }
-  await button.click();
+  // Activated with the keyboard: a pointer click aimed at the button can land elsewhere while Stripe's
+  // frame is still resizing the page.
+  await button.press("Enter");
 }
 
 test("guest pays by card, the webhook confirms, and cancelling refunds the card", async ({ page }) => {

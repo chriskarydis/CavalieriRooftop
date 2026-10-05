@@ -20,24 +20,37 @@ Last updated: 2026-10-05. Update this file at the end of every working session.
 | Menu | Seeded from the current site with the 14 EU allergens; management screens; public menu page, prices hidden by default; no dish photos (owner's decision) |
 | Public pages | Home, contact, reservation policy, privacy and cookies, header and footer, sitemap, robots, structured data |
 | Emails | Guest confirmation, reminder, cancellation; restaurant new, cancelled, no-show; EN/EL; sent once each and recorded. Not sent anywhere until an email provider key is set |
-| Stripe | Payment form, webhook, automatic refund on in-policy cancellation, automatic refund of late payments, manager refund with reason. Tested against a stand-in for Stripe; **not yet run against Stripe itself** |
+| Stripe | Payment form, webhook, automatic refund on in-policy cancellation, automatic refund of late payments, manager refund with reason. Cards only. Run against Stripe test mode with the owner's test keys (2026-10-06): pay, webhook confirmation, guest cancellation with refund, declined card then retry, staff cancellation with refund all pass. **3-D Secure card not yet verified** (see below) |
+| Hardening | Security headers and CSP, no-store and no-referrer on secret links, production configuration check, error and not-found pages, optional guest-data retention, automated accessibility checks on every page |
 | Timeline | Every table's evening for any date: reservations, walk-ins, blocks, holds |
 | Analytics | Reservations, guests, cancellations, no-shows, deposits, table fees, kept and refunded amounts, chosen tables, walk-ins, by time and weekday |
 | Floor tools | Close or reopen several tables at once; floor-plan editor (drag or arrow keys, size, rotation, shape); add a table |
-| Tests | 187 unit/integration, 37 browser tests (desktop and mobile) |
+| Tests | 197 unit/integration; 60 browser tests (desktop and mobile); 4 opt-in real-Stripe tests (`npm run test:stripe`), 3 passing |
 | Docs | PROJECT_ANALYSIS, DECISIONS, BOOKING_LOGIC, TABLE_ALLOCATION, DATABASE, SECURITY |
 
 ## To do, in order
 
-1. **Run payments against Stripe test mode** once test keys are in `.env` (see README): pay, fail a
-   card, 3-D Secure card, cancel with refund, manager refund, late payment.
-2. **Send real emails:** needs an email provider key (Resend) and a sender address on a domain.
-3. **Public site, remaining:** photography (the hero is a colour gradient stand-in), gallery and
+1. **Where we stopped (2026-10-06):** the 3-D Secure test in `tests/stripe/payment.spec.ts` fails
+   because the test cannot find the "Complete" button of Stripe's test bank page inside its nested
+   frames. Not yet known whether the page or the test is at fault. Next step: open the trace of that
+   test to see the frame structure, fix the locator, and also try the card `4000 0025 0000 3155` by
+   hand. To run these tests: start `stripe listen --forward-to localhost:3200/api/stripe/webhook`
+   (the CLI was only downloaded temporarily; install it properly), then `npm run test:stripe`.
+   Note for the tests: a pointer click on the pay button right after typing the card was lost in
+   automation, so the tests press Enter on it; the owner confirmed by hand that a normal click works
+   the first time.
+2. **Re-run the standard browser suite** (`npm run test:e2e`); it last passed before the Stripe
+   changes of 2026-10-06.
+3. **Send a real test email** through Resend (key is in the local `.env`; sender is
+   `onboarding@resend.dev`, which only delivers to the Resend account owner's address).
+4. **Manager refund and late-payment refund against Stripe:** covered by logic tests, not yet by a
+   real-Stripe run.
+5. **Public site, remaining:** photography (the hero is a colour gradient stand-in), gallery and
    experience pages once photos exist, page caching.
-4. **Hardening:** security headers, error monitoring, data retention, accessibility pass.
-5. **Small dashboard items:** extend a walk-in's stay; drag a reservation to another table on the
-   live floor (moving already works from the Move button).
-6. **Deployment:** Vercel + Neon (EU), scheduler for `/api/cron/tick` every minute, production
+6. **Error monitoring** (for example Sentry).
+7. **Small dashboard item:** drag a reservation to another table on the live floor (moving already
+   works from the Move button).
+8. **Deployment:** Vercel + Neon (EU), scheduler for `/api/cron/tick` every minute, production
    configuration script, DEPLOYMENT.md, TESTING.md, ARCHITECTURE.md, domain cut-over.
 
 Later, if wanted: photos of the view from each paid table (the data model has the field).

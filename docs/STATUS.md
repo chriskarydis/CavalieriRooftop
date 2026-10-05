@@ -1,6 +1,6 @@
 # Status and next steps
 
-Last updated: 2026-10-04. Update this file at the end of every working session.
+Last updated: 2026-10-05. Update this file at the end of every working session.
 
 ## Done
 
@@ -14,40 +14,40 @@ Last updated: 2026-10-04. Update this file at the end of every working session.
 | Reservation engine | Availability, 10-minute holds, confirmation, late/no-show, cancellation outcome, walk-ins |
 | Guest booking pages | Search, floor plan, hold with countdown, details, confirmation, cancel (EN/EL) |
 | Staff | Sign-in, roles, rate limit; live floor; seat, no-show, table free, cancel, walk-in (EN/EL) |
-| Tests | 115 unit/integration, 13 browser tests (desktop and mobile) |
+| Settings screens | Tables, categories and fees, joined tables, neighbouring groups, reservation settings, closed dates (EN/EL) |
+| Dashboard | Table details on click, manual blocks, move a reservation with price preview, reservations list with date, status and search |
+| Tests | 139 unit/integration, 17 browser tests (desktop and mobile) |
 | Docs | PROJECT_ANALYSIS, DECISIONS, BOOKING_LOGIC, TABLE_ALLOCATION, DATABASE, SECURITY |
 
 ## To do, in order
 
-1. **Settings screens:** tables (capacity, category, status, online/auto switches), categories and
-   fees, combinations and pairings, opening rules, closed dates, reservation settings.
-2. **Dashboard:** table details on click, move a reservation (record price difference, no refund or
-   charge), manual block, disable tables in bulk (weather), phone reservation by staff, extend a
-   walk-in, reservation list with search and filters, timeline view, notifications.
-3. **Floor-plan editor:** drag tables, edit position and shape.
-4. **Menu:** management screens and public menu (prices hidden by default).
-5. **Public site:** home, experience, gallery, about, contact, terms, privacy, cookies; real design;
+1. **Dashboard, remaining:** phone reservation by staff (needs the owner's deposit rule), disable
+   tables in bulk (weather), extend a walk-in, timeline view, notifications, creating a new table.
+2. **Floor-plan editor:** drag tables, edit position and shape.
+3. **Menu:** management screens and public menu (prices hidden by default).
+4. **Public site:** home, experience, gallery, about, contact, terms, privacy, cookies; real design;
    SEO (metadata, sitemap, robots, structured data).
-6. **Stripe:** Payment Element, webhook, refunds on cancellation, manager discretionary refund,
+5. **Stripe:** Payment Element, webhook, refunds on cancellation, manager discretionary refund,
    cancel the payment when a hold expires. Remove reliance on the test stand-in.
-7. **Emails:** confirmation, reminder, cancellation, refund; restaurant notifications (EN/EL).
-8. **Analytics.**
-9. **Hardening:** rate limit on hold creation, security headers, error monitoring, data retention,
+6. **Emails:** confirmation, reminder, cancellation, refund; restaurant notifications (EN/EL).
+7. **Analytics.**
+8. **Hardening:** rate limit on hold creation, security headers, error monitoring, data retention,
    accessibility pass, browser tests for dashboard reservation actions.
-10. **Deployment:** Vercel + Neon (EU), scheduler for `/api/cron/tick` every minute, production
+9. **Deployment:** Vercel + Neon (EU), scheduler for `/api/cron/tick` every minute, production
     configuration script, DEPLOYMENT.md, TESTING.md, ARCHITECTURE.md, domain cut-over.
 
 ## Needed from the owner
 
 | Item | Needed for |
 |---|---|
-| Stripe test keys (publishable, secret, webhook secret) | Step 6 |
-| Greek menu text; confirm the English menu from the current site is still right | Step 4 |
-| Photography: hero sunset (wide and vertical), the views, terrace at dusk, view from tables 1-5, 6/11/12/16 and 70/80/90, 8-12 dishes, cocktails; logo file | Step 5 |
-| View descriptions for the paid tables (one line each) | Step 1 |
-| Restaurant email address for notifications; sender address | Step 7 |
-| Contact with whoever manages DNS for cavalieriroofgarden.com | Step 10 |
-| Vercel and Neon accounts | Step 10 |
+| Stripe test keys (publishable, secret, webhook secret) | Stripe |
+| Rule for reservations taken by phone: is a deposit required, and how is it paid? | Phone reservations |
+| Greek menu text; confirm the English menu from the current site is still right | Menu |
+| Photography: hero sunset (wide and vertical), the views, terrace at dusk, view from tables 1-5, 6/11/12/16 and 70/80/90, 8-12 dishes, cocktails; logo file | Public site |
+| View descriptions for the paid tables (one line each) | Table settings (can be typed in at /manage/tables) |
+| Restaurant email address for notifications; sender address | Emails |
+| Contact with whoever manages DNS for cavalieriroofgarden.com | Deployment |
+| Vercel and Neon accounts | Deployment |
 
 ## Rules worth re-confirming when convenient
 

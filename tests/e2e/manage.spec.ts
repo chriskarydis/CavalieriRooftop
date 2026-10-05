@@ -25,7 +25,7 @@ test("manager seats a walk-in, frees the table, and can work in Greek", async ({
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Live floor" })).toBeVisible();
   await expect(page.getByText(`${E2E_STAFF.name} · Manager`)).toBeVisible();
-  await expect(page.getByRole("img", { name: "Table 29, 3 seats, Available" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Table 29, 3 seats, Available" })).toBeVisible();
 
   // Seat three walk-in guests for drinks on table 29.
   await page.getByLabel("Guests").fill("3");
@@ -33,7 +33,7 @@ test("manager seats a walk-in, frees the table, and can work in Greek", async ({
   await page.getByLabel("Name (optional)").fill("Bar guests");
   await page.getByRole("button", { name: "Seat walk-in" }).click();
   await expect(page.getByRole("status")).toContainText("Walk-in seated until");
-  await expect(page.getByRole("img", { name: "Table 29, 3 seats, Occupied" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Table 29, 3 seats, Occupied" })).toBeVisible();
   await expect(page.getByRole("cell", { name: "Bar guests" })).toBeVisible();
   await testInfo.attach("live-floor", { body: await page.screenshot({ fullPage: true, path: process.env.SHOTS ? `${process.env.SHOTS}/live-floor.png` : undefined }), contentType: "image/png" });
 
@@ -50,7 +50,7 @@ test("manager seats a walk-in, frees the table, and can work in Greek", async ({
 
   // Guests leave.
   await page.getByRole("button", { name: "Table free" }).click();
-  await expect(page.getByRole("img", { name: "Table 29, 3 seats, Available" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Table 29, 3 seats, Available" })).toBeVisible();
 
   // Greek.
   await page.getByRole("button", { name: "Ελληνικά" }).click();

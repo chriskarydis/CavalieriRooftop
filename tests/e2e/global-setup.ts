@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { chromium, type FullConfig } from "@playwright/test";
 import { hashPassword } from "better-auth/crypto";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
@@ -9,8 +10,11 @@ import { seedInitialConfiguration } from "../../src/server/db/seed-config";
 
 export const E2E_STAFF = { email: "manager@e2e.test", password: "e2e-manager-password", name: "Eleni Manager" };
 
-/** Recreates the end-to-end database from scratch: schema, initial floor and one manager. */
-export default async function globalSetup(): Promise<void> {
+/** Signed-in manager session, reused by specs so they do not trip the sign-in rate limit. */
+export const MANAGER_SESSION = "tests/e2e/.auth/manager.json";
+
+/** Recreates the end-to-end database (schema, initial floor, one manager) and signs the manager in once. */
+export default async function globalSetup(config: FullConfig): Promise<void> {
   const admin = postgres(process.env.DATABASE_URL ?? "", { max: 1, onnotice: () => {} });
   await admin.unsafe("DROP DATABASE IF EXISTS cavalieri_e2e WITH (FORCE)");
   await admin.unsafe("CREATE DATABASE cavalieri_e2e");
@@ -33,4 +37,14 @@ export default async function globalSetup(): Promise<void> {
     password: await hashPassword(E2E_STAFF.password),
   });
   await client.end();
+
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ baseURL: config.projects[0].use.baseURL });
+  await page.goto("/manage/login");
+  await page.getByLabel("Email").fill(E2E_STAFF.email);
+  await page.getByLabel("Password").fill(E2E_STAFF.password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.waitForURL((url) => url.pathname === "/manage");
+  await page.context().storageState({ path: MANAGER_SESSION });
+  await browser.close();
 }

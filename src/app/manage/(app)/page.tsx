@@ -1,14 +1,21 @@
-import { getFormatter, getTranslations } from "next-intl/server";
+import { getFormatter, getLocale, getTranslations } from "next-intl/server";
+import Link from "next/link";
 import type { LiveTableState } from "@/domain/table-state";
 import { zonedTime } from "@/domain/time";
+import { localized } from "@/i18n/localized";
 import { requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import { getFloorPlanView } from "@/server/floor/queries";
-import { loadFloorConfig, loadSettings } from "@/server/services/context";
-import { getLiveFloor, getRecentNoShows, type LiveBooking } from "@/server/services/live-floor";
-import { FloorPlan, type FloorPlanTable } from "@/ui/floor-plan/FloorPlan";
-import { cancelAction, completeAction, completeWalkInAction, noShowAction, seatAction } from "../actions";
+import { BookingError, loadFloorConfig, loadSettings, type FloorConfig } from "@/server/services/context";
+import { getLiveFloor, getRecentNoShows, type LiveBooking, type LiveTable } from "@/server/services/live-floor";
+import { previewMove, type MovePreview } from "@/server/services/table-ops";
+import type { FloorPlanTable } from "@/ui/floor-plan/FloorPlan";
+import type { FloorPlanView } from "@/ui/floor-plan/types";
+import { blockAction, completeWalkInAction, moveAction, unblockAction } from "../actions";
 import { AutoRefresh } from "./AutoRefresh";
+import { LiveFloorPlan } from "./LiveFloorPlan";
+import { ReservationActions } from "./ReservationActions";
+import { cardClass, inputClass, primaryButton, secondaryButton } from "./ui";
 import { WalkInForm, type SeatingOption } from "./WalkInForm";
 
 const STATE_COLOR: Record<LiveTableState, string> = {
@@ -23,19 +30,20 @@ const STATE_COLOR: Record<LiveTableState, string> = {
   INACTIVE: "#c5ccd0",
 };
 
-const buttonClass = "rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-100";
+const BLOCK_DURATIONS = [60, 120, 180, 360, 720] as const;
+const HOUR_MINUTES = 60;
 
 interface Row extends LiveBooking {
   tables: number[];
 }
 
 /** One row per reservation or walk-in, with all of its tables. */
-function groupBookings(live: Awaited<ReturnType<typeof getLiveFloor>>): Row[] {
+function groupBookings(live: LiveTable[]): Row[] {
   const rows = new Map<string, Row>();
   for (const table of live) {
     for (const booking of table.bookings) {
       if (booking.kind === "HOLD") continue;
-      const key = booking.reservationId ?? booking.walkInId ?? `${table.tableId}-${booking.startsAt.toISOString()}`;
+      const key = booking.reservationId ?? booking.walkInId ?? booking.allocationId;
       const existing = rows.get(key);
       if (existing) existing.tables.push(table.number);
       else rows.set(key, { ...booking, tables: [table.number] });
@@ -44,40 +52,9 @@ function groupBookings(live: Awaited<ReturnType<typeof getLiveFloor>>): Row[] {
   return [...rows.values()].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime() || a.tables[0] - b.tables[0]);
 }
 
-export default async function LiveFloorPage({ searchParams }: PageProps<"/manage">) {
-  await requirePermission("operations");
-  const t = await getTranslations("manage");
-  const tPlan = await getTranslations("floorPlan");
-  const format = await getFormatter();
-  const { error } = await searchParams;
-
-  const [plan, live, noShows, config, settings] = await Promise.all([
-    getFloorPlanView(),
-    getLiveFloor(db),
-    getRecentNoShows(db),
-    loadFloorConfig(db),
-    loadSettings(db),
-  ]);
-  if (!plan) return <p>{t("noFloorPlan")}</p>;
-
-  const stateOf = new Map(live.map((table) => [table.tableId, table.state]));
-  const tables: FloorPlanTable[] = plan.tables.map((table) => {
-    const state = stateOf.get(table.id) ?? "AVAILABLE";
-    return {
-      ...table,
-      color: STATE_COLOR[state],
-      muted: false,
-      label: t("tableAria", { number: table.number, capacity: table.capacity, state: t(`state.${state}`) }),
-    };
-  });
-
-  const rows = groupBookings(live);
-  const euro = (cents: number) =>
-    format.number(cents / 100, { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
-  const time = (instant: Date) => zonedTime(instant, settings.timezone);
-
+function seatingOptions(config: FloorConfig): SeatingOption[] {
   const numberOf = new Map(config.tables.map((table) => [table.id, table.number]));
-  const seatings: SeatingOption[] = [
+  return [
     ...config.tables
       .filter((table) => table.status === "ACTIVE")
       .sort((a, b) => a.number - b.number)
@@ -89,6 +66,59 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
         label: `${combination.tableIds.map((id) => numberOf.get(id)).join(" + ")} (${combination.capacity})`,
       })),
   ];
+}
+
+const first = (value: string | string[] | undefined): string | undefined => (Array.isArray(value) ? value[0] : value);
+
+export default async function LiveFloorPage({ searchParams }: PageProps<"/manage">) {
+  await requirePermission("operations");
+  const t = await getTranslations("manage");
+  const tPlan = await getTranslations("floorPlan");
+  const format = await getFormatter();
+  const query = await searchParams;
+  const error = first(query.error);
+  const selectedTableId = first(query.table) ?? null;
+  const moveId = first(query.move);
+  const moveTo = first(query.to);
+
+  const [plan, live, noShows, config, settings] = await Promise.all([
+    getFloorPlanView(),
+    getLiveFloor(db),
+    getRecentNoShows(db),
+    loadFloorConfig(db),
+    loadSettings(db),
+  ]);
+  if (!plan) return <p>{t("noFloorPlan")}</p>;
+
+  const liveById = new Map(live.map((table) => [table.tableId, table]));
+  const tables: FloorPlanTable[] = plan.tables.map((table) => {
+    const state = liveById.get(table.id)?.state ?? "AVAILABLE";
+    return {
+      ...table,
+      color: STATE_COLOR[state],
+      muted: false,
+      selectable: true,
+      label: t("tableAria", { number: table.number, capacity: table.capacity, state: t(`state.${state}`) }),
+    };
+  });
+
+  const rows = groupBookings(live);
+  const euro = (cents: number) =>
+    format.number(cents / 100, { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+  const time = (instant: Date) => zonedTime(instant, settings.timezone);
+  const seatings = seatingOptions(config);
+
+  let movePreview: MovePreview | null = null;
+  let moveError: string | null = null;
+  if (moveId && moveTo) {
+    try {
+      movePreview = await previewMove(db, moveId, moveTo.split(","));
+    } catch (caught) {
+      if (!(caught instanceof BookingError)) throw caught;
+      moveError = caught.code;
+    }
+  }
+  const moving = moveId ? rows.find((row) => row.reservationId === moveId) : undefined;
 
   return (
     <main className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_1fr]">
@@ -98,10 +128,11 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
           {t("liveFloor")}
         </h1>
         <div className="rounded-xl border border-slate-200 bg-white p-3">
-          <FloorPlan
+          <LiveFloorPlan
             plan={plan}
             tables={tables}
             title={t("liveFloor")}
+            selectedId={selectedTableId}
             areaLabels={{
               toilets: tPlan("areas.toilets"),
               entrance: tPlan("areas.entrance"),
@@ -121,10 +152,73 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
       </section>
 
       <div className="space-y-6">
-        {typeof error === "string" && (
+        {(error || moveError) && (
           <p role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-red-900">
-            {t.has(`errors.${error}`) ? t(`errors.${error}`, { time: "" }) : t("errors.GENERIC")}
+            {t.has(`errors.${error ?? moveError}`) ? t(`errors.${error ?? moveError}`, { time: "" }) : t("errors.GENERIC")}
           </p>
+        )}
+
+        {moveId && (
+          <section aria-labelledby="move-heading" className={`${cardClass} border-slate-900`}>
+            <h2 id="move-heading" className="mb-2 text-lg font-semibold">
+              {t("move.title", { guest: moving?.guestName ?? moving?.reference ?? "" })}
+            </h2>
+            <form method="get" className="flex flex-wrap items-end gap-3 text-sm font-medium">
+              <input type="hidden" name="move" value={moveId} />
+              <label>
+                {t("move.to")}
+                <select name="to" defaultValue={moveTo} required className={inputClass}>
+                  {seatings.map((seating) => (
+                    <option key={seating.value} value={seating.value}>
+                      {seating.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="submit" className={secondaryButton}>
+                {t("move.check")}
+              </button>
+              <Link href="/manage" className={secondaryButton}>
+                {t("move.close")}
+              </Link>
+            </form>
+            {movePreview && moveTo && (
+              <div className="mt-4 space-y-3 text-sm">
+                <p>
+                  {t("move.summary", {
+                    from: movePreview.fromTableNumbers.join(" + "),
+                    to: movePreview.toTableNumbers.join(" + "),
+                  })}
+                </p>
+                {movePreview.differenceCents === 0 ? (
+                  <p>{t("move.samePrice")}</p>
+                ) : (
+                  <p className="rounded-md bg-amber-50 p-2 text-amber-900">
+                    {t("move.priceChange", {
+                      paidFee: euro(movePreview.paid.tableFeeCents),
+                      newFee: euro(movePreview.target.tableFeeCents),
+                      paidDeposit: euro(movePreview.paid.depositCents),
+                      newDeposit: euro(movePreview.target.depositCents),
+                    })}
+                  </p>
+                )}
+                <form action={moveAction.bind(null, moveId, moveTo, "/manage")}>
+                  <button type="submit" className={primaryButton}>
+                    {t("move.confirm")}
+                  </button>
+                </form>
+              </div>
+            )}
+          </section>
+        )}
+
+        {selectedTableId && liveById.has(selectedTableId) && (
+          <TableDetails
+            table={liveById.get(selectedTableId)!}
+            view={plan.tables.find((table) => table.id === selectedTableId)}
+            categories={plan.categories}
+            time={time}
+          />
         )}
 
         <section aria-labelledby="tonight-heading">
@@ -151,7 +245,7 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
                   {rows.map((row) => {
                     const status = row.reservationStatus ?? row.kind;
                     return (
-                      <tr key={row.reservationId ?? row.walkInId ?? `${row.tables[0]}-${row.startsAt.toISOString()}`} className="border-b border-slate-100 align-top last:border-0">
+                      <tr key={row.reservationId ?? row.walkInId ?? row.allocationId} className="border-b border-slate-100 align-top last:border-0">
                         <td className="px-3 py-2 tabular-nums">
                           {time(row.startsAt)}–{time(row.endsAt)}
                         </td>
@@ -167,40 +261,19 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
                           {row.depositCents === null ? "—" : `${euro(row.depositCents)} / ${euro(row.tableFeeCents ?? 0)}`}
                         </td>
                         <td className="px-3 py-2">
-                          <div className="flex flex-wrap gap-1.5">
-                            {row.reservationId && (status === "CONFIRMED" || status === "LATE") && (
-                              <form action={seatAction.bind(null, row.reservationId)}>
-                                <button className={buttonClass}>{t("actions.seat")}</button>
-                              </form>
-                            )}
-                            {row.reservationId && status === "LATE" && (
-                              <form action={noShowAction.bind(null, row.reservationId)}>
-                                <button className={buttonClass}>{t("actions.noShow")}</button>
-                              </form>
-                            )}
-                            {row.reservationId && status === "SEATED" && (
-                              <form action={completeAction.bind(null, row.reservationId)}>
-                                <button className={buttonClass}>{t("actions.complete")}</button>
-                              </form>
-                            )}
-                            {row.walkInId && (
-                              <form action={completeWalkInAction.bind(null, row.walkInId)}>
-                                <button className={buttonClass}>{t("actions.complete")}</button>
-                              </form>
-                            )}
-                            {row.reservationId && (status === "CONFIRMED" || status === "LATE") && (
-                              <details>
-                                <summary className={`${buttonClass} cursor-pointer list-none text-red-800`}>
-                                  {t("actions.cancel")}
-                                </summary>
-                                <form action={cancelAction.bind(null, row.reservationId)} className="mt-1">
-                                  <button className="rounded-md bg-red-700 px-2 py-1 text-white">
-                                    {t("actions.confirmCancel")}
-                                  </button>
-                                </form>
-                              </details>
-                            )}
-                          </div>
+                          {row.reservationId && row.reservationStatus && (
+                            <ReservationActions reservationId={row.reservationId} status={row.reservationStatus} returnTo="/manage" />
+                          )}
+                          {row.walkInId && (
+                            <form action={completeWalkInAction.bind(null, row.walkInId, "/manage")}>
+                              <button className={secondaryButton}>{t("actions.complete")}</button>
+                            </form>
+                          )}
+                          {row.kind === "BLOCK" && (
+                            <form action={unblockAction.bind(null, row.allocationId, "/manage")}>
+                              <button className={secondaryButton}>{t("actions.unblock")}</button>
+                            </form>
+                          )}
                         </td>
                       </tr>
                     );
@@ -223,9 +296,7 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
                     {time(noShow.startsAt)} · {noShow.tableNumbers.join(" + ")} · {noShow.guestName ?? "—"} ·{" "}
                     {noShow.partySize} · {noShow.reference}
                   </span>
-                  <form action={seatAction.bind(null, noShow.reservationId)}>
-                    <button className={buttonClass}>{t("seatAnyway")}</button>
-                  </form>
+                  <ReservationActions reservationId={noShow.reservationId} status="NO_SHOW" returnTo="/manage" />
                 </li>
               ))}
             </ul>
@@ -240,5 +311,102 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
         </section>
       </div>
     </main>
+  );
+}
+
+async function TableDetails({
+  table,
+  view,
+  categories,
+  time,
+}: {
+  table: LiveTable;
+  view: FloorPlanView["tables"][number] | undefined;
+  categories: FloorPlanView["categories"];
+  time: (instant: Date) => string;
+}) {
+  const t = await getTranslations("manage");
+  const locale = await getLocale();
+  const category = categories.find((entry) => entry.id === view?.categoryId);
+  const returnTo = `/manage?table=${table.tableId}`;
+  const bookings = table.bookings.filter((booking) => booking.kind !== "HOLD");
+  const usable = table.state !== "OUT_OF_SERVICE" && table.state !== "INACTIVE";
+
+  return (
+    <section aria-labelledby="table-heading" className={cardClass}>
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="table-heading" className="text-lg font-semibold">
+          {t("details.title", { number: table.number })}
+        </h2>
+        <span className="text-sm">
+          <Link href="/manage/tables" className="underline">
+            {t("details.settings")}
+          </Link>
+          {" · "}
+          <Link href="/manage" className="underline">
+            {t("move.close")}
+          </Link>
+        </span>
+      </div>
+      <p className="text-sm text-slate-700">
+        {t("details.meta", { capacity: view?.capacity ?? 0, max: view?.maxCapacity ?? 0 })}
+        {category && ` · ${localized(category.name, locale)}`} · <strong>{t(`state.${table.state}`)}</strong>
+      </p>
+
+      <ul className="mt-3 space-y-2 text-sm">
+        {bookings.length === 0 && <li className="text-slate-600">{t("details.noBookings")}</li>}
+        {bookings.map((booking) => (
+          <li key={booking.allocationId} className="rounded-md border border-slate-200 p-2">
+            <p>
+              <span className="tabular-nums">
+                {time(booking.startsAt)}–{time(booking.endsAt)}
+              </span>{" "}
+              · {booking.guestName ?? (booking.kind === "WALK_IN" ? t("walkIn") : t(`booking.${booking.kind}`))}
+              {booking.partySize !== null && ` · ${booking.partySize}`}
+              {booking.reference && ` · ${booking.reference}`}
+              {booking.reservationStatus && ` · ${t(`booking.${booking.reservationStatus}`)}`}
+            </p>
+            {booking.notes && <p className="text-xs text-slate-500">{booking.notes}</p>}
+            <div className="mt-1.5">
+              {booking.reservationId && booking.reservationStatus && (
+                <ReservationActions reservationId={booking.reservationId} status={booking.reservationStatus} returnTo={returnTo} />
+              )}
+              {booking.walkInId && (
+                <form action={completeWalkInAction.bind(null, booking.walkInId, returnTo)}>
+                  <button className={secondaryButton}>{t("actions.complete")}</button>
+                </form>
+              )}
+              {booking.kind === "BLOCK" && (
+                <form action={unblockAction.bind(null, booking.allocationId, returnTo)}>
+                  <button className={secondaryButton}>{t("actions.unblock")}</button>
+                </form>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {usable && (
+        <form action={blockAction.bind(null, table.tableId, returnTo)} className="mt-4 flex flex-wrap items-end gap-3 text-sm font-medium">
+          <label>
+            {t("details.blockFor")}
+            <select name="minutes" defaultValue={BLOCK_DURATIONS[1]} className={inputClass}>
+              {BLOCK_DURATIONS.map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  {t("details.hours", { hours: minutes / HOUR_MINUTES })}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="min-w-40 flex-1">
+            {t("details.reason")}
+            <input name="reason" maxLength={200} className={inputClass} />
+          </label>
+          <button type="submit" className={secondaryButton}>
+            {t("details.block")}
+          </button>
+        </form>
+      )}
+    </section>
   );
 }

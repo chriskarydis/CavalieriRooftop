@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 import { findCandidates, type Candidate } from "@/domain/allocation";
 import { cancellationOutcome, type CancellationOutcome } from "@/domain/cancellation";
+import type { Seating } from "@/domain/pricing";
 import { addMinutes, toRange } from "@/domain/time";
 import * as schema from "@/server/db/schema";
 import {
@@ -185,19 +186,30 @@ export interface WalkInInput {
   overrideUpcoming?: boolean;
 }
 
-/** Staff may only seat a party at one table, a configured combination or a configured pairing. */
-function assertConfiguredSeating(config: FloorConfig, tableIds: string[], partySize: number): void {
+/**
+ * Staff may only seat a party at one active table, a configured combination or
+ * a configured pairing. Returns the seating in the form the pricing engine takes.
+ */
+export function assertConfiguredSeating(config: FloorConfig, tableIds: string[], partySize: number): Seating {
   const matches = (ids: string[]): boolean => ids.length === tableIds.length && ids.every((id) => tableIds.includes(id));
+  const usable = (ids: string[]): boolean =>
+    ids.every((id) => config.tables.some((table) => table.id === id && table.status === "ACTIVE"));
+  if (!usable(tableIds)) throw new BookingError("INVALID_SELECTION");
+
   const [single] = tableIds.length === 1 ? config.tables.filter((table) => table.id === tableIds[0]) : [];
-  if (single && partySize <= single.maxCapacity) return;
+  if (single && partySize <= single.maxCapacity) return { kind: "TABLE", table: single };
 
   const active = config.combinations.filter((combination) => combination.active);
-  if (active.some((combination) => matches(combination.tableIds) && partySize <= combination.capacity)) return;
+  const combination = active.find((entry) => matches(entry.tableIds) && partySize <= entry.capacity);
+  if (combination) return { kind: "COMBINATION", capacity: combination.capacity };
 
   for (const pairing of config.pairings.filter((entry) => entry.active)) {
-    const [first, second] = pairing.combinationIds.map((id) => active.find((combination) => combination.id === id));
+    const [first, second] = pairing.combinationIds.map((id) => active.find((entry) => entry.id === id));
     if (!first || !second) continue;
-    if (matches([...first.tableIds, ...second.tableIds]) && partySize <= first.capacity + second.capacity) return;
+    const capacity = first.capacity + second.capacity;
+    if (matches([...first.tableIds, ...second.tableIds]) && partySize <= capacity) {
+      return { kind: "COMBINATION", capacity };
+    }
   }
   throw new BookingError("INVALID_SELECTION");
 }

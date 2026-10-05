@@ -7,6 +7,7 @@ import type { Db } from "./context";
 const LOOKAHEAD_MINUTES = 12 * 60;
 
 export interface LiveBooking {
+  allocationId: string;
   kind: "HOLD" | "RESERVATION" | "WALK_IN" | "BLOCK";
   startsAt: Date;
   endsAt: Date;
@@ -86,6 +87,8 @@ export async function getLiveFloor(db: Db, now = new Date()): Promise<LiveTable[
     db.select().from(schema.diningTable).orderBy(asc(schema.diningTable.number)),
     db
       .select({
+        allocationId: schema.tableAllocation.id,
+        reason: schema.tableAllocation.reason,
         tableId: schema.tableAllocation.tableId,
         kind: schema.tableAllocation.kind,
         startsAt: sql<string>`lower(${schema.tableAllocation.period})`,
@@ -111,6 +114,7 @@ export async function getLiveFloor(db: Db, now = new Date()): Promise<LiveTable[
     const bookings: LiveBooking[] = rows
       .filter((row) => row.tableId === table.id)
       .map((row) => ({
+        allocationId: row.allocationId,
         kind: row.kind,
         startsAt: new Date(row.startsAt),
         endsAt: new Date(row.endsAt),
@@ -122,7 +126,7 @@ export async function getLiveFloor(db: Db, now = new Date()): Promise<LiveTable[
         guestName: row.guestName ?? row.walkIn?.name ?? null,
         depositCents: row.reservation?.depositCents ?? null,
         tableFeeCents: row.reservation?.tableFeeCents ?? null,
-        notes: row.reservation?.staffNotes ?? row.reservation?.guestNotes ?? row.walkIn?.notes ?? null,
+        notes: row.reservation?.staffNotes ?? row.reservation?.guestNotes ?? row.walkIn?.notes ?? (row.kind === "BLOCK" ? row.reason : null),
       }))
       .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 

@@ -54,10 +54,10 @@
     "holdButton": "Reserve this table",
     "holdNote": "We hold the table for 10 minutes while you complete your reservation.",
     "errors": {
-      "CLOSED": "We are closed on that date. The restaurant is open from May to 10 October, every day except Monday.",
+      "CLOSED": "We are closed on that date. Please choose another date.",
       "INVALID_SLOT": "Please choose one of the listed times.",
       "IN_THE_PAST": "That time has already passed. Please choose a later time.",
-      "PARTY_SIZE": "Online reservations are for up to 16 guests. For larger parties please contact us.",
+      "PARTY_SIZE": "That party size cannot be booked online. Please contact us.",
       "TABLE_UNAVAILABLE": "That table has just been taken by another guest. Please choose another one.",
       "NO_AVAILABILITY": "There are no tables free for this party at that time. Please try another time.",
       "INVALID_SELECTION": "That table cannot be reserved for this party. Please choose another one.",
@@ -140,7 +140,10 @@
     "signOut": "Sign out",
     "badCredentials": "The email or password is incorrect.",
     "tooManyAttempts": "Too many attempts. Please wait a minute and try again.",
-    "role": { "MANAGER": "Manager", "DEVELOPER": "Developer" },
+    "role": {
+      "MANAGER": "Manager",
+      "DEVELOPER": "Developer"
+    },
     "liveFloor": "Live floor",
     "noFloorPlan": "No floor plan has been configured yet.",
     "tableAria": "Table {number}, {capacity} seats, {state}",
@@ -172,14 +175,19 @@
       "LATE": "Late",
       "SEATED": "Seated",
       "WALK_IN": "Walk-in",
-      "BLOCK": "Blocked"
+      "BLOCK": "Blocked",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled",
+      "NO_SHOW": "No-show"
     },
     "actions": {
       "seat": "Seat guests",
       "noShow": "No-show",
       "complete": "Table free",
       "cancel": "Cancel",
-      "confirmCancel": "Confirm cancellation"
+      "confirmCancel": "Confirm cancellation",
+      "move": "Move",
+      "unblock": "Remove block"
     },
     "noShows": "No-shows tonight",
     "seatAnyway": "Guests arrived: seat",
@@ -205,6 +213,160 @@
       "NOT_FOUND": "Not found. The page may be out of date.",
       "FORBIDDEN": "You do not have permission to do that.",
       "GENERIC": "Something went wrong. Please try again."
+    },
+    "nav": {
+      "label": "Management",
+      "floor": "Live floor",
+      "reservations": "Reservations",
+      "tables": "Tables",
+      "categories": "Categories",
+      "combinations": "Joined tables",
+      "settings": "Settings"
+    },
+    "move": {
+      "title": "Move reservation {guest}",
+      "to": "Move to",
+      "check": "Check",
+      "close": "Close",
+      "summary": "From table {from} to table {to}, for the same time.",
+      "samePrice": "The price of the new table is the same as what the guest paid.",
+      "priceChange": "The guest paid a table fee of {paidFee} and a deposit of {paidDeposit}. The new table would be {newFee} and {newDeposit}. Nothing is charged or refunded; the difference is recorded.",
+      "confirm": "Confirm move"
+    },
+    "details": {
+      "title": "Table {number}",
+      "settings": "Table settings",
+      "meta": "{capacity} seats (up to {max})",
+      "noBookings": "Nothing booked on this table in the next 12 hours.",
+      "blockFor": "Block from now for",
+      "hours": "{hours, plural, one {# hour} other {# hours}}",
+      "reason": "Reason (optional)",
+      "block": "Block table"
+    },
+    "reservations": {
+      "title": "Reservations",
+      "date": "Date",
+      "allStatuses": "All",
+      "search": "Search name, phone, email or reference",
+      "show": "Show",
+      "summary": "{count, plural, =0 {No reservations} one {# reservation} other {# reservations}} · {covers} guests expected",
+      "chosen": "chosen by guest"
+    }
+  },
+  "config": {
+    "save": "Save",
+    "saved": "Saved.",
+    "errors": {
+      "INVALID": "Some values are not valid. Nothing was saved.",
+      "NOT_FOUND": "Not found. The page may be out of date.",
+      "IN_USE": "Tables still use this category. Move them to another category first.",
+      "DUPLICATE": "That already exists.",
+      "FORBIDDEN": "You do not have permission to do that.",
+      "GENERIC": "Something went wrong. Nothing was saved."
+    },
+    "tables": {
+      "title": "Tables",
+      "intro": "Capacity, category and availability of each table. Changes apply to new bookings; existing reservations keep their table and price.",
+      "table": "Table {number}",
+      "spare": "Spare",
+      "seats": "{capacity} seats (up to {max})",
+      "status": {
+        "ACTIVE": "Active",
+        "INACTIVE": "Inactive",
+        "OUT_OF_SERVICE": "Out of service"
+      },
+      "notOnline": "not bookable online",
+      "notAuto": "never auto-assigned",
+      "capacity": "Standard seats",
+      "maxCapacity": "Seats with extra chair",
+      "category": "Category",
+      "priority": "Priority (higher is assigned first)",
+      "statusLabel": "Status",
+      "statusReason": "Reason (when not active)",
+      "onlineBookable": "Guests can book it online",
+      "autoAssignable": "Can be assigned automatically",
+      "viewEn": "View description (English)",
+      "viewEl": "View description (Greek)",
+      "notes": "Staff notes",
+      "upcomingWarning": "Table {table} still has {count, plural, one {# upcoming reservation} other {# upcoming reservations}}. They were not changed: move them or contact the guests."
+    },
+    "categories": {
+      "title": "Table categories",
+      "intro": "The fee is charged when a guest chooses a table of this category. It is not charged for automatic assignment or joined tables.",
+      "tableCount": "{count, plural, one {# table} other {# tables}}",
+      "nameEn": "Name (English)",
+      "nameEl": "Name (Greek)",
+      "fee": "Extra fee (€)",
+      "color": "Colour on the floor plan",
+      "descriptionEn": "Description (English)",
+      "descriptionEl": "Description (Greek)",
+      "priority": "Priority",
+      "displayOrder": "Display order",
+      "feeCounts": "The fee is also deducted from the guest's bill",
+      "active": "Active",
+      "new": "New category",
+      "create": "Create category"
+    },
+    "combinations": {
+      "title": "Joined tables",
+      "intro": "Only the joins listed here are ever offered. Seats is what the joined tables seat together, which can be less than the sum.",
+      "capacity": "Seats",
+      "minParty": "Offered from (guests)",
+      "active": "Active",
+      "online": "Bookable online",
+      "new": "New join",
+      "newNote": "Add a join only for tables that physically stand next to each other.",
+      "tables": "Tables",
+      "create": "Create join"
+    },
+    "pairings": {
+      "title": "Neighbouring groups for large parties",
+      "intro": "Two joins that stand next to each other and may seat one large party together.",
+      "with": "with",
+      "enable": "Enable",
+      "disable": "Disable",
+      "first": "First group",
+      "second": "Second group",
+      "create": "Add pair"
+    },
+    "settings": {
+      "title": "Reservation settings",
+      "intro": "Changes apply to new bookings only. Existing reservations keep the price and time block they were booked with.",
+      "money": "Deposit and refunds",
+      "deposit": "Deposit per person (€)",
+      "minBillableGuests": "Smallest party billed (guests)",
+      "refundCutoffHours": "Free cancellation until (hours before)",
+      "timing": "Times",
+      "diningMinutes": "Dining time (minutes)",
+      "blockMinutes": "Table blocked (minutes)",
+      "graceMinutes": "Late arrival grace (minutes)",
+      "holdMinutes": "Hold during booking (minutes)",
+      "booking": "Online booking",
+      "minOnlineParty": "Smallest party online",
+      "maxOnlineParty": "Largest party online",
+      "seasonStart": "Season starts (MM-DD)",
+      "seasonEnd": "Season ends (MM-DD)",
+      "timeSlots": "Reservation times (HH:MM, separated by commas)",
+      "closedWeekdays": "Closed every",
+      "weekday": {
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday",
+        "7": "Sunday"
+      },
+      "showMenuPrices": "Show menu prices on the website"
+    },
+    "closures": {
+      "title": "Closed dates",
+      "intro": "Dates on which online booking is switched off. Existing reservations on that date are not cancelled.",
+      "none": "No closed dates.",
+      "date": "Date",
+      "reason": "Reason (optional)",
+      "add": "Close this date",
+      "remove": "Reopen"
     }
   }
 }

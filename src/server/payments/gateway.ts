@@ -62,7 +62,9 @@ export function stripeGateway(): PaymentGateway | null {
         {
           amount: amountCents,
           currency: "eur",
-          automatic_payment_methods: { enabled: true },
+          // Cards only (including Apple Pay and Google Pay, which are card wallets): they settle within
+          // the 10-minute hold. Bank redirects and pay-later methods can take longer than the hold lasts.
+          allowed_payment_method_types: ["card"],
           description: `Reservation ${reference}`,
           receipt_email: receiptEmail,
           // The reservation id is all Stripe needs to know; no guest details or manage token.

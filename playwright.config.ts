@@ -28,6 +28,10 @@ export default defineConfig({
       DATABASE_URL: E2E_DATABASE_URL,
       BETTER_AUTH_URL: BASE_URL,
       ALLOW_SIMULATED_PAYMENTS: "true",
+      // The browser suite never talks to Stripe or the email provider, whatever is in .env.
+      STRIPE_SECRET_KEY: "",
+      STRIPE_WEBHOOK_SECRET: "",
+      RESEND_API_KEY: "",
       // Every test browser shares this machine's address; the per-address cap is covered by integration tests.
       MAX_HOLDS_PER_ADDRESS: "1000",
     },

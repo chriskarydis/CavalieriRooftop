@@ -16,7 +16,7 @@ access (once the site is nearly ready).
 - **One hold per guest.** A guest holds one seating at a time; for a party of 16 that is all the
   tables the party needs. *Engineering:* a new selection releases the previous hold, and at most 3
   unpaid holds may exist per network address.
-- **Test notification address** is the developer's own, set only in the local .
+- **Test notification address** is the developer's own, set only in the local `.env` file, which is not committed.
 
 ## 2026-10-05 (second round): engineering
 

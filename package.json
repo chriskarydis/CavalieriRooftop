@@ -17,7 +17,8 @@
     "staff:create": "tsx scripts/create-staff.ts",
     "test:e2e": "next build && playwright test",
     "stripe:check": "tsx scripts/stripe-check.ts",
-    "test:stripe": "next build && playwright test --config playwright.stripe.config.ts"
+    "test:stripe": "next build && playwright test --config playwright.stripe.config.ts",
+    "email:check": "tsx scripts/email-check.ts"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^7.0.0",

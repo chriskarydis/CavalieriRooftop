@@ -99,9 +99,15 @@ test("a card that needs 3-D Secure confirmation works", async ({ page }) => {
   await fillCard(page, "4000 0025 0000 3155");
   await pay(page, "Pay €60.00");
 
-  // Stripe's test bank page, in nested iframes.
-  const challenge = page.frameLocator('iframe[name^="__privateStripeFrame"]').last().frameLocator("iframe").first();
-  await challenge.getByRole("button", { name: /complete/i }).click({ timeout: 30_000 });
+  // Stripe's test bank page: a challenge frame inside Stripe's own 3-D Secure frame.
+  const challenge = page
+    .frameLocator('iframe[src*="three-ds-2-challenge"]')
+    .frameLocator('iframe[name="stripe-challenge-frame"]');
+  const complete = challenge.locator("#test-source-authorize-3ds");
+  await complete.waitFor({ timeout: 30_000 });
+  // The challenge slides into view; as with the pay button, the keyboard is reliable while it moves.
+  await page.waitForTimeout(1500);
+  await complete.press("Enter");
   await expect(page.getByRole("heading", { name: "Your reservation is confirmed" })).toBeVisible({ timeout: 60_000 });
 });
 

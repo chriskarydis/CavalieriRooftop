@@ -4,7 +4,8 @@
     "tagline": "Rooftop dining above Corfu Old Town",
     "underConstruction": "The new website is being built.",
     "reserveCta": "Reserve a table",
-    "language": "Language"
+    "language": "Language",
+    "menu": "Menu"
   },
   "floorPlan": {
     "title": "Floor plan",
@@ -221,7 +222,8 @@
       "tables": "Tables",
       "categories": "Categories",
       "combinations": "Joined tables",
-      "settings": "Settings"
+      "settings": "Settings",
+      "menu": "Menu"
     },
     "move": {
       "title": "Move reservation {guest}",
@@ -368,5 +370,55 @@
       "add": "Close this date",
       "remove": "Reopen"
     }
+  },
+  "menu": {
+    "title": "Dinner menu",
+    "intro": "Mediterranean cuisine: meat, fresh fish and seafood, pasta and salads.",
+    "categories": "Menu sections",
+    "unavailable": "Not available today",
+    "tag": {
+      "signature": "Signature dish",
+      "chefRecommendation": "Chef's recommendation",
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "spicy": "Spicy"
+    },
+    "contains": "Contains: {allergens}",
+    "allergenNote": "If you have a food allergy or intolerance, please tell our staff before ordering. Allergen information is shown where we have it and is not a complete list.",
+    "reserve": "Reserve a table"
+  },
+  "menuAdmin": {
+    "title": "Menu",
+    "intro": "What guests see on the menu page. Dishes are hidden, not deleted, so nothing is lost. Greek text that is left empty shows the English text.",
+    "dishCount": "{count, plural, one {# dish} other {# dishes}}",
+    "hidden": "hidden",
+    "nameEn": "Name (English)",
+    "nameEl": "Name (Greek)",
+    "descriptionEn": "Description (English)",
+    "descriptionEl": "Description (Greek)",
+    "ingredientsEn": "Ingredients (English)",
+    "ingredientsEl": "Ingredients (Greek)",
+    "category": "Section",
+    "price": "Price (€, optional)",
+    "displayOrder": "Order",
+    "imageUrl": "Photo address (https://…)",
+    "tags": "Labels",
+    "flag": {
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "spicy": "Spicy",
+      "signature": "Signature dish",
+      "chefRecommendation": "Chef's recommendation"
+    },
+    "allergens": "Allergens",
+    "available": "Available today",
+    "onMenu": "Shown on the menu",
+    "categoryActive": "Section shown on the menu",
+    "noGreek": "no Greek name",
+    "unavailable": "not available today",
+    "addDish": "Add a dish to this section",
+    "createDish": "Add dish",
+    "newCategory": "New section",
+    "createCategory": "Add section"
   }
 }

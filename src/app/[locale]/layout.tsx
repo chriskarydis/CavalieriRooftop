@@ -32,6 +32,9 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
               {t("name")}
             </Link>
             <div className="flex items-center gap-3">
+              <Link href="/menu" className="text-sm hover:underline">
+                {t("menu")}
+              </Link>
               <LocaleSwitcher label={t("language")} />
               <Link href="/reserve" className="rounded-md bg-stone-900 px-3 py-2 text-sm font-medium text-white">
                 {t("reserveCta")}

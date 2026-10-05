@@ -7,6 +7,7 @@ import postgres from "postgres";
 import { E2E_DATABASE_URL } from "../../playwright.config";
 import * as schema from "../../src/server/db/schema";
 import { seedInitialConfiguration } from "../../src/server/db/seed-config";
+import { seedInitialMenu } from "../../src/server/db/seed-menu";
 
 export const E2E_STAFF = { email: "manager@e2e.test", password: "e2e-manager-password", name: "Eleni Manager" };
 
@@ -24,6 +25,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
   const db = drizzle(client, { schema, casing: "snake_case" });
   await migrate(db, { migrationsFolder: "./drizzle" });
   await seedInitialConfiguration(db);
+  await seedInitialMenu(db);
 
   const userId = randomUUID();
   await db

@@ -14,6 +14,7 @@ const CONFIGURATION = [
   { href: "/manage/tables", key: "tables" },
   { href: "/manage/categories", key: "categories" },
   { href: "/manage/combinations", key: "combinations" },
+  { href: "/manage/menu", key: "menu" },
   { href: "/manage/settings", key: "settings" },
 ] as const;
 

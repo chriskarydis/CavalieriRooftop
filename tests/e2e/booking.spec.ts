@@ -150,6 +150,19 @@ test("guest moves a paid reservation to another evening without paying again", a
   await expect(page.getByText("€70.00").first()).toBeVisible();
   await testInfo.attach("moved", { body: await page.screenshot({ fullPage: true, path: shot(testInfo, "moved") }), contentType: "image/png" });
 
+  // Without the link, the reservation opens with its number and the email it was booked with.
+  const reference = (await page.getByText(/^CRG-\d+$/).textContent()) ?? "";
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "My reservation" }).click();
+  await page.getByLabel("Confirmation number").fill(reference);
+  await page.getByLabel("Email or mobile phone used for the reservation").fill("wrong@example.com");
+  await page.getByRole("button", { name: "Find my reservation" }).click();
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("We could not find a reservation with those details.");
+  await page.getByLabel("Confirmation number").fill(reference.replace("CRG-", ""));
+  await page.getByLabel("Email or mobile phone used for the reservation").fill("690 000 0000");
+  await page.getByRole("button", { name: "Find my reservation" }).click();
+  await expect(page.getByRole("heading", { name: "Your reservation is confirmed" })).toBeVisible();
+  await expect(page.getByText(reference, { exact: true })).toBeVisible();
+
   // The old evening is free again.
   await search(page, "en", from, 2);
   await expect(page.getByRole("button", { name: /^Table 70, 2 seats, Best for Two, available/ })).toBeVisible();

@@ -53,7 +53,7 @@ test("footer links work and no public page links to the management area", async 
 
 test("pages never scroll sideways on a phone-sized screen", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
-  for (const path of ["/en", "/el", "/el/menu", "/en/gallery", "/el/contact", "/el/reserve"]) {
+  for (const path of ["/en", "/el", "/el/menu", "/en/gallery", "/el/contact", "/el/reserve", "/el/my-reservation"]) {
     await page.goto(path);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow, path).toBeLessThanOrEqual(0);

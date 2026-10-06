@@ -61,3 +61,14 @@ phases and documented here as they land.
 ## Secrets
 
 - Only in environment variables (`.env` locally, never committed). `.env.example` lists the names.
+
+## Opening a reservation without the link
+
+- `/my-reservation` opens a reservation from its number plus the email or phone it was booked with
+  (owner's request). The number alone is never enough, a wrong number and a wrong contact give the
+  same answer, and one network address gets 8 attempts per 15 minutes (`lookup_attempt` table, which
+  stores a keyed hash of the address and nothing about guests).
+- This is weaker than the secret link: someone who knows a guest's number and phone can open, move or
+  cancel that reservation. It was accepted as the usual trade-off for letting guests help themselves.
+- Staff can open a guest's move page from the reservations list for a guest on the phone. The guest's
+  rules apply there too.

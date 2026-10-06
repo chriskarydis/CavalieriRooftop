@@ -18,6 +18,7 @@ import { BookingError, GUEST } from "@/server/services/context";
 import { cancelReservation } from "@/server/services/floor-service";
 import { getReservationByToken } from "@/server/services/guest-reservation";
 import { notifyReservationEvent } from "@/server/services/notifications";
+import { findReservation } from "@/server/services/find-reservation";
 import { refundPayment } from "@/server/services/payments";
 import { rescheduleReservation } from "@/server/services/reschedule";
 
@@ -39,6 +40,25 @@ const HOLDER_COOKIE_DAYS = 30;
  * HttpOnly cookie, plus a keyed hash of their IP address (never the address
  * itself) for the per-address cap.
  */
+/** Keyed hash of the visitor's network address, or null when it is unknown. */
+async function currentIpHash(): Promise<string | null> {
+  const forwarded = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim();
+  const secret = process.env.MANAGE_TOKEN_SECRET ?? process.env.BETTER_AUTH_SECRET ?? "";
+  return forwarded ? createHmac("sha256", secret).update(`ip:${forwarded}`).digest("hex") : null;
+}
+
+const findSchema = z.object({ reference: z.string().trim().min(1).max(20), contact: z.string().trim().min(3).max(200) });
+
+/** Opens a reservation from its number and the email or phone it was booked with. */
+export async function findMyReservation(locale: string, formData: FormData): Promise<void> {
+  const parsed = findSchema.safeParse(Object.fromEntries(formData));
+  const result = parsed.success
+    ? await findReservation(db, { ...parsed.data, ipHash: await currentIpHash() })
+    : ({ found: false, reason: "NOT_FOUND" } as const);
+  if (!result.found) return redirect({ href: `/my-reservation?error=${result.reason}`, locale });
+  return redirect({ href: `/reservation/${result.token}`, locale });
+}
+
 async function currentHolder(): Promise<Holder> {
   const jar = await cookies();
   let id = jar.get(HOLDER_COOKIE)?.value;
@@ -52,10 +72,7 @@ async function currentHolder(): Promise<Holder> {
       path: "/",
     });
   }
-  const forwarded = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim();
-  const secret = process.env.MANAGE_TOKEN_SECRET ?? process.env.BETTER_AUTH_SECRET ?? "";
-  const ipHash = forwarded ? createHmac("sha256", secret).update(`ip:${forwarded}`).digest("hex") : null;
-  return { id, ipHash };
+  return { id, ipHash: await currentIpHash() };
 }
 
 /** Step 2 -> 3: hold the selection for the guest and move to checkout. */

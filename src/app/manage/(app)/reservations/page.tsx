@@ -1,8 +1,9 @@
-import { getFormatter, getTranslations } from "next-intl/server";
+import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 import { RESERVATION_STATUSES, type ReservationStatus } from "@/domain/reservation-state";
 import { addMinutes, zonedDate, zonedTime, zonedToInstant } from "@/domain/time";
 import { requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
+import { manageTokenFor } from "@/server/services/booking";
 import { loadSettings } from "@/server/services/context";
 import { listReservations } from "@/server/services/reservation-list";
 import { listBlocks } from "@/server/services/table-ops";
@@ -22,6 +23,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
   const format = await getFormatter();
   const query = await searchParams;
   const settings = await loadSettings(db);
+  const locale = await getLocale();
 
   const requestedDate = first(query.date);
   const date = requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? requestedDate : zonedDate(new Date(), settings.timezone);
@@ -129,6 +131,17 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                   </td>
                   <td className="px-3 py-2">
                     <ReservationActions reservationId={reservation.id} status={reservation.status} returnTo={returnTo} />
+                    {reservation.status === "CONFIRMED" && (
+                      // The guest's own page, opened by staff for a guest on the phone. The same rules apply.
+                      <a
+                        href={`/${locale}/reservation/${manageTokenFor(reservation.id)}/move`}
+                        target="_blank"
+                        rel="noopener"
+                        className={`${secondaryButton} mt-1.5 inline-block`}
+                      >
+                        {t("reservations.changeDate")}
+                      </a>
+                    )}
                     {mayRefund &&
                       (reservation.status === "CANCELLED" || reservation.status === "NO_SHOW") &&
                       reservation.paidCents > reservation.refundedCents && (

@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { hasPermission } from "@/domain/permissions";
 import logoOnDark from "@/assets/photos/logo-on-dark.png";
+import { SITE } from "@/config/site";
 import { requireStaff } from "@/server/auth/session";
 import { StaffLocaleSwitcher } from "../StaffLocaleSwitcher";
 import { NavLinks } from "./NavLinks";
@@ -54,6 +55,21 @@ export default async function ManageAppLayout({ children }: { children: React.Re
         <NavLinks label={t("nav.label")} links={links.map((link) => ({ href: link.href, label: t(`nav.${link.key}`) }))} />
       </header>
       <div className="flex-1 px-4 py-6 sm:px-6">{children}</div>
+      <footer className="bg-night px-4 py-5 text-xs text-stone-400 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <p>
+            <span className="tracking-[0.2em] text-gold uppercase">{SITE.name}</span>
+            {" · "}
+            {SITE.street}, {SITE.postalCode} {SITE.city.en} · {SITE.phone}
+          </p>
+          <p className="flex flex-wrap gap-x-5">
+            <a href="/" target="_blank" rel="noopener" className="hover:text-white">
+              {t("footer.publicSite")}
+            </a>
+            <span>{t("footer.staffOnly")}</span>
+          </p>
+        </div>
+      </footer>
     </>
   );
 }

@@ -62,12 +62,19 @@ const escapeHtml = (value: string): string =>
 function brandRow(): string {
   const base = siteUrl();
   if (!base.startsWith("https://")) {
-    return `<tr><td style="padding:24px 24px 8px;font-size:13px;letter-spacing:1px;color:#a8481f">${escapeHtml(SITE.name.toUpperCase())}</td></tr>`;
+    return `<tr><td style="padding:24px 24px 8px;font-size:13px;letter-spacing:1px;color:#76581c">${escapeHtml(SITE.name.toUpperCase())}</td></tr>`;
   }
   return `<tr><td style="padding:24px 24px 8px"><img src="${escapeHtml(base)}/logo.png" alt="${escapeHtml(SITE.name)}" width="200" style="display:block;width:200px;height:auto;border:0"></td></tr>`;
 }
 
-function layout(heading: string, paragraphs: string[], rows: Array<[string, string]>, link?: { href: string; label: string }) {
+function layout(
+  heading: string,
+  paragraphs: string[],
+  rows: Array<[string, string]>,
+  link?: { href: string; label: string },
+  /** A quieter link under the button. */
+  secondary?: { href: string; label: string },
+) {
   const html = `<!doctype html><html><body style="margin:0;background:#faf7f2;font-family:Arial,Helvetica,sans-serif;color:#1f2a30">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px">
@@ -88,7 +95,12 @@ ${rows
 }
 ${
   link
-    ? `<tr><td style="padding:16px 24px"><a href="${escapeHtml(link.href)}" style="display:inline-block;background:#a8481f;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:bold">${escapeHtml(link.label)}</a></td></tr>`
+    ? `<tr><td style="padding:16px 24px"><a href="${escapeHtml(link.href)}" style="display:inline-block;background:#1e1b17;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:bold">${escapeHtml(link.label)}</a></td></tr>`
+    : ""
+}
+${
+  secondary
+    ? `<tr><td style="padding:0 24px 8px;font-size:15px"><a href="${escapeHtml(secondary.href)}" style="color:#76581c">${escapeHtml(secondary.label)}</a></td></tr>`
     : ""
 }
 <tr><td style="padding:16px 24px 24px;font-size:13px;line-height:1.5;color:#5b6870">${escapeHtml(SITE.name)} · ${escapeHtml(SITE.street)}, ${escapeHtml(SITE.postalCode)} ${escapeHtml(SITE.city.en)}<br>${escapeHtml(SITE.phone)} · ${escapeHtml(SITE.email)}</td></tr>
@@ -101,6 +113,7 @@ ${
     "",
     ...rows.map(([label, value]) => `${label}: ${value}`),
     ...(link ? ["", `${link.label}: ${link.href}`] : []),
+    ...(secondary ? [`${secondary.label}: ${secondary.href}`] : []),
     "",
     `${SITE.name} · ${SITE.street}, ${SITE.postalCode} ${SITE.city.en}`,
     `${SITE.phone} · ${SITE.email}`,
@@ -119,6 +132,7 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
   const time = zonedTime(data.startsAt, data.timezone);
   const tables = data.tableNumbers.join(" + ") || "—";
   const manageUrl = `${siteUrl()}/${locale}/reservation/${data.manageToken}`;
+  const moveLink = { href: `${manageUrl}/move`, label: t("moveLink", { hours: data.refundCutoffHours }) };
   const values = {
     reference: data.reference,
     name: data.guestName,
@@ -167,6 +181,7 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
           [t("guest_confirmation.intro", values), t("policy.minimum"), t("policy.grace", values), t("policy.refund", values)],
           [...reservationRows, ...paymentRows],
           { href: manageUrl, label: t("manageLink") },
+          moveLink,
         ),
       };
     case "guest_reminder":
@@ -180,10 +195,13 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
     case "guest_rescheduled":
       return {
         subject,
-        ...layout(heading, [t("guest_rescheduled.intro", values), t("policy.grace", values), t("policy.refund", values)], reservationRows, {
-          href: manageUrl,
-          label: t("manageLink"),
-        }),
+        ...layout(
+          heading,
+          [t("guest_rescheduled.intro", values), t("policy.grace", values), t("policy.refund", values)],
+          reservationRows,
+          { href: manageUrl, label: t("manageLink") },
+          moveLink,
+        ),
       };
     case "guest_cancellation":
       return {

@@ -17,7 +17,8 @@
     "hours": "{opens} – {closes}",
     "closedOn": "Closed on {days}",
     "gallery": "Gallery",
-    "follow": "Follow us"
+    "follow": "Follow us",
+    "myReservation": "My reservation"
   },
   "floorPlan": {
     "title": "Floor plan",
@@ -311,7 +312,8 @@
       "refundAmount": "Amount to refund (€)",
       "refundReason": "Reason (kept on record)",
       "refundConfirm": "Refund to the guest's card",
-      "refundDone": "Refund of {amount} sent to the guest's card."
+      "refundDone": "Refund of {amount} sent to the guest's card.",
+      "changeDate": "Change date or time"
     },
     "notifications": {
       "title": "New ({count})",
@@ -322,6 +324,10 @@
         "NO_SHOW": "No-show",
         "RESCHEDULED": "Moved by guest"
       }
+    },
+    "footer": {
+      "publicSite": "Open the public site",
+      "staffOnly": "For staff only"
     }
   },
   "config": {
@@ -656,7 +662,8 @@
       "subject": "Moved {reference}: now {date} {time}",
       "heading": "Reservation moved by the guest",
       "intro": "{name} moved the reservation to {date} at {time}. Nothing was charged or refunded."
-    }
+    },
+    "moveLink": "Change the date or time (until {hours} hours before)"
   },
   "timeline": {
     "title": "Timeline",
@@ -794,5 +801,18 @@
     "cheaper": "This table costs less than you paid. The difference is not refunded.",
     "confirm": "Move my reservation here",
     "policy": "After the move, free cancellation counts from the new date."
+  },
+  "find": {
+    "title": "My reservation",
+    "intro": "See your reservation, move it to another date or cancel it. Enter the confirmation number and the email address or phone number you booked with.",
+    "reference": "Confirmation number",
+    "contact": "Email or mobile phone used for the reservation",
+    "submit": "Find my reservation",
+    "where": "The confirmation number is in the email we sent you and starts with CRG.",
+    "help": "Cannot find it? Call us on",
+    "errors": {
+      "NOT_FOUND": "We could not find a reservation with those details. Please check the number and the email or phone and try again.",
+      "TOO_MANY_ATTEMPTS": "Too many attempts. Please wait a few minutes and try again, or call us."
+    }
   }
 }

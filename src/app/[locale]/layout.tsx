@@ -66,7 +66,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
               </Link>
               <nav
                 aria-label={t("mainNav")}
-                className="order-3 flex w-full items-center justify-center gap-x-7 text-xs font-medium tracking-[0.2em] uppercase md:order-2 md:w-auto md:flex-1 md:justify-end"
+                className="order-3 flex w-full flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs sm:gap-x-7 font-medium tracking-[0.2em] uppercase md:order-2 md:w-auto md:flex-1 md:justify-end"
               >
                 <Link href="/menu" className={navLink}>
                   {t("menu")}
@@ -76,6 +76,9 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
                 </Link>
                 <Link href="/contact" className={navLink}>
                   {t("contact")}
+                </Link>
+                <Link href="/my-reservation" className={navLink}>
+                  {t("myReservation")}
                 </Link>
               </nav>
               <div className="order-2 flex items-center gap-2 sm:gap-4 md:order-3">
@@ -115,6 +118,11 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
                   <li>
                     <Link href="/reserve" className={footerLink}>
                       {t("reserveCta")}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/my-reservation" className={footerLink}>
+                      {t("myReservation")}
                     </Link>
                   </li>
                   <li>

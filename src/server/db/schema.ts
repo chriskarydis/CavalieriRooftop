@@ -442,6 +442,18 @@ export const notification = pgTable("notification", {
   createdAt: createdAt(),
 });
 
+/** Attempts to open a reservation by its number, kept for a day to limit guessing. No guest data. */
+export const lookupAttempt = pgTable(
+  "lookup_attempt",
+  {
+    id: id(),
+    /** Keyed hash of the visitor's network address, never the address itself. */
+    ipHash: text().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("lookup_attempt_ip_idx").on(t.ipHash, t.createdAt)],
+);
+
 export const emailLog = pgTable(
   "email_log",
   {

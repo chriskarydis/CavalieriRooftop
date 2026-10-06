@@ -4,6 +4,7 @@ import { Inter, Noto_Serif_Display } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import logoOnDark from "@/assets/photos/logo-on-dark.png";
 import logo from "@/assets/photos/logo.png";
 import { SITE, siteUrl } from "@/config/site";
 import { Link } from "@/i18n/navigation";
@@ -52,7 +53,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
           <header className="border-b border-stone-200 bg-white">
             <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
               <Link href="/" className="shrink-0">
-                <Image src={logo} alt={t("name")} priority sizes="170px" className="h-11 w-auto sm:h-12" />
+                <Image src={logo} alt={t("name")} priority sizes="170px" className="h-12 w-auto sm:h-14" />
               </Link>
               <nav aria-label={t("mainNav")} className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                 <Link href="/menu" className="hover:underline">
@@ -79,7 +80,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
           <footer className="mt-12 bg-sea text-stone-100">
             <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm sm:grid-cols-3">
               <div>
-                <p className="font-display text-lg font-semibold">{t("name")}</p>
+                <Image src={logoOnDark} alt={t("name")} sizes="200px" className="h-14 w-auto" />
                 <address className="mt-2 not-italic leading-relaxed">
                   {SITE.street}, {SITE.postalCode} {SITE.city[locale as "en" | "el"]}
                   <br />

@@ -26,8 +26,10 @@ const PHOTOS = {
   "golden-rooftops": "0-02-05-cc8b053e3a8c0637",
   "blue-hour": "0-02-05-e11e55c9f8367f42",
   "pasta-view": "images (1).jpg",
-  logo: "roofgardenlogo.jpg",
 };
+
+/** The logo with a transparent background, as supplied by the owner. */
+const LOGO = "roofgardenlogo-removebg-preview.png";
 
 mkdirSync(TARGET, { recursive: true });
 const originals = readdirSync(SOURCE);
@@ -36,14 +38,53 @@ for (const [name, prefix] of Object.entries(PHOTOS)) {
   const original = originals.find((file) => file.startsWith(prefix));
   if (!original) throw new Error(`No original starting with "${prefix}" in ${SOURCE}/`);
   const image = sharp(`${SOURCE}/${original}`).rotate();
-  if (name === "logo") {
-    // Trimmed of its white margin; shown on white, so it stays a JPEG-sized PNG without transparency.
-    await image.trim().resize({ width: 640 }).png({ compressionLevel: 9 }).toFile(`${TARGET}/${name}.png`);
-  } else {
-    await image
-      .resize({ width: MAX_SIDE, height: MAX_SIDE, fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 82, mozjpeg: true })
-      .toFile(`${TARGET}/${name}.jpg`);
-  }
+  await image
+    .resize({ width: MAX_SIDE, height: MAX_SIDE, fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 82, mozjpeg: true })
+    .toFile(`${TARGET}/${name}.jpg`);
   console.log(`${name} <- ${original.slice(0, 28)}`);
+}
+
+// Logo for light backgrounds: the supplied file as it is. The knight is cut out of the gold badge, so
+// on white it reads as a white knight.
+await sharp(`${SOURCE}/${LOGO}`).png({ compressionLevel: 9 }).toFile(`${TARGET}/logo.png`);
+await sharp(`${SOURCE}/${LOGO}`).png({ compressionLevel: 9 }).toFile("public/logo.png");
+
+// Logo for dark backgrounds: the same, with white laid behind the badge so the knight stays white.
+{
+  const { data, info } = await sharp(`${SOURCE}/${LOGO}`).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const solid = (x, y) => data[(y * info.width + x) * 4 + 3] > 200;
+  // A column belongs to the badge when most of it is opaque; lettering columns never are.
+  const columns = [];
+  for (let x = 0; x < info.width * 0.35; x++) {
+    let count = 0;
+    for (let y = 0; y < info.height; y++) if (solid(x, y)) count++;
+    if (count > info.height * 0.45) columns.push(x);
+  }
+  const left = columns[0];
+  const right = columns[columns.length - 1];
+  const rows = [];
+  for (let y = 0; y < info.height; y++) {
+    let count = 0;
+    for (let x = left; x <= right; x++) if (solid(x, y)) count++;
+    if (count > (right - left) * 0.45) rows.push(y);
+  }
+  const top = rows[0];
+  // The badge ends in a point; the white must stop where its sides stop being straight.
+  let straight = rows[rows.length - 1];
+  for (let y = straight; y > top; y--) {
+    if (solid(left + 2, y) && solid(right - 2, y)) {
+      straight = y;
+      break;
+    }
+  }
+  const inset = 5;
+  const backing = Buffer.from(
+    `<svg width="${info.width}" height="${info.height}"><rect x="${left + inset}" y="${top + inset}" width="${right - left - 2 * inset}" height="${straight - top - 2 * inset}" rx="6" fill="#fff"/></svg>`,
+  );
+  await sharp(backing)
+    .composite([{ input: `${SOURCE}/${LOGO}` }])
+    .png({ compressionLevel: 9 })
+    .toFile(`${TARGET}/logo-on-dark.png`);
+  console.log("logo, logo-on-dark <- " + LOGO);
 }

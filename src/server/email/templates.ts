@@ -53,11 +53,23 @@ export interface RenderedEmail {
 const escapeHtml = (value: string): string =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+/**
+ * The top of every email: the logo when the site has a public address an inbox
+ * can load images from, otherwise the restaurant's name as text.
+ */
+function brandRow(): string {
+  const base = siteUrl();
+  if (!base.startsWith("https://")) {
+    return `<tr><td style="padding:24px 24px 8px;font-size:13px;letter-spacing:1px;color:#a8481f">${escapeHtml(SITE.name.toUpperCase())}</td></tr>`;
+  }
+  return `<tr><td style="padding:24px 24px 8px"><img src="${escapeHtml(base)}/logo.png" alt="${escapeHtml(SITE.name)}" width="200" style="display:block;width:200px;height:auto;border:0"></td></tr>`;
+}
+
 function layout(heading: string, paragraphs: string[], rows: Array<[string, string]>, link?: { href: string; label: string }) {
   const html = `<!doctype html><html><body style="margin:0;background:#faf7f2;font-family:Arial,Helvetica,sans-serif;color:#1f2a30">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px">
-<tr><td style="padding:24px 24px 8px;font-size:13px;letter-spacing:1px;color:#a8481f">${escapeHtml(SITE.name.toUpperCase())}</td></tr>
+${brandRow()}
 <tr><td style="padding:0 24px 8px;font-size:22px;font-weight:bold">${escapeHtml(heading)}</td></tr>
 ${paragraphs.map((text) => `<tr><td style="padding:8px 24px;font-size:15px;line-height:1.5">${escapeHtml(text)}</td></tr>`).join("\n")}
 ${

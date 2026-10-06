@@ -21,6 +21,13 @@ test("public menu shows sections, dietary labels and allergens, without prices",
   await page.getByRole("button", { name: "Close" }).click();
   await page.getByRole("button", { name: /^Wine list/ }).click();
   await expect(page.getByRole("dialog", { name: "Wine list" }).getByRole("heading", { name: "Retsina", exact: true })).toBeVisible();
+  // The strip of sections marks where the reader is, and follows when a section is chosen.
+  const strip = page.getByRole("dialog", { name: "Wine list" }).getByRole("navigation", { name: "Menu sections" });
+  await expect(strip.getByRole("button", { name: "White Wine by the Glass" })).toHaveAttribute("aria-current", "true");
+  await strip.getByRole("button", { name: "Champagne and Sparkling Wines" }).click();
+  await expect(strip.getByRole("button", { name: "Champagne and Sparkling Wines" })).toHaveAttribute("aria-current", "true");
+  await expect(strip.getByRole("button", { name: "Champagne and Sparkling Wines" })).toBeInViewport();
+  await expect(strip.getByRole("button", { name: "White Wine by the Glass" })).not.toHaveAttribute("aria-current", "true");
 
   // Greek: sections and dishes in Greek, as on the restaurant's own Greek menu.
   await page.goto("/el/menu");

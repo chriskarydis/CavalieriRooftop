@@ -21,7 +21,7 @@ const TONE_CLASS: Record<Tone, string> = {
   done: "border-slate-400 bg-slate-100",
   walkIn: "border-teal-700 bg-teal-100",
   block: "border-slate-700 bg-slate-300",
-  hold: "border-amber-500 bg-amber-100",
+  hold: "border-fuchsia-600 bg-fuchsia-100",
 };
 const TONES = Object.keys(TONE_CLASS) as Tone[];
 
@@ -41,7 +41,9 @@ export default async function TimelinePage({ searchParams }: PageProps<"/manage/
   await requirePermission("operations");
   const t = await getTranslations("timeline");
   const settings = await loadSettings(db);
-  const requested = first((await searchParams).date);
+  const query = await searchParams;
+  const requested = first(query.date);
+  const openId = first(query.entry);
   const today = zonedDate(new Date(), settings.timezone);
   const date = requested && /^\d{4}-\d{2}-\d{2}$/.test(requested) ? requested : today;
   const timeline = await getTimeline(db, date);
@@ -53,6 +55,7 @@ export default async function TimelinePage({ searchParams }: PageProps<"/manage/
     addMinutes(timeline.windowStart, index * HOUR_MINUTES),
   );
   const time = (instant: Date): string => zonedTime(instant, settings.timezone);
+  const opened = timeline.tables.flatMap((table) => table.entries).find((entry) => entry.allocationId === openId);
   const shift = (days: number): string =>
     zonedDate(addMinutes(new Date(`${date}T12:00:00Z`), days * DAY_MINUTES), "UTC");
 
@@ -79,6 +82,51 @@ export default async function TimelinePage({ searchParams }: PageProps<"/manage/
           {t("today")}
         </Link>
       </form>
+
+      {opened && (
+        <section aria-labelledby="entry-heading" className={`${cardClass} ${opened.kind === "HOLD" ? "border-fuchsia-300 bg-fuchsia-50" : ""}`}>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="entry-heading">
+              {t("table")} {opened.tableNumber} · {t(`tone.${toneOf(opened)}`)}
+            </h2>
+            <Link href={`/manage/timeline?date=${date}`} className="text-sm underline">
+              {t("close")}
+            </Link>
+          </div>
+          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+            <dt className="text-slate-600">{t("detail.time")}</dt>
+            <dd className="tabular-nums">
+              {time(opened.startsAt)}–{time(opened.endsAt)}
+            </dd>
+            <dt className="text-slate-600">{t("detail.guest")}</dt>
+            <dd>{opened.label ?? (opened.kind === "HOLD" ? t("detail.noDetails") : "—")}</dd>
+            {opened.partySize !== null && (
+              <>
+                <dt className="text-slate-600">{t("detail.party")}</dt>
+                <dd>{opened.partySize}</dd>
+              </>
+            )}
+            {(opened.phone || opened.email) && (
+              <>
+                <dt className="text-slate-600">{t("detail.contact")}</dt>
+                <dd>{[opened.phone, opened.email].filter(Boolean).join(" · ")}</dd>
+              </>
+            )}
+            {opened.reference && (
+              <>
+                <dt className="text-slate-600">{t("detail.reference")}</dt>
+                <dd>{opened.reference}</dd>
+              </>
+            )}
+            {opened.holdExpiresAt && (
+              <>
+                <dt className="text-slate-600">{t("detail.heldUntil")}</dt>
+                <dd className="tabular-nums">{time(opened.holdExpiresAt)}</dd>
+              </>
+            )}
+          </dl>
+        </section>
+      )}
 
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
         {TONES.map((tone) => (
@@ -118,10 +166,12 @@ export default async function TimelinePage({ searchParams }: PageProps<"/manage/
                   const label = entry.label ?? t(`tone.${toneOf(entry)}`);
                   const detail = `${time(entry.startsAt)}–${time(entry.endsAt)} · ${label}${entry.partySize ? ` · ${entry.partySize}` : ""}${entry.reference ? ` · ${entry.reference}` : ""} · ${t(`tone.${toneOf(entry)}`)}`;
                   return (
-                    <div
+                    <Link
                       key={entry.allocationId}
+                      href={`/manage/timeline?date=${date}&entry=${entry.allocationId}`}
+                      scroll={false}
                       title={detail}
-                      className={`absolute inset-y-1 overflow-hidden rounded-r border-l-4 px-1.5 text-xs leading-8 whitespace-nowrap text-slate-900 ${TONE_CLASS[toneOf(entry)]}`}
+                      className={`absolute inset-y-1 overflow-hidden rounded-r border-l-4 px-1.5 text-xs leading-8 whitespace-nowrap text-slate-900 hover:brightness-95 ${TONE_CLASS[toneOf(entry)]} ${entry.allocationId === openId ? "ring-2 ring-slate-900" : ""}`}
                       style={{ left: `${left}%`, width: `${Math.max(0.5, percent(entry.endsAt) - left)}%` }}
                     >
                       <span className="sr-only">{detail}</span>
@@ -129,7 +179,7 @@ export default async function TimelinePage({ searchParams }: PageProps<"/manage/
                         {time(entry.startsAt)} {label}
                         {entry.partySize ? ` · ${entry.partySize}` : ""}
                       </span>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>

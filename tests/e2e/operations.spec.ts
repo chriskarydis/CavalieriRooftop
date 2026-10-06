@@ -106,3 +106,41 @@ test("floor plan editor: move a table with the keyboard, save, and guests see th
   await page.getByRole("button", { name: "Add table" }).click();
   await expect(page.getByRole("main").getByRole("alert")).toContainText("That already exists.");
 });
+
+test("a table a guest is reserving right now shows on the timeline with what they have entered", async ({ page }) => {
+  const date = "2027-09-23";
+  const context = await page.context().browser()!.newContext();
+  const visitor = await context.newPage();
+  await visitor.goto(`/en/reserve?date=${date}&time=20:00&guests=2`);
+  await visitor.getByRole("button", { name: /^Table 26, 2 seats, Standard, available/ }).click();
+  await visitor.getByRole("button", { name: "Reserve this table" }).click();
+  await expect(visitor.getByRole("timer")).toBeVisible();
+
+  // Held, but the guest has typed nothing yet.
+  await page.goto(`/manage/timeline?date=${date}`);
+  const entry = page.getByRole("link", { name: /Being reserved/ });
+  await entry.click();
+  const details = page.getByRole("region", { name: /Table 26 · Being reserved/ });
+  await expect(details).toContainText("No details entered yet");
+  await expect(details).toContainText("Held until");
+
+  await visitor.getByLabel("Full name").fill("Hara Holding");
+  await visitor.getByLabel("Email").fill("hara@example.com");
+  await visitor.getByLabel("Mobile phone").fill("+30 690 555 0000");
+  await visitor.getByRole("checkbox").check();
+  await visitor.getByRole("button", { name: "Continue to payment" }).click();
+  await expect(visitor.getByRole("button", { name: /^Pay / })).toBeVisible();
+
+  await page.reload();
+  await expect(details).toContainText("Hara Holding");
+  await expect(details).toContainText("+30 690 555 0000 · hara@example.com");
+  await page.screenshot({ fullPage: true, path: shot("timeline-hold") });
+
+  // Paid: the same slot is now an ordinary reservation.
+  await visitor.getByRole("button", { name: /^Pay / }).click();
+  await expect(visitor.getByRole("heading", { name: "Your reservation is confirmed" })).toBeVisible();
+  await context.close();
+  await page.goto(`/manage/timeline?date=${date}`);
+  await expect(page.getByRole("link", { name: /Being reserved/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Hara Holding .* Reserved/ })).toBeAttached();
+});

@@ -17,6 +17,10 @@ export interface LiveBooking {
   reservationStatus: schema.ReservationStatusValue | null;
   partySize: number | null;
   guestName: string | null;
+  guestPhone: string | null;
+  guestEmail: string | null;
+  /** For a hold: when the guest's 10 minutes run out. */
+  holdExpiresAt: Date | null;
   depositCents: number | null;
   tableFeeCents: number | null;
   notes: string | null;
@@ -96,6 +100,9 @@ export async function getLiveFloor(db: Db, now = new Date()): Promise<LiveTable[
         reservation: schema.reservation,
         walkIn: schema.walkIn,
         guestName: schema.customer.name,
+        guestPhone: schema.customer.phone,
+        guestEmail: schema.customer.email,
+        expiresAt: schema.tableAllocation.expiresAt,
       })
       .from(schema.tableAllocation)
       .leftJoin(schema.reservation, eq(schema.tableAllocation.reservationId, schema.reservation.id))
@@ -124,6 +131,9 @@ export async function getLiveFloor(db: Db, now = new Date()): Promise<LiveTable[
         reservationStatus: row.reservation?.status ?? null,
         partySize: row.reservation?.partySize ?? row.walkIn?.partySize ?? null,
         guestName: row.guestName ?? row.walkIn?.name ?? null,
+        guestPhone: row.guestPhone ?? null,
+        guestEmail: row.guestEmail ?? null,
+        holdExpiresAt: row.kind === "HOLD" ? row.expiresAt : null,
         depositCents: row.reservation?.depositCents ?? null,
         tableFeeCents: row.reservation?.tableFeeCents ?? null,
         notes: row.reservation?.staffNotes ?? row.reservation?.guestNotes ?? row.walkIn?.notes ?? (row.kind === "BLOCK" ? row.reason : null),

@@ -16,6 +16,11 @@ export interface TimelineEntry {
   label: string | null;
   partySize: number | null;
   reference: string | null;
+  tableNumber: number;
+  phone: string | null;
+  email: string | null;
+  /** For a hold: when the guest's 10 minutes run out. */
+  holdExpiresAt: Date | null;
 }
 
 export interface Timeline {
@@ -48,6 +53,9 @@ export async function getTimeline(db: Db, date: string, now = new Date()): Promi
         reservation: schema.reservation,
         walkIn: schema.walkIn,
         guestName: schema.customer.name,
+        guestPhone: schema.customer.phone,
+        guestEmail: schema.customer.email,
+        expiresAt: schema.tableAllocation.expiresAt,
       })
       .from(schema.tableAllocation)
       .leftJoin(schema.reservation, eq(schema.tableAllocation.reservationId, schema.reservation.id))
@@ -91,6 +99,10 @@ export async function getTimeline(db: Db, date: string, now = new Date()): Promi
               label: row.guestName ?? row.walkIn?.name ?? (row.kind === "BLOCK" ? row.reason : null),
               partySize: row.reservation?.partySize ?? row.walkIn?.partySize ?? null,
               reference: row.reservation?.reference ?? null,
+              tableNumber: table.number,
+              phone: row.guestPhone ?? null,
+              email: row.guestEmail ?? null,
+              holdExpiresAt: row.kind === "HOLD" ? row.expiresAt : null,
             };
           })
           .filter((entry) => entry.endsAt.getTime() > entry.startsAt.getTime())

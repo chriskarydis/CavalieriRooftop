@@ -26,20 +26,40 @@ const PHOTOS = {
   "golden-rooftops": "0-02-05-cc8b053e3a8c0637",
   "blue-hour": "0-02-05-e11e55c9f8367f42",
   "pasta-view": "images (1).jpg",
+  // October 2026, daylight, from photos/converted (JPG copies of the owner's HEIC originals).
+  "fortress-table-ship": "converted/IMG_8620",
+  "terrace-fortress": "converted/IMG_8591",
+  "terrace-panorama": "converted/IMG_8608",
+  "terrace-entrance": "converted/IMG_8595",
+  "terrace-fortress-wide": "converted/IMG_8590",
+  "terrace-tables": "converted/IMG_8589",
+  "fortress-tables-rail": "converted/IMG_8604",
+  "fortress-table-tall": "converted/IMG_8606",
+  "old-town-tables": "converted/IMG_8601",
+  "old-town-roofs": "converted/IMG_8609",
+  "fortress-trees": "converted/IMG_8611",
+  "ship-table": "converted/IMG_8634",
+  "garitsa-tables": "converted/IMG_8629",
+  "terrace-long": "converted/IMG_8628",
+  "fortress-close": "converted/IMG_8593",
+  "fortress-table-wide": "converted/IMG_8619",
 };
+
+/** Wider than the rest: shown as a strip across the page. */
+const WIDE = { "terrace-panorama": 3200 };
 
 /** The logo with a transparent background, as supplied by the owner. */
 const LOGO = "roofgardenlogo-removebg-preview.png";
 
 mkdirSync(TARGET, { recursive: true });
-const originals = readdirSync(SOURCE);
+const originals = [...readdirSync(SOURCE), ...readdirSync(`${SOURCE}/converted`).map((file) => `converted/${file}`)];
 
 for (const [name, prefix] of Object.entries(PHOTOS)) {
   const original = originals.find((file) => file.startsWith(prefix));
   if (!original) throw new Error(`No original starting with "${prefix}" in ${SOURCE}/`);
   const image = sharp(`${SOURCE}/${original}`).rotate();
   await image
-    .resize({ width: MAX_SIDE, height: MAX_SIDE, fit: "inside", withoutEnlargement: true })
+    .resize({ width: WIDE[name] ?? MAX_SIDE, height: WIDE[name] ?? MAX_SIDE, fit: "inside", withoutEnlargement: true })
     .jpeg({ quality: 82, mozjpeg: true })
     .toFile(`${TARGET}/${name}.jpg`);
   console.log(`${name} <- ${original.slice(0, 28)}`);

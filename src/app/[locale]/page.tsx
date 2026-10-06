@@ -22,11 +22,13 @@ export async function generateMetadata({ params }: PageProps<"/[locale]">): Prom
 }
 
 const FEATURES = ["view", "cuisine", "table"] as const;
-const FEATURE_PHOTO = { view: PHOTOS.fortressDay, cuisine: PHOTOS.pasta, table: PHOTOS.terraceSunset } as const;
+const FEATURE_PHOTO = { view: PHOTOS.fortressTableShip, cuisine: PHOTOS.pasta, table: PHOTOS.terraceFortress } as const;
 const FEATURE_LINK = { view: "/gallery", cuisine: "/menu", table: "/reserve" } as const;
 
 // Photos for the strip at the foot of the page: ones not already shown above.
-const SHOWN = new Set<unknown>([PHOTOS.heroWide, PHOTOS.heroTall, PHOTOS.fortressNight, ...Object.values(FEATURE_PHOTO)].map((photo) => photo.image));
+const SHOWN = new Set<unknown>(
+  [PHOTOS.heroWide, PHOTOS.heroTall, PHOTOS.fortressNight, PHOTOS.terracePanorama, ...Object.values(FEATURE_PHOTO)].map((photo) => photo.image),
+);
 const STRIP = GALLERY.filter((photo) => !SHOWN.has(photo.image)).slice(0, 4);
 
 export default async function HomePage({ params }: PageProps<"/[locale]">) {
@@ -125,6 +127,17 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             </div>
           </article>
         ))}
+      </section>
+
+      {/* The whole terrace in one strip. On a phone it can be swiped sideways. */}
+      <section aria-label={PHOTOS.terracePanorama.alt[language]} className="overflow-x-auto bg-night">
+        <Image
+          src={PHOTOS.terracePanorama.image}
+          alt={PHOTOS.terracePanorama.alt[language]}
+          placeholder="blur"
+          sizes="(min-width: 1024px) 100vw, 1400px"
+          className="h-64 w-auto max-w-none object-cover sm:h-80 lg:h-auto lg:w-full"
+        />
       </section>
 
       <section className="bg-night text-stone-200">

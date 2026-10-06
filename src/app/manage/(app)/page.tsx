@@ -33,7 +33,7 @@ const STATE_COLOR: Record<LiveTableState, string> = {
   ARRIVING: "#7a5cc0",
   LATE: "#d9822b",
   OCCUPIED: "#b23a48",
-  HELD: "#e0a030",
+  HELD: "#c0269b",
   BLOCKED: "#5b6870",
   OUT_OF_SERVICE: "#9aa5ab",
   INACTIVE: "#c5ccd0",
@@ -51,7 +51,6 @@ function groupBookings(live: LiveTable[]): Row[] {
   const rows = new Map<string, Row>();
   for (const table of live) {
     for (const booking of table.bookings) {
-      if (booking.kind === "HOLD") continue;
       const key = booking.reservationId ?? booking.walkInId ?? booking.allocationId;
       const existing = rows.get(key);
       if (existing) existing.tables.push(table.number);
@@ -281,15 +280,18 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
                 </thead>
                 <tbody>
                   {rows.map((row) => {
-                    const status = row.reservationStatus ?? row.kind;
+                    const status = row.kind === "HOLD" ? "HOLD" : (row.reservationStatus ?? row.kind);
                     return (
-                      <tr key={row.reservationId ?? row.walkInId ?? row.allocationId} className="border-b border-slate-100 align-top last:border-0">
+                      <tr
+                        key={row.reservationId ?? row.walkInId ?? row.allocationId}
+                        className={`border-b border-slate-100 align-top last:border-0 ${row.kind === "HOLD" ? "bg-fuchsia-50" : ""}`}
+                      >
                         <td className="px-3 py-2 tabular-nums">
                           {time(row.startsAt)}–{time(row.endsAt)}
                         </td>
                         <td className="px-3 py-2">{row.tables.sort((a, b) => a - b).join(" + ")}</td>
                         <td className="px-3 py-2">
-                          {row.guestName ?? (row.kind === "WALK_IN" ? t("walkIn") : "—")}
+                          {row.guestName ?? (row.kind === "WALK_IN" ? t("walkIn") : row.kind === "HOLD" ? t("details.holdNoDetails") : "—")}
                           {row.reference && <span className="block text-xs text-slate-500">{row.reference}</span>}
                           {row.notes && <span className="block text-xs text-slate-500">{row.notes}</span>}
                         </td>
@@ -299,7 +301,10 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
                           {row.depositCents === null ? "—" : `${euro(row.depositCents)} / ${euro(row.tableFeeCents ?? 0)}`}
                         </td>
                         <td className="px-3 py-2">
-                          {row.reservationId && row.reservationStatus && (
+                          {row.kind === "HOLD" && row.holdExpiresAt && (
+                            <span className="text-xs text-slate-600">{t("details.holdUntil", { time: time(row.holdExpiresAt) })}</span>
+                          )}
+                          {row.kind !== "HOLD" && row.reservationId && row.reservationStatus && (
                             <ReservationActions reservationId={row.reservationId} status={row.reservationStatus} returnTo="/manage" />
                           )}
                           {row.walkInId && (
@@ -372,7 +377,7 @@ async function TableDetails({
   const locale = await getLocale();
   const category = categories.find((entry) => entry.id === view?.categoryId);
   const returnTo = `/manage?table=${table.tableId}`;
-  const bookings = table.bookings.filter((booking) => booking.kind !== "HOLD");
+  const bookings = table.bookings;
   const usable = table.state !== "OUT_OF_SERVICE" && table.state !== "INACTIVE";
 
   return (
@@ -399,19 +404,31 @@ async function TableDetails({
       <ul className="mt-3 space-y-2 text-sm">
         {bookings.length === 0 && <li className="text-slate-600">{t("details.noBookings")}</li>}
         {bookings.map((booking) => (
-          <li key={booking.allocationId} className="rounded-md border border-slate-200 p-2">
+          <li
+            key={booking.allocationId}
+            className={`rounded-md border p-2 ${booking.kind === "HOLD" ? "border-fuchsia-300 bg-fuchsia-50" : "border-slate-200"}`}
+          >
+            {booking.kind === "HOLD" && (
+              <p className="mb-1 text-xs font-semibold tracking-wide text-fuchsia-900 uppercase">
+                {t("details.holdTitle")}
+                {booking.holdExpiresAt && ` · ${t("details.holdUntil", { time: time(booking.holdExpiresAt) })}`}
+              </p>
+            )}
             <p>
               <span className="tabular-nums">
                 {time(booking.startsAt)}–{time(booking.endsAt)}
               </span>{" "}
-              · {booking.guestName ?? (booking.kind === "WALK_IN" ? t("walkIn") : t(`booking.${booking.kind}`))}
+              · {booking.guestName ?? (booking.kind === "WALK_IN" ? t("walkIn") : booking.kind === "HOLD" ? t("details.holdNoDetails") : t(`booking.${booking.kind}`))}
               {booking.partySize !== null && ` · ${booking.partySize}`}
               {booking.reference && ` · ${booking.reference}`}
-              {booking.reservationStatus && ` · ${t(`booking.${booking.reservationStatus}`)}`}
+              {booking.kind !== "HOLD" && booking.reservationStatus && ` · ${t(`booking.${booking.reservationStatus}`)}`}
             </p>
+            {booking.kind === "HOLD" && (booking.guestPhone || booking.guestEmail) && (
+              <p className="text-xs text-slate-700">{[booking.guestPhone, booking.guestEmail].filter(Boolean).join(" · ")}</p>
+            )}
             {booking.notes && <p className="text-xs text-slate-500">{booking.notes}</p>}
             <div className="mt-1.5">
-              {booking.reservationId && booking.reservationStatus && (
+              {booking.kind !== "HOLD" && booking.reservationId && booking.reservationStatus && (
                 <ReservationActions reservationId={booking.reservationId} status={booking.reservationStatus} returnTo={returnTo} />
               )}
               {booking.walkInId && (

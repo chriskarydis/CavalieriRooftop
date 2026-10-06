@@ -226,7 +226,8 @@
       "BLOCK": "Blocked",
       "COMPLETED": "Completed",
       "CANCELLED": "Cancelled",
-      "NO_SHOW": "No-show"
+      "NO_SHOW": "No-show",
+      "HOLD": "Being reserved now"
     },
     "actions": {
       "seat": "Seat guests",
@@ -299,7 +300,10 @@
       "block": "Block table",
       "blockDate": "From date",
       "blockStart": "From time",
-      "blockHint": "Leave date and time empty to block from now. A date without a time starts at opening time that day. To keep a table for a guest by hand (no online reservation, no deposit), block it for that date and time and write the guest's name as the reason."
+      "blockHint": "Leave date and time empty to block from now. A date without a time starts at opening time that day. To keep a table for a guest by hand (no online reservation, no deposit), block it for that date and time and write the guest's name as the reason.",
+      "holdTitle": "A guest is reserving this table now",
+      "holdUntil": "held until {time}",
+      "holdNoDetails": "No details entered yet"
     },
     "reservations": {
       "title": "Reservations",
@@ -715,6 +719,16 @@
       "walkIn": "Walk-in",
       "block": "Blocked",
       "hold": "Being reserved"
+    },
+    "close": "Close",
+    "detail": {
+      "time": "Time",
+      "guest": "Guest",
+      "party": "Guests",
+      "contact": "Contact",
+      "reference": "Reservation",
+      "heldUntil": "Held until",
+      "noDetails": "No details entered yet"
     }
   },
   "analytics": {

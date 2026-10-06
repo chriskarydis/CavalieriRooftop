@@ -24,7 +24,7 @@ export interface MenuCategoryView extends MenuCategoryRow {
 /** The whole menu, in display order. `publicOnly` leaves out inactive categories and dishes. */
 export async function getMenu(db: Db, options: { publicOnly: boolean }): Promise<MenuCategoryView[]> {
   const [categories, items, links, allergens, images] = await Promise.all([
-    db.select().from(schema.menuCategory).orderBy(asc(schema.menuCategory.displayOrder)),
+    db.select().from(schema.menuCategory).orderBy(asc(schema.menuCategory.displayOrder), asc(schema.menuCategory.id)),
     db.select().from(schema.menuItem).orderBy(asc(schema.menuItem.displayOrder), asc(schema.menuItem.createdAt)),
     db.select().from(schema.menuItemAllergen),
     db.select().from(schema.allergen),
@@ -62,6 +62,7 @@ const requiredName = z.object({ en: z.string().trim().min(1).max(120), el: z.str
 const optionalText = z.object({ en: z.string().trim().max(600), el: z.string().trim().max(600) });
 
 const categorySchema = z.object({
+  menu: z.enum(schema.MENU_KEYS),
   name: requiredName,
   description: optionalText,
   displayOrder: z.number().int().min(0).max(1000),

@@ -50,6 +50,13 @@
       "when": 1791257839251,
       "tag": "0006_lookup_attempt",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791316816325,
+      "tag": "0007_menu_lists",
+      "breakpoints": true
     }
   ]
 }

@@ -57,6 +57,11 @@ temporarily; install it properly. See TESTING.md.
 
 ## To check by hand
 
+- The three menus: wording and spellings against the printed cards, especially wines.
+- The view photographs on the booking page (16 tables so far) and the photo proposal in
+  `photos/protasi-fotografion.jpg`, which the owner has still to approve.
+- Table 1's fifth chair did not seem to be drawn when the table was selected.
+
 Built on 2026-10-06 and covered by automated tests, but not yet looked at by a person:
 
 - A real card payment in Stripe test mode after the change that confirms on return from payment

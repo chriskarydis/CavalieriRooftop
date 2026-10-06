@@ -4,6 +4,7 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 import { notFound } from "next/navigation";
 import { SITE } from "@/config/site";
 import { hasPermission } from "@/domain/permissions";
+import { TABLE_PHOTOS } from "@/assets/tables";
 import { zonedDate, zonedTime } from "@/domain/time";
 import { formatLongDate } from "@/i18n/intl-locale";
 import { localized } from "@/i18n/localized";
@@ -165,6 +166,7 @@ async function MoveChoices({
     price: table.price,
     categoryName: categoryName.get(view.get(table.tableId)?.categoryId ?? "") ?? "",
     viewDescription: localized(view.get(table.tableId)?.viewDescription, locale),
+    photos: TABLE_PHOTOS[view.get(table.tableId)?.number ?? -1],
   }));
   const numberOf = new Map(config.tables.map((table) => [table.id, table.number]));
   const groups: PickerGroup[] = options.groups.map((group) => ({

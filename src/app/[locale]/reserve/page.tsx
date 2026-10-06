@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { gte } from "drizzle-orm";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { TABLE_PHOTOS } from "@/assets/tables";
 import { zonedDate } from "@/domain/time";
 import { localized } from "@/i18n/localized";
 import { db } from "@/server/db/client";
@@ -118,6 +119,7 @@ async function AvailabilitySection({
     price: table.price,
     categoryName: categoryName.get(view.get(table.tableId)?.categoryId ?? "") ?? "",
     viewDescription: localized(view.get(table.tableId)?.viewDescription, locale),
+    photos: TABLE_PHOTOS[view.get(table.tableId)?.number ?? -1],
   }));
   const numberOf = new Map(config.tables.map((table) => [table.id, table.number]));
   const groups: PickerGroup[] = availability.groups.map((group) => ({

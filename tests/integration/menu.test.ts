@@ -63,7 +63,8 @@ describe("menu", () => {
     const menu = await getMenu(ctx.db, { publicOnly: true });
     expect(menu.map((category) => category.name.en)).toEqual(MENU.map((category) => category.en));
     expect(menu.map((category) => category.items.length)).toEqual(MENU.map((category) => category.dishes.length));
-    expect(menu[0].items[0].name.en).toBe("Prosciutto with Melon or Mozzarella");
+    expect(menu[0].items[1].name).toEqual({ en: "Prosciutto with Melon or Mozzarella", el: "Προσούτο με Πεπόνι και Μοτσαρέλα" });
+    expect([...new Set(menu.map((category) => category.menu))]).toEqual(["FOOD", "BAR", "WINE"]);
     expect(await ctx.db.$count(schema.allergen)).toBe(14);
     expect((await dish("Baklava")).allergens.map((allergen) => allergen.code)).toEqual(["nuts"]);
   });
@@ -105,7 +106,7 @@ describe("menu", () => {
   it("an empty section is not shown to guests", async () => {
     await createMenuCategory(
       ctx.db,
-      { name: { en: "Drinks", el: "Ποτά" }, description: { en: "", el: "" }, displayOrder: 9, active: true },
+      { menu: "BAR", name: { en: "Drinks", el: "Ποτά" }, description: { en: "", el: "" }, displayOrder: 9, active: true },
       MANAGER,
     );
     expect((await getMenu(ctx.db, { publicOnly: true })).map((category) => category.name.en)).not.toContain("Drinks");

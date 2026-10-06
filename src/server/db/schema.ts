@@ -372,8 +372,13 @@ export const stripeEvent = pgTable("stripe_event", {
 
 // ── Menu ────────────────────────────────────────────────────────────────────
 
+/** The restaurant's three printed lists; every menu section belongs to one. */
+export const MENU_KEYS = ["FOOD", "BAR", "WINE"] as const;
+export type MenuKey = (typeof MENU_KEYS)[number];
+
 export const menuCategory = pgTable("menu_category", {
   id: id(),
+  menu: text().$type<MenuKey>().notNull().default("FOOD"),
   name: jsonb().$type<LocalizedText>().notNull(),
   description: jsonb().$type<LocalizedText>(),
   displayOrder: integer().notNull().default(0),

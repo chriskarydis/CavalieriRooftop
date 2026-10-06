@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
+import Image, { type StaticImageData } from "next/image";
 import { useRef, useState } from "react";
 import type { PriceBreakdown } from "@/domain/pricing";
 import { FloorPlan, type FloorPlanTable } from "@/ui/floor-plan/FloorPlan";
@@ -16,6 +17,8 @@ export interface PickerTable {
   price: PriceBreakdown | null;
   categoryName: string;
   viewDescription: string;
+  /** Photographs of the view from this table, when the restaurant has supplied any. */
+  photos?: StaticImageData[];
 }
 
 export interface PickerGroup {
@@ -71,11 +74,13 @@ export function TablePicker({
   const tMove = useTranslations("move");
   const format = useFormatter();
   const [choice, setChoice] = useState<Choice>(move?.initialTableId ? { kind: "TABLE", tableId: move.initialTableId } : null);
+  const [photoIndex, setPhotoIndex] = useState(0);
   const panel = useRef<HTMLElement>(null);
 
   // On a phone the price panel sits below the tall floor plan, so bring it into view.
   const choose = (next: Choice) => {
     setChoice(next);
+    setPhotoIndex(0);
     requestAnimationFrame(() => panel.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
   };
 
@@ -169,6 +174,30 @@ export function TablePicker({
             <p className="text-muted">{t("selectPrompt")}</p>
           ) : (
             <form action={move ? move.action : startHold} className="space-y-3">
+              {selectedTable?.photos?.length && selectedPlanTable ? (
+                <figure>
+                  <Image
+                    key={`${selectedTable.tableId}-${photoIndex}`}
+                    src={selectedTable.photos[photoIndex] ?? selectedTable.photos[0]}
+                    alt={t("viewAlt", { number: selectedPlanTable.number })}
+                    placeholder="blur"
+                    sizes="(min-width: 1024px) 23rem, 100vw"
+                    className="aspect-[4/3] w-full object-cover"
+                  />
+                  <figcaption className="mt-1.5 flex items-center justify-between gap-3 text-xs tracking-[0.16em] text-gold-deep uppercase">
+                    {t("viewCaption")}
+                    {selectedTable.photos.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setPhotoIndex((photoIndex + 1) % selectedTable.photos!.length)}
+                        className="border-b border-gold pb-0.5 tracking-[0.16em] text-ink uppercase"
+                      >
+                        {t("viewNext", { current: photoIndex + 1, total: selectedTable.photos.length })}
+                      </button>
+                    )}
+                  </figcaption>
+                </figure>
+              ) : null}
               <h3 className="text-2xl">
                 {selectedGroup
                   ? t("groupLabel", { tables: selectedGroup.tableNumbers.join(" + "), capacity: selectedGroup.capacity })

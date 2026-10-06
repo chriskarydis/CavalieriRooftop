@@ -3,7 +3,12 @@ import { MANAGER_SESSION } from "./global-setup";
 
 test("public menu shows sections, dietary labels and allergens, without prices", async ({ page }) => {
   await page.goto("/en/menu");
-  await expect(page.getByRole("heading", { name: "Dinner menu" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Our menus" })).toBeVisible();
+  // Three lists, each opening in its own window.
+  await expect(page.getByRole("button", { name: /^Bar list/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Wine list/ })).toBeVisible();
+  await page.getByRole("button", { name: /^Dinner menu/ }).click();
+  await expect(page.getByRole("dialog", { name: "Dinner menu" })).toBeVisible();
   for (const section of ["Starters", "Mains", "Pasta", "Salads", "Desserts"]) {
     await expect(page.getByRole("heading", { name: section, exact: true })).toBeVisible();
   }
@@ -11,12 +16,18 @@ test("public menu shows sections, dietary labels and allergens, without prices",
   await expect(aubergines).toContainText("Vegetarian");
   await expect(page.getByRole("listitem").filter({ hasText: "Baklava" })).toContainText("Contains: Nuts");
   await expect(page.locator("main")).not.toContainText("€");
+  await expect(page.getByRole("listitem").filter({ hasText: "Corfiot Salad" })).toContainText("noumboulo");
+  await expect(page.getByText("Mexican Salad")).toHaveCount(0);
+  await page.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("button", { name: /^Wine list/ }).click();
+  await expect(page.getByRole("dialog", { name: "Wine list" }).getByRole("heading", { name: "Retsina", exact: true })).toBeVisible();
 
-  // Greek: section names are translated; dishes fall back to English until the owner supplies Greek text.
+  // Greek: sections and dishes in Greek, as on the restaurant's own Greek menu.
   await page.goto("/el/menu");
+  await page.getByRole("button", { name: /^Κατάλογος φαγητού/ }).click();
   await expect(page.getByRole("heading", { name: "Ορεκτικά", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Greek Salad" })).toBeVisible();
-  await expect(page.getByRole("listitem").filter({ hasText: "Baklava" })).toContainText("Περιέχει: Ξηροί καρποί");
+  await expect(page.getByRole("heading", { name: "Σαλάτα Κορφιάτα" })).toBeVisible();
+  await expect(page.getByRole("listitem").filter({ hasText: "Μπακλαβάς" })).toContainText("Περιέχει: Ξηροί καρποί");
 });
 
 test.describe("menu management", () => {
@@ -43,9 +54,10 @@ test.describe("menu management", () => {
     await expect(page.getByRole("status")).toContainText("Saved.");
 
     await page.goto("/el/menu");
+    await page.getByRole("button", { name: /^Κατάλογος φαγητού/ }).click();
     const greek = page.getByRole("listitem").filter({ hasText: "Χωριάτικη σαλάτα" });
     await expect(greek).toContainText("Σπεσιαλιτέ");
-    await expect(page.getByText("Fruit Salad")).toHaveCount(0);
+    await expect(page.getByText("Φρουτοσαλάτα")).toHaveCount(0);
     // Prices stay hidden until the manager switches them on.
     await expect(page.locator("main")).not.toContainText("12,50");
 
@@ -54,6 +66,7 @@ test.describe("menu management", () => {
     await page.getByRole("button", { name: "Save" }).first().click();
     await expect(page.getByRole("status")).toContainText("Saved.");
     await page.goto("/en/menu");
+    await page.getByRole("button", { name: /^Dinner menu/ }).click();
     await expect(page.getByRole("listitem").filter({ hasText: "Greek Salad" })).toContainText("€12.50");
 
     // Back to the owner's choice: no prices online.

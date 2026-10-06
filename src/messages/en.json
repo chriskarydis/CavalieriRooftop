@@ -89,7 +89,10 @@
     "nextMonth": "Next month",
     "chooseDate": "Choose an evening on the calendar",
     "autoEyebrow": "The simple way",
-    "chooseEyebrow": "Or pick it yourself"
+    "chooseEyebrow": "Or pick it yourself",
+    "viewCaption": "The view from this table",
+    "viewAlt": "The view from table {number}",
+    "viewNext": "Next photo ({current}/{total})"
   },
   "price": {
     "deposit": "Deposit (minimum spend)",
@@ -458,8 +461,8 @@
     }
   },
   "menu": {
-    "title": "Dinner menu",
-    "intro": "Mediterranean cuisine: meat, fresh fish and seafood, pasta and salads.",
+    "title": "Our menus",
+    "intro": "Mediterranean cuisine, cocktails from the bar and a list of Greek and imported wines. Open the one you want to read.",
     "categories": "Menu sections",
     "unavailable": "Not available today",
     "tag": {
@@ -471,7 +474,23 @@
     },
     "contains": "Contains: {allergens}",
     "allergenNote": "If you have a food allergy or intolerance, please tell our staff before ordering. Allergen information is shown where we have it and is not a complete list.",
-    "reserve": "Reserve a table"
+    "reserve": "Reserve a table",
+    "open": "Open",
+    "close": "Close",
+    "books": {
+      "FOOD": {
+        "title": "Dinner menu",
+        "text": "Starters, meat, fresh fish and seafood, pasta, salads and desserts."
+      },
+      "BAR": {
+        "title": "Bar list",
+        "text": "Cocktails, spirits, beers, coffee and soft drinks."
+      },
+      "WINE": {
+        "title": "Wine list",
+        "text": "By the glass and by the bottle, from Greek vineyards and abroad."
+      }
+    }
   },
   "menuAdmin": {
     "title": "Menu",
@@ -504,7 +523,13 @@
     "addDish": "Add a dish to this section",
     "createDish": "Add dish",
     "newCategory": "New section",
-    "createCategory": "Add section"
+    "createCategory": "Add section",
+    "list": "List",
+    "lists": {
+      "FOOD": "Dinner menu",
+      "BAR": "Bar list",
+      "WINE": "Wine list"
+    }
   },
   "home": {
     "eyebrow": "Corfu Town · Rooftop restaurant",

@@ -1,3 +1,4 @@
+import { MENU_KEYS } from "@/server/db/schema";
 import { asc } from "drizzle-orm";
 import { getLocale, getTranslations } from "next-intl/server";
 import { localized } from "@/i18n/localized";
@@ -132,6 +133,7 @@ export default async function MenuAdminPage({ searchParams }: PageProps<"/manage
             <summary className="cursor-pointer text-base font-semibold">
               {localized(category.name, locale)}
               <span className="ml-2 text-sm font-normal text-slate-600">
+                {t(`lists.${category.menu}`)} ·{" "}
                 {t("dishCount", { count: category.items.length })}
                 {!category.active && ` · ${t("hidden")}`}
               </span>
@@ -144,6 +146,16 @@ export default async function MenuAdminPage({ searchParams }: PageProps<"/manage
               <label>
                 {t("nameEl")}
                 <input name="nameEl" maxLength={120} defaultValue={category.name.el ?? ""} className={inputClass} />
+              </label>
+              <label>
+                {t("list")}
+                <select name="menu" defaultValue={category.menu} className={inputClass}>
+                  {MENU_KEYS.map((key) => (
+                    <option key={key} value={key}>
+                      {t(`lists.${key}`)}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label>
                 {t("displayOrder")}
@@ -217,6 +229,16 @@ export default async function MenuAdminPage({ searchParams }: PageProps<"/manage
           <label>
             {t("nameEl")}
             <input name="nameEl" maxLength={120} className={inputClass} />
+          </label>
+          <label>
+            {t("list")}
+            <select name="menu" defaultValue="FOOD" className={inputClass}>
+              {MENU_KEYS.map((key) => (
+                <option key={key} value={key}>
+                  {t(`lists.${key}`)}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             {t("displayOrder")}

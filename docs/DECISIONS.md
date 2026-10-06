@@ -174,3 +174,14 @@ Owner's rules, implemented in `src/server/services/reschedule.ts`:
 - The contact page has a Google map that loads only when the visitor asks for it, so the site sets
   no third-party cookies by itself. Car parks are listed in `src/config/site.ts`; the owner should
   confirm and extend the list.
+
+## Menus and photographs (2026-10-06)
+
+- The menu page shows three lists (dinner, bar, wine) as covers that each open in a window. A menu
+  section belongs to one list (`menu_category.menu`). Content was typed from the owner's photographs
+  of the printed cards, in both languages, with obvious misprints corrected. Mexican salad was
+  replaced by Corfiot salad. No prices are stored or shown.
+- `npx tsx scripts/sync-menu.ts` replaces the menu in a database with `src/config/initial-menu.ts`.
+- View from a table: photographs named `table_12.jpg`, `table_23_24.jpg`, `table_1_a.jpg` anywhere
+  under `photos/` become web images with `node scripts/prepare-table-photos.mjs` and show in the
+  booking page when that table is selected. A trial for now.

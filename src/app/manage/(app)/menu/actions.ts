@@ -37,6 +37,7 @@ async function menuAction(run: (staffId: string) => Promise<unknown>): Promise<v
 
 function categoryInput(form: FormData): MenuCategoryInput {
   return {
+    menu: text(form, "menu") as MenuCategoryInput["menu"],
     name: { en: text(form, "nameEn"), el: text(form, "nameEl") },
     description: { en: text(form, "descriptionEn"), el: text(form, "descriptionEl") },
     displayOrder: Number(form.get("displayOrder")),

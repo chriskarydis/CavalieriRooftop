@@ -130,9 +130,9 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
   const moving = moveId ? rows.find((row) => row.reservationId === moveId) : undefined;
 
   return (
-    <main className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_1fr]">
+    <main className="grid gap-6 lg:grid-cols-[minmax(0,34rem)_1fr] 2xl:grid-cols-[minmax(0,44rem)_1fr]">
       <AutoRefresh />
-      <section aria-labelledby="floor-heading">
+      <section aria-labelledby="floor-heading" className="lg:sticky lg:top-4 lg:self-start">
         <h1 id="floor-heading" className="mb-2 text-lg font-semibold">
           {t("liveFloor")}
         </h1>
@@ -164,7 +164,7 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
         </ul>
       </section>
 
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
         {(error || moveError) && (
           <p role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-red-900">
             {t.has(`errors.${error ?? moveError}`) ? t(`errors.${error ?? moveError}`, { time: "" }) : t("errors.GENERIC")}

@@ -280,9 +280,9 @@
       "hours": "{hours, plural, one {# hour} other {# hours}}",
       "reason": "Reason (optional)",
       "block": "Block table",
-      "blockDate": "From date (empty = now)",
+      "blockDate": "From date",
       "blockStart": "From time",
-      "blockHint": "To keep a table for a guest by hand (no online reservation, no deposit), block it for that date and time and write the guest's name as the reason."
+      "blockHint": "Leave date and time empty to block from now. A date without a time starts at opening time that day. To keep a table for a guest by hand (no online reservation, no deposit), block it for that date and time and write the guest's name as the reason."
     },
     "reservations": {
       "title": "Reservations",

@@ -78,6 +78,23 @@ export function closedReason(
   return null;
 }
 
+/**
+ * When a block made by hand begins. With nothing filled in it begins now. A
+ * date without a time begins at that evening's first time slot (it must never
+ * fall back to "now": that would block the table today). A time without a date
+ * means today.
+ */
+export function blockStart(
+  input: { date?: string; start?: string },
+  settings: { timezone: string; timeSlots: readonly string[] },
+  now: Date,
+): Date {
+  if (!input.date && !input.start) return now;
+  const date = input.date || zonedDate(now, settings.timezone);
+  const start = input.start || settings.timeSlots[0] || "00:00";
+  return zonedToInstant(date, start, settings.timezone);
+}
+
 /** Postgres tstzrange literal for the half-open interval [start, end). */
 export function toRange(start: Date, end: Date): string {
   return `[${start.toISOString()},${end.toISOString()})`;

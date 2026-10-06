@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { hasLocale } from "next-intl";
 import { InvalidTransitionError } from "@/domain/reservation-state";
-import { addMinutes, zonedTime, zonedToInstant } from "@/domain/time";
+import { addMinutes, blockStart, zonedTime } from "@/domain/time";
 import { STAFF_LOCALE_COOKIE } from "@/i18n/request";
 import { routing } from "@/i18n/routing";
 import { ForbiddenError, requirePermission } from "@/server/auth/session";
@@ -101,7 +101,7 @@ export async function extendWalkInAction(walkInId: string, returnTo: string): Pr
 const blockSchema = z.object({
   minutes: z.coerce.number().int().min(15).max(24 * 60),
   reason: z.string().max(200).optional(),
-  /** YYYY-MM-DD and HH:mm in the restaurant's timezone; both empty means "from now". */
+  /** YYYY-MM-DD and HH:mm in the restaurant's timezone; both empty means "from now" (see blockStart). */
   date: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional(),
   start: z.union([z.literal(""), z.string().regex(/^\d{2}:\d{2}$/)]).optional(),
 });
@@ -117,7 +117,7 @@ export async function blockAction(tableId: string, returnTo: string, formData: F
     if (!parsed.success) throw new BookingError("INVALID_SELECTION");
     const input = parsed.data;
     const settings = await loadSettings(db);
-    const from = input.date && input.start ? zonedToInstant(input.date, input.start, settings.timezone) : new Date();
+    const from = blockStart(input, settings, new Date());
     await blockTables(db, { tableIds: [tableId], from, until: addMinutes(from, input.minutes), reason: input.reason }, staffId);
   });
 }

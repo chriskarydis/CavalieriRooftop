@@ -32,7 +32,7 @@ test.describe("staff", () => {
     await page.goto("/manage");
     await page.getByRole("button", { name: /^Table 30, 2 seats/ }).click();
     await expect(page.getByRole("heading", { name: "Table 30" })).toBeVisible();
-    await page.getByLabel("From date (empty = now)").fill(DATE);
+    await page.getByLabel("From date").fill(DATE);
     await page.getByLabel("From time").fill("20:00");
     await page.getByLabel("Block from now for").selectOption({ label: "3 hours" });
     await page.getByLabel("Reason (optional)").fill("Papadopoulos, by phone");

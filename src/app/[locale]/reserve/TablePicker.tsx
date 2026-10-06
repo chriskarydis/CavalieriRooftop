@@ -187,7 +187,7 @@ export function TablePicker({
 
         <details className="border border-line bg-paper p-3">
           <summary className="cursor-pointer font-medium">{t("listTitle")}</summary>
-          <div className="mt-3 max-h-72 space-y-1 overflow-y-auto overscroll-contain pr-1">
+          <div className="mt-3 max-h-52 space-y-1 overflow-y-auto overscroll-contain pr-1">
             {available.length === 0 && <p className="text-sm text-muted">{t("noTables")}</p>}
             {available.map((table) => (
               <label key={table.id} className="flex cursor-pointer items-center gap-3 px-2 py-1.5 hover:bg-ivory">

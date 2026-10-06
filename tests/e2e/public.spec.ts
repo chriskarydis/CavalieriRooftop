@@ -51,6 +51,15 @@ test("footer links work and no public page links to the management area", async 
   await expect(page).toHaveURL(/\/en\/policy$/);
 });
 
+test("pages never scroll sideways on a phone-sized screen", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  for (const path of ["/en", "/el", "/el/menu", "/en/gallery", "/el/contact", "/el/reserve"]) {
+    await page.goto(path);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow, path).toBeLessThanOrEqual(0);
+  }
+});
+
 test("sitemap lists public pages only; robots points to it", async ({ request }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
   expect(sitemap).toContain("/en/menu");
@@ -64,7 +73,7 @@ test("sitemap lists public pages only; robots points to it", async ({ request })
 });
 
 test("every public page has one h1, a title and a description", async ({ page }) => {
-  for (const path of ["/en", "/el", "/en/menu", "/el/menu", "/en/contact", "/en/policy", "/en/privacy", "/en/reserve"]) {
+  for (const path of ["/en", "/el", "/en/menu", "/el/menu", "/en/gallery", "/el/gallery", "/en/contact", "/en/policy", "/en/privacy", "/en/reserve"]) {
     await page.goto(path);
     await expect(page.locator("h1"), path).toHaveCount(1);
     expect((await page.title()).length, path).toBeGreaterThan(10);

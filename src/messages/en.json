@@ -15,7 +15,8 @@
     "vat": "VAT {number}",
     "season": "Open {from} to {to}",
     "hours": "{opens} – {closes}",
-    "closedOn": "Closed on {days}"
+    "closedOn": "Closed on {days}",
+    "gallery": "Gallery"
   },
   "floorPlan": {
     "title": "Floor plan",
@@ -494,7 +495,10 @@
     "bookPoint2": "Full refund if you cancel at least {hours} hours before.",
     "bookPoint3": "For drinks, simply come up: no reservation needed.",
     "visitTitle": "Visit us",
-    "walkIns": "Walk-ins are welcome for food and drinks when tables are free."
+    "walkIns": "Walk-ins are welcome for food and drinks when tables are free.",
+    "galleryTitle": "Evenings on the roof",
+    "galleryText": "Sunsets over the Old Town, the Old Fortress by day and by night, and the terrace itself.",
+    "galleryLink": "See the photos"
   },
   "contact": {
     "title": "Contact",
@@ -705,5 +709,9 @@
     "notFoundText": "This page does not exist, or the link is no longer valid.",
     "home": "Home",
     "reserve": "Reserve a table"
+  },
+  "gallery": {
+    "title": "Gallery",
+    "intro": "The view from the roof garden at different hours: the Old Fortress, the rooftops of the Old Town and the sunset."
   }
 }

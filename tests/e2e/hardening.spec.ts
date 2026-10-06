@@ -60,7 +60,7 @@ test("the payment webhook refuses unsigned requests", async ({ request }) => {
 });
 
 test.describe("accessibility: public pages", () => {
-  for (const path of ["/en", "/el/menu", "/en/contact", "/en/policy", "/en/privacy", `/en/reserve?date=${DATE}&time=20:00&guests=2`]) {
+  for (const path of ["/en", "/el/menu", "/el/gallery", "/en/contact", "/en/policy", "/en/privacy", `/en/reserve?date=${DATE}&time=20:00&guests=2`]) {
     test(path, async ({ page }) => {
       await page.goto(path);
       expect(await violations(page)).toEqual([]);

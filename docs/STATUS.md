@@ -1,6 +1,6 @@
 # Status and next steps
 
-Last updated: 2026-10-05. Update this file at the end of every working session.
+Last updated: 2026-10-06. Update this file at the end of every working session.
 
 ## Done
 
@@ -18,7 +18,7 @@ Last updated: 2026-10-05. Update this file at the end of every working session.
 | Settings screens | Tables, categories and fees, joined tables, neighbouring groups, reservation settings, closed dates |
 | Dashboard | Table details, blocks from now or for a future date and time, move a reservation with price preview, reservations list, notifications |
 | Menu | Seeded from the current site with the 14 EU allergens; management screens; public menu page, prices hidden by default; no dish photos (owner's decision) |
-| Public pages | Home, contact, reservation policy, privacy and cookies, header and footer, sitemap, robots, structured data |
+| Public pages | Home, gallery, contact, reservation policy, privacy and cookies, header and footer, sitemap, robots, structured data. Uses the owner's photographs (16 chosen from the first batch), logo and knight favicon |
 | Emails | Guest confirmation, reminder, cancellation; restaurant new, cancelled, no-show; EN/EL; sent once each and recorded. Sample emails were sent through Resend on 2026-10-06 (`npm run email:check`). Until a sender domain is verified, Resend delivers only to its account owner's address |
 | Stripe | Payment form, webhook, automatic refund on in-policy cancellation, automatic refund of late payments, manager refund with reason. Cards only. Run against Stripe test mode with the owner's test keys (2026-10-06): pay, webhook confirmation, guest cancellation with refund, declined card then retry, 3-D Secure card, staff cancellation with refund all pass |
 | Hardening | Security headers and CSP, no-store and no-referrer on secret links, production configuration check, error and not-found pages, optional guest-data retention, automated accessibility checks on every page |

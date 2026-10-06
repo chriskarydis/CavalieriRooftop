@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { siteUrl } from "@/config/site";
 import { routing } from "@/i18n/routing";
 
-const PAGES = ["", "/menu", "/reserve", "/contact", "/policy", "/privacy"] as const;
+const PAGES = ["", "/menu", "/gallery", "/reserve", "/contact", "/policy", "/privacy"] as const;
 
 /** Public pages in every language. Checkout, manage-reservation and management pages are never listed. */
 export default function sitemap(): MetadataRoute.Sitemap {

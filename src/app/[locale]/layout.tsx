@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Inter, Noto_Serif_Display } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import logo from "@/assets/photos/logo.png";
 import { SITE, siteUrl } from "@/config/site";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
@@ -49,12 +51,15 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
           </a>
           <header className="border-b border-stone-200 bg-white">
             <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
-              <Link href="/" className="font-display text-xl font-semibold tracking-tight">
-                {t("name")}
+              <Link href="/" className="shrink-0">
+                <Image src={logo} alt={t("name")} priority sizes="170px" className="h-11 w-auto sm:h-12" />
               </Link>
-              <nav aria-label={t("mainNav")} className="flex items-center gap-4 text-sm">
+              <nav aria-label={t("mainNav")} className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                 <Link href="/menu" className="hover:underline">
                   {t("menu")}
+                </Link>
+                <Link href="/gallery" className="hover:underline">
+                  {t("gallery")}
                 </Link>
                 <Link href="/contact" className="hover:underline">
                   {t("contact")}
@@ -97,6 +102,11 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
                   <li>
                     <Link href="/menu" className={footerLink}>
                       {t("menu")}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/gallery" className={footerLink}>
+                      {t("gallery")}
                     </Link>
                   </li>
                   <li>

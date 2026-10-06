@@ -36,7 +36,7 @@ export function PasswordForm({ minLength }: { minLength: number }) {
     setOutcome("saved");
   }
 
-  const inputClass = "mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 font-normal";
+  const inputClass = "mt-1 w-full rounded border border-stone-300 bg-white px-2 py-1.5 font-normal";
 
   return (
     <form onSubmit={onSubmit} className="space-y-3 text-sm font-medium">
@@ -62,7 +62,7 @@ export function PasswordForm({ minLength }: { minLength: number }) {
           {t(`passwordError.${outcome}`)}
         </p>
       )}
-      <button type="submit" disabled={pending} className="rounded-md bg-slate-900 px-3 py-2 text-white disabled:opacity-60">
+      <button type="submit" disabled={pending} className="rounded bg-ink hover:bg-gold-deep px-3 py-2 text-white disabled:opacity-60">
         {t("changePassword")}
       </button>
     </form>

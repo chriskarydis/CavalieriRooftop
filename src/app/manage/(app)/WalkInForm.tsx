@@ -16,10 +16,10 @@ export interface SeatingOption {
 export function WalkInForm({ seatings }: { seatings: SeatingOption[] }) {
   const t = useTranslations("manage");
   const [state, action, pending] = useActionState(createWalkInAction, INITIAL);
-  const inputClass = "mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1.5";
+  const inputClass = "mt-1 w-full rounded border border-stone-300 bg-white px-2 py-1.5";
 
   return (
-    <form action={action} className="grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm">
+    <form action={action} className="grid grid-cols-2 gap-3 rounded-lg border border-line bg-white shadow-sm p-3 text-sm">
       <label className="font-medium">
         {t("walkInForm.party")}
         <input name="partySize" type="number" min={1} max={16} defaultValue={2} required className={inputClass} />
@@ -80,7 +80,7 @@ export function WalkInForm({ seatings }: { seatings: SeatingOption[] }) {
           {t("walkInForm.created", { time: state.time ?? "" })}
         </p>
       )}
-      <button type="submit" disabled={pending} className="col-span-2 rounded-md bg-slate-900 px-3 py-2 font-medium text-white disabled:opacity-60">
+      <button type="submit" disabled={pending} className="col-span-2 rounded bg-ink hover:bg-gold-deep px-3 py-2 font-medium text-white disabled:opacity-60">
         {t("walkInForm.submit")}
       </button>
     </form>

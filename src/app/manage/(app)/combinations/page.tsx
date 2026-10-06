@@ -23,7 +23,7 @@ export default async function CombinationsPage({ searchParams }: PageProps<"/man
       .map((member) => tableById.get(member.tableId))
       .map((table) => (table?.isSpare ? t("tables.spare") : String(table?.number)))
       .join(" + ");
-  const small = "w-20 rounded-md border border-slate-300 px-2 py-1";
+  const small = "w-20 rounded border border-stone-300 px-2 py-1";
 
   return (
     <main className="mx-auto max-w-4xl space-y-6">

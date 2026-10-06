@@ -53,6 +53,34 @@ body {
   }
 }
 
+/*
+ * The management application: the same faces and colours as the public site, in
+ * a plainer working layout. Left outside the layers so the rules apply to every
+ * page heading without touching each page.
+ */
+.staff h1 {
+  font-family: var(--font-heading, Georgia), "Times New Roman", serif;
+  font-size: 1.9rem;
+  font-weight: 400;
+  line-height: 1.2;
+  word-spacing: -0.1em;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line);
+}
+.staff h2 {
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+}
+.staff thead th {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 @layer components {
   /* Small spaced capitals above a heading. */
   .eyebrow {

@@ -136,7 +136,7 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
         <h1 id="floor-heading" className="mb-2 text-lg font-semibold">
           {t("liveFloor")}
         </h1>
-        <div className="rounded-xl border border-slate-200 bg-white p-3">
+        <div className="rounded-lg border border-line bg-white shadow-sm p-3">
           <LiveFloorPlan
             plan={plan}
             tables={tables}
@@ -265,7 +265,7 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
           {rows.length === 0 ? (
             <p className="text-slate-600">{t("nothingBooked")}</p>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+            <div className="overflow-x-auto rounded-lg border border-line bg-white shadow-sm">
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-slate-200 text-slate-600">
                   <tr>
@@ -333,7 +333,7 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
             </h2>
             <ul className="space-y-2 text-sm">
               {noShows.map((noShow) => (
-                <li key={noShow.reservationId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                <li key={noShow.reservationId} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line bg-white shadow-sm px-3 py-2">
                   <span>
                     {time(noShow.startsAt)} · {noShow.tableNumbers.join(" + ")} · {noShow.guestName ?? "—"} ·{" "}
                     {noShow.partySize} · {noShow.reference}

@@ -89,7 +89,7 @@ export default async function TimelinePage({ searchParams }: PageProps<"/manage/
         ))}
       </ul>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-line bg-white shadow-sm">
         <div className="min-w-[56rem]">
           <div className="flex border-b border-slate-200 text-xs text-slate-600">
             <div className="w-20 shrink-0 px-2 py-1.5 font-medium">{t("table")}</div>

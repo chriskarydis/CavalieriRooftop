@@ -33,7 +33,7 @@ export function LoginForm() {
   }
 
   const inputClass =
-    "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-slate-900";
+    "mt-1 w-full rounded border border-stone-300 px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-slate-900";
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -53,7 +53,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-md bg-slate-900 px-3 py-2 font-medium text-white disabled:opacity-60"
+        className="w-full rounded bg-ink hover:bg-gold-deep px-3 py-2 font-medium text-white disabled:opacity-60"
       >
         {pending ? t("signingIn") : t("signIn")}
       </button>

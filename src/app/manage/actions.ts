@@ -54,6 +54,7 @@ async function floorAction(returnTo: string, run: (staffId: string) => Promise<u
   }
   if (failure) target.searchParams.set("error", failure);
   else target.searchParams.delete("error");
+  target.searchParams.delete("refunded");
   revalidatePath("/manage", "layout");
   redirect(target.pathname + target.search);
 }
@@ -137,23 +138,28 @@ const refundSchema = z.object({ amount: z.coerce.number().positive().max(100_000
 export async function refundAction(reservationId: string, returnTo: string, formData: FormData): Promise<void> {
   const target = new URL(returnTo.startsWith("/manage") ? returnTo : "/manage", "http://local");
   let failure: string | null = null;
+  let refundedCents = 0;
   try {
     const staff = await requirePermission("refunds");
     const parsed = refundSchema.safeParse(Object.fromEntries(formData));
     const gateway = stripeGateway();
     if (!parsed.success || !gateway) throw new BookingError("INVALID_SELECTION");
-    await discretionaryRefund(
+    const result = await discretionaryRefund(
       db,
       gateway,
       reservationId,
       { amountCents: Math.round(parsed.data.amount * 100), reason: parsed.data.reason },
       staff.id,
     );
+    refundedCents = result.refundedCents;
   } catch (error) {
     failure = errorCode(error);
   }
   if (failure) target.searchParams.set("error", failure === "INVALID_SELECTION" ? "REFUND_FAILED" : failure);
   else target.searchParams.delete("error");
+  // Shown back to the manager as proof that the refund went through.
+  if (failure) target.searchParams.delete("refunded");
+  else target.searchParams.set("refunded", String(refundedCents));
   revalidatePath("/manage", "layout");
   redirect(target.pathname + target.search);
 }

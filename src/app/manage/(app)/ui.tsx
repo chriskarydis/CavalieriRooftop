@@ -1,9 +1,9 @@
 import { getTranslations } from "next-intl/server";
 
-export const inputClass = "mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 font-normal";
-export const primaryButton = "rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white";
-export const secondaryButton = "rounded-md border border-slate-300 px-2 py-1 text-sm hover:bg-slate-100";
-export const cardClass = "rounded-xl border border-slate-200 bg-white p-4";
+export const inputClass = "mt-1 w-full rounded border border-stone-300 bg-white px-2.5 py-2 font-normal";
+export const primaryButton = "rounded bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-gold-deep";
+export const secondaryButton = "rounded border border-stone-300 bg-white px-2.5 py-1 text-sm hover:border-ink";
+export const cardClass = "rounded-lg border border-line bg-white p-5 shadow-sm";
 
 const first = (value: string | string[] | undefined): string | undefined => (Array.isArray(value) ? value[0] : value);
 

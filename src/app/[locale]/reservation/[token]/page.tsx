@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { zonedTime } from "@/domain/time";
+import { SITE } from "@/config/site";
 import { formatLongDate, intlLocale } from "@/i18n/intl-locale";
-import { redirect } from "@/i18n/navigation";
+import { Link, redirect } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
 import { getReservationByToken } from "@/server/services/guest-reservation";
 import { getPaymentSummary } from "@/server/services/payments";
@@ -30,6 +31,7 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
   const euro = (cents: number) => format.number(cents / 100, { style: "currency", currency: "EUR" });
   const canCancel = reservation.status === "CONFIRMED" || reservation.status === "LATE";
   const payment = await getPaymentSummary(db, reservation.id);
+  const cancelled = reservation.status === "CANCELLED";
 
   return (
     <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-12">
@@ -68,13 +70,42 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
             creditTowardBillCents: reservation.creditTowardBillCents,
           }}
         />
-        {payment && payment.refundedCents > 0 && (
+        {!cancelled && payment && payment.refundedCents > 0 && (
           <p className="notice notice-ok mt-3">
             {t("refunded", { amount: euro(payment.refundedCents) })}
           </p>
         )}
       </section>
 
+      {cancelled && (
+        <section className="panel">
+          <h2 className="mb-3 text-2xl">{t("cancelledTitle")}</h2>
+          <p className={`notice ${payment && payment.refundedCents > 0 ? "notice-ok" : "notice-info"}`}>
+            {!payment || payment.amountCents === 0
+              ? t("cancelledNothingPaid")
+              : payment.refundedCents >= payment.amountCents
+                ? t("cancelledRefundFull", { amount: euro(payment.refundedCents) })
+                : payment.refundedCents > 0
+                  ? t("cancelledRefundPart", { amount: euro(payment.refundedCents), paid: euro(payment.amountCents) })
+                  : t("cancelledNoRefund", { paid: euro(payment.amountCents), hours: settings.refundCutoffHours })}
+          </p>
+          <p className="mt-4 text-sm">
+            {t("cancelledContact")}{" "}
+            <a href={SITE.phoneHref} className="text-link">
+              {SITE.phone}
+            </a>
+            {" · "}
+            <a href={`mailto:${SITE.email}`} className="text-link break-words">
+              {SITE.email}
+            </a>
+          </p>
+          <Link href="/reserve" className="btn btn-primary mt-5 w-full">
+            {t("bookAgain")}
+          </Link>
+        </section>
+      )}
+
+      {!cancelled && (
       <section className="panel text-sm">
         <h2 className="mb-3 text-2xl">{t("policyTitle")}</h2>
         <ul className="list-disc space-y-1 pl-5">
@@ -83,6 +114,7 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
           <li>{t("policyMinimum")}</li>
         </ul>
       </section>
+      )}
 
       {canCancel && (
         <section className="panel">

@@ -29,6 +29,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
   const status = LISTED_STATUSES.find((entry) => entry === requestedStatus) as ReservationStatus | undefined;
   const search = first(query.q) ?? "";
   const error = first(query.error);
+  const justRefunded = Number(first(query.refunded) ?? 0);
 
   const dayStart = zonedToInstant(date, "00:00", settings.timezone);
   const [reservations, blocks] = await Promise.all([
@@ -71,6 +72,12 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
         </button>
       </form>
 
+      {justRefunded > 0 && !error && (
+        <p role="status" className="rounded border border-emerald-300 bg-emerald-50 p-3 font-medium text-emerald-900">
+          {t("reservations.refundDone", { amount: format.number(justRefunded / 100, { style: "currency", currency: "EUR" }) })}
+        </p>
+      )}
+
       {error && (
         <p role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-red-900">
           {t.has(`errors.${error}`) ? t(`errors.${error}`, { time: "" }) : t("errors.GENERIC")}
@@ -80,7 +87,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
       <p className="text-sm text-slate-600">{t("reservations.summary", { count: reservations.length, covers })}</p>
 
       {reservations.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-line bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200 text-slate-600">
               <tr>
@@ -115,7 +122,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                   <td className="px-3 py-2 tabular-nums">
                     {euro(reservation.depositCents)} / {euro(reservation.tableFeeCents)}
                     {reservation.refundedCents > 0 && (
-                      <span className="block text-xs text-slate-500">
+                      <span className="mt-1 block w-fit rounded bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-900">
                         {t("reservations.refunded", { amount: euro(reservation.refundedCents) })}
                       </span>
                     )}

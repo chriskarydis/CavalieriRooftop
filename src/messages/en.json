@@ -159,7 +159,14 @@
     "cancelConfirmText": "This cannot be undone.",
     "cancelConfirm": "Yes, cancel my reservation",
     "refunded": "{amount} has been refunded to your card. It can take a few working days to appear.",
-    "referenceLabel": "Confirmation number"
+    "referenceLabel": "Confirmation number",
+    "cancelledTitle": "What happens now",
+    "cancelledRefundFull": "{amount} will be returned to the card you paid with. It can take a few working days to appear.",
+    "cancelledRefundPart": "{amount} of the {paid} you paid will be returned to the card you paid with. It can take a few working days to appear.",
+    "cancelledNoRefund": "The reservation was cancelled less than {hours} hours before the visit, so the {paid} you paid is not refunded.",
+    "cancelledNothingPaid": "Nothing was charged for this reservation.",
+    "cancelledContact": "Questions about this cancellation? Contact us:",
+    "bookAgain": "Make a new reservation"
   },
   "manage": {
     "title": "Cavalieri Roof Garden · Management",
@@ -297,7 +304,8 @@
       "refund": "Refund",
       "refundAmount": "Amount to refund (€)",
       "refundReason": "Reason (kept on record)",
-      "refundConfirm": "Refund to the guest's card"
+      "refundConfirm": "Refund to the guest's card",
+      "refundDone": "Refund of {amount} sent to the guest's card."
     },
     "notifications": {
       "title": "New ({count})",

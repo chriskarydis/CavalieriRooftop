@@ -1,8 +1,11 @@
+import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { hasPermission } from "@/domain/permissions";
+import logoOnDark from "@/assets/photos/logo-on-dark.png";
 import { requireStaff } from "@/server/auth/session";
 import { StaffLocaleSwitcher } from "../StaffLocaleSwitcher";
+import { NavLinks } from "./NavLinks";
 import { SignOutButton } from "./SignOutButton";
 
 const OPERATIONS = [
@@ -32,26 +35,25 @@ export default async function ManageAppLayout({ children }: { children: React.Re
 
   return (
     <>
-      <header className="border-b border-slate-200 bg-white px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="font-semibold">Cavalieri Roof Garden</span>
+      <header className="bg-night px-4 text-stone-300 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 py-3">
+          <Link href="/manage" className="flex items-center gap-4">
+            <Image src={logoOnDark} alt="Cavalieri Roof Garden" priority sizes="160px" className="h-11 w-auto" />
+            <span className="hidden border-l border-white/20 pl-4 text-[0.7rem] tracking-[0.24em] text-gold uppercase sm:inline">
+              {t("title")}
+            </span>
+          </Link>
           <div className="flex items-center gap-4 text-sm">
             <StaffLocaleSwitcher />
-            <Link href="/manage/account" className="text-slate-600 hover:underline">
+            <Link href="/manage/account" className="hover:text-white">
               {staff.name} · {t(`role.${staff.role}`)}
             </Link>
             <SignOutButton label={t("signOut")} />
           </div>
         </div>
-        <nav aria-label={t("nav.label")} className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          {links.map((link) => (
-            <Link key={link.href} href={link.href} className="text-slate-700 hover:underline">
-              {t(`nav.${link.key}`)}
-            </Link>
-          ))}
-        </nav>
+        <NavLinks label={t("nav.label")} links={links.map((link) => ({ href: link.href, label: t(`nav.${link.key}`) }))} />
       </header>
-      <div className="flex-1 p-4">{children}</div>
+      <div className="flex-1 px-4 py-6 sm:px-6">{children}</div>
     </>
   );
 }

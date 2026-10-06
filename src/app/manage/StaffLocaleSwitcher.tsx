@@ -16,7 +16,7 @@ export async function StaffLocaleSwitcher() {
             aria-label={LANGUAGE_NAMES[locale]}
             title={LANGUAGE_NAMES[locale]}
             aria-current={locale === current ? "true" : undefined}
-            className={`block border-b p-1 ${locale === current ? "border-slate-900" : "border-transparent opacity-55 hover:opacity-100"}`}
+            className={`block border-b p-1 ${locale === current ? "border-gold" : "border-transparent opacity-55 hover:opacity-100"}`}
           >
             <Flag locale={locale} />
           </button>

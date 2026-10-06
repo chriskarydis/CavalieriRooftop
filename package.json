@@ -18,7 +18,8 @@
     "test:e2e": "next build && playwright test",
     "stripe:check": "tsx scripts/stripe-check.ts",
     "test:stripe": "next build && playwright test --config playwright.stripe.config.ts",
-    "email:check": "tsx scripts/email-check.ts"
+    "email:check": "tsx scripts/email-check.ts",
+    "test:stripe:services": "vitest run --config vitest.stripe.config.mts"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^7.0.0",

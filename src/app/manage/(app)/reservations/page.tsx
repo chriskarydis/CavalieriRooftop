@@ -131,7 +131,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                   </td>
                   <td className="px-3 py-2">
                     <ReservationActions reservationId={reservation.id} status={reservation.status} returnTo={returnTo} />
-                    {reservation.status === "CONFIRMED" && (
+                    {(reservation.status === "CONFIRMED" || reservation.status === "LATE") && (
                       // The guest's own page, opened by staff for a guest on the phone. The same rules apply.
                       <a
                         href={`/${locale}/reservation/${manageTokenFor(reservation.id)}/move`}

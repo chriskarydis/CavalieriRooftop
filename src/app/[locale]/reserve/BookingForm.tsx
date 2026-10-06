@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { closedReason, type OpeningSettings } from "@/domain/time";
-import { intlLocale } from "@/i18n/intl-locale";
+import { formatLongDate, intlLocale } from "@/i18n/intl-locale";
 import { useRouter } from "@/i18n/navigation";
 import { RESULTS_ID } from "./results";
 
@@ -196,7 +196,7 @@ export function BookingForm({
 
         <div className="mt-auto">
           <p aria-live="polite" className="mb-3 min-h-7 font-display text-xl">
-            {date ? <span className="capitalize">{fullDate.format(at(date))}</span> : <span className="text-muted">{t("chooseDate")}</span>}
+            {date ? <span className="capitalize">{formatLongDate(at(date), locale, "UTC")}</span> : <span className="text-muted">{t("chooseDate")}</span>}
           </p>
           <button type="submit" disabled={!date || searching} className="btn btn-primary w-full">
             {t("check")}

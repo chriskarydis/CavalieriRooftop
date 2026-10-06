@@ -160,6 +160,36 @@ describe("a guest moving their reservation", () => {
     expect((await reservation(held.reservationId)).startsAt.toISOString()).toBe("2027-08-21T17:00:00.000Z");
   });
 
+  it("lets staff move inside the last 24 hours, change the party and pick a dearer table, with no money moving", async () => {
+    // Best for Two table 70 for two: 70 paid.
+    const held = await confirmed(70);
+    const twoHoursBefore = new Date("2027-08-12T15:00:00Z");
+    const staffOptions = await getMoveOptions(ctx.db, held.reservationId, { date: DATE, time: "21:00" }, twoHoursBefore, { partySize: 4 });
+    expect(staffOptions.tables.find((table) => table.number === 1)?.state).toBe("AVAILABLE");
+
+    await rescheduleReservation(
+      ctx.db,
+      held.reservationId,
+      { date: DATE, time: "21:00", selection: { mode: "TABLE", tableId: tableId.get(1)! } },
+      "staff-1",
+      twoHoursBefore,
+      { partySize: 4 },
+    );
+    const row = await reservation(held.reservationId);
+    expect(row.partySize).toBe(4);
+    expect(row.startsAt.toISOString()).toBe("2027-08-12T18:00:00.000Z");
+    expect([row.depositCents, row.tableFeeCents, row.totalCents]).toEqual([6000, 1000, 7000]);
+    expect(await activeTables(held.reservationId)).toEqual([1]);
+
+    // The guest, at that same moment, could not have.
+    const other = await confirmed(7);
+    expect(
+      await codeOf(
+        rescheduleReservation(ctx.db, other.reservationId, { date: NEW_DATE, time: "20:00", selection: { mode: "TABLE", tableId: tableId.get(7)! } }, "guest", twoHoursBefore),
+      ),
+    ).toBe("TOO_LATE_TO_MOVE");
+  });
+
   it("cannot be used on a reservation that is not confirmed", async () => {
     const held = await createHold(
       ctx.db,

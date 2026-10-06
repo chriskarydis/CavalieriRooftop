@@ -543,7 +543,16 @@
     "reach": "Call or write",
     "largeParties": "For parties of more than {max} guests or special requests, please call or email us.",
     "hours": "Opening hours",
-    "walkIns": "Online reservations are for dinner. For drinks, walk-ins are welcome."
+    "walkIns": "Online reservations are for dinner. For drinks, walk-ins are welcome.",
+    "gettingHere": "Getting here",
+    "gettingHereText": "We are on the roof of the Cavalieri Hotel, at the edge of the Spianada. Take the lift to the top floor.",
+    "directions2": "Directions",
+    "mapTitle": "Map showing Cavalieri Roof Garden",
+    "showMap": "Show the map",
+    "mapNote": "The map is provided by Google Maps and loads only when you ask for it.",
+    "parkingTitle": "Parking nearby",
+    "parkingText": "Car parks close to us.",
+    "parkingAll": "See all car parks nearby on the map"
   },
   "policy": {
     "title": "Reservation policy",
@@ -594,7 +603,7 @@
     },
     "cookies": {
       "title": "Cookies",
-      "text": "This website uses only cookies that are necessary for it to work, such as remembering your language. It uses no advertising or tracking cookies, so no cookie consent is requested."
+      "text": "This website uses only cookies that are necessary for it to work, such as remembering your language. It uses no advertising or tracking cookies, so no cookie consent is requested. The map on the contact page comes from Google Maps and is loaded only if you choose to show it. Google may then set its own cookies."
     },
     "rights": {
       "title": "Your rights",
@@ -800,7 +809,9 @@
     "noCharge": "Nothing more to pay.",
     "cheaper": "This table costs less than you paid. The difference is not refunded.",
     "confirm": "Move my reservation here",
-    "policy": "After the move, free cancellation counts from the new date."
+    "policy": "After the move, free cancellation counts from the new date.",
+    "staffBanner": "Staff: you are changing this reservation for the guest. You may change the date, the time and the number of guests, at any time before the reservation, and choose any free table. Nothing is charged or refunded.",
+    "staffNoCharge": "Nothing is charged or refunded, whatever the table."
   },
   "find": {
     "title": "My reservation",

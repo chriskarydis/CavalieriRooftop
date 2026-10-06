@@ -70,7 +70,7 @@ describe("notifications", () => {
     expect(guest.text).toContain("Τραπέζι: 1");
     expect(guest.text).toContain("Άτομα: 2");
     expect(guest.text).toContain("20:00");
-    expect(guest.text).toContain("12 Αυγούστου 2027");
+    expect(guest.text).toContain("12/08/2027");
     expect(guest.text).toContain("Προκαταβολή (ελάχιστη κατανάλωση): 120,00");
     expect(guest.text).toContain("Χρέωση επιλογής τραπεζιού: 50,00");
     expect(guest.text).toContain("Σύνολο πληρωμής: 170,00");

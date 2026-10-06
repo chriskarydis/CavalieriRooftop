@@ -17,6 +17,18 @@ export const SITE = {
   opens: "18:30",
   closes: "00:00",
   mapUrl: "https://www.google.com/maps/search/?api=1&query=Cavalieri+Roof+Garden+Kapodistriou+4+Corfu",
+  /** The same place as a map that can be shown inside a page, and as a destination for directions. */
+  mapEmbedUrl: "https://www.google.com/maps?q=Cavalieri+Hotel+Kapodistriou+4+Corfu&z=16&output=embed",
+  directionsUrl: "https://www.google.com/maps/dir/?api=1&destination=Cavalieri+Hotel+Kapodistriou+4+Corfu",
+  parkingSearchUrl: "https://www.google.com/maps/search/parking+near+Cavalieri+Hotel+Kapodistriou+4+Corfu",
+  /** Car parks to suggest. Position taken from OpenStreetMap; the owner should confirm the list. */
+  parking: [
+    {
+      name: { en: "Spianada public car park", el: "Δημοτικό πάρκινγκ Σπιανάδας" },
+      note: { en: "Open-air, with a fee.", el: "Υπαίθριο, με χρέωση." },
+      directionsUrl: "https://www.google.com/maps/dir/?api=1&destination=39.6243733,19.9247055",
+    },
+  ],
   social: {
     instagram: "https://www.instagram.com/cavalieriroofgarden/",
     facebook: "https://www.facebook.com/p/Cavalieri-Roof-Garden-100063548092513/",

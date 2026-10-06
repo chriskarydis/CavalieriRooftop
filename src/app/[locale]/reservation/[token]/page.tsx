@@ -3,7 +3,7 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 import { notFound } from "next/navigation";
 import { zonedTime } from "@/domain/time";
 import { SITE } from "@/config/site";
-import { formatLongDate, intlLocale } from "@/i18n/intl-locale";
+import { formatDate, formatLongDate } from "@/i18n/intl-locale";
 import { Link, redirect } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
 import { getReservationByToken } from "@/server/services/guest-reservation";
@@ -36,12 +36,7 @@ export default async function ManageReservationPage({ params, searchParams }: Pa
   const justMoved = (await searchParams).moved === "1";
   const movable = canMove(reservation, settings, new Date());
   const deadline = (instant: Date): string =>
-    new Intl.DateTimeFormat(intlLocale(locale), {
-      dateStyle: "medium",
-      timeStyle: "short",
-      hourCycle: "h23",
-      timeZone: settings.timezone,
-    }).format(instant);
+    `${formatDate(instant, settings.timezone)} ${zonedTime(instant, settings.timezone)}`;
 
   return (
     <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-12">

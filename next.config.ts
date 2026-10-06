@@ -20,7 +20,8 @@ const contentSecurityPolicy = [
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
   `connect-src 'self' https://api.stripe.com${isDevelopment ? " ws:" : ""}`,
-  "frame-src https://js.stripe.com https://hooks.stripe.com",
+  // Google only for the map on the contact page, which loads when the visitor asks for it.
+  "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com",
   "frame-ancestors 'none'",
   "form-action 'self'",
   "base-uri 'self'",

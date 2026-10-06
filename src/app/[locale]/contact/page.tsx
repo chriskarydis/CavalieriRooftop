@@ -5,6 +5,7 @@ import { SITE } from "@/config/site";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
 import { getOpeningSummary } from "@/server/services/opening";
+import { LocationMap } from "@/ui/LocationMap";
 import { OpeningHours } from "@/ui/OpeningHours";
 import { PageHeader } from "@/ui/PageHeader";
 
@@ -63,7 +64,38 @@ export default async function ContactPage({ params }: PageProps<"/[locale]/conta
         </section>
       </div>
 
-      <div className="mt-12 text-center">
+      <section className="mt-16 grid gap-10 md:grid-cols-[3fr_2fr] md:items-start">
+        <LocationMap src={SITE.mapEmbedUrl} title={t("mapTitle")} showLabel={t("showMap")} note={t("mapNote")} />
+        <div>
+          <h2 className="text-3xl">{t("gettingHere")}</h2>
+          <div aria-hidden className="mt-4 h-px w-16 bg-gold" />
+          <p className="mt-4 leading-relaxed text-muted">{t("gettingHereText")}</p>
+          <a href={SITE.directionsUrl} target="_blank" rel="noopener" className="btn btn-primary mt-5">
+            {t("directions2")}
+          </a>
+
+          <h3 className="mt-10 text-2xl">{t("parkingTitle")}</h3>
+          <p className="mt-2 text-sm text-muted">{t("parkingText")}</p>
+          <ul className="mt-4 divide-y divide-line border-y border-line">
+            {SITE.parking.map((park) => (
+              <li key={park.directionsUrl} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
+                <span>
+                  {park.name[locale as "en" | "el"] ?? park.name.en}
+                  <span className="block text-sm text-muted">{park.note[locale as "en" | "el"] ?? park.note.en}</span>
+                </span>
+                <a href={park.directionsUrl} target="_blank" rel="noopener" className="text-link text-xs font-medium tracking-[0.2em] uppercase">
+                  {t("directions2")}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <a href={SITE.parkingSearchUrl} target="_blank" rel="noopener" className="text-link mt-4 inline-block text-sm">
+            {t("parkingAll")}
+          </a>
+        </div>
+      </section>
+
+      <div className="mt-16 text-center">
         <Link href="/reserve" className="btn btn-primary">
           {tSite("reserveCta")}
         </Link>

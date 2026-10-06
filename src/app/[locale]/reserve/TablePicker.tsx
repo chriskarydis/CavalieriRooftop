@@ -59,7 +59,13 @@ export function TablePicker({
    * nothing is held or charged, the form goes to `action`, and prices are
    * replaced by a note that the amount paid stays as it is.
    */
-  move?: { action: (formData: FormData) => Promise<void>; paidCents: number; initialTableId: string | null };
+  move?: {
+    action: (formData: FormData) => Promise<void>;
+    paidCents: number;
+    initialTableId: string | null;
+    /** A member of staff is making the change: no note about the price difference. */
+    staff?: boolean;
+  };
 }) {
   const t = useTranslations("reserve");
   const tMove = useTranslations("move");
@@ -176,8 +182,8 @@ export function TablePicker({
               )}
               {move ? (
                 <>
-                  <p>{tMove("noCharge")}</p>
-                  {price.totalCents < move.paidCents && <p className="notice notice-warn">{tMove("cheaper")}</p>}
+                  <p>{move.staff ? tMove("staffNoCharge") : tMove("noCharge")}</p>
+                  {!move.staff && price.totalCents < move.paidCents && <p className="notice notice-warn">{tMove("cheaper")}</p>}
                 </>
               ) : (
                 <PriceSummary price={price} />

@@ -2,6 +2,7 @@ import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 import type { LiveTableState } from "@/domain/table-state";
 import { zonedTime } from "@/domain/time";
+import { formatDate } from "@/i18n/intl-locale";
 import { localized } from "@/i18n/localized";
 import { requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
@@ -187,7 +188,7 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
                   <strong>{t.has(`notifications.type.${notification.type}`) ? t(`notifications.type.${notification.type}`) : notification.type}</strong>
                   {" · "}
                   {notification.guestName} · {notification.partySize} ·{" "}
-                  {format.dateTime(notification.startsAt, { day: "numeric", month: "short", timeZone: settings.timezone })}{" "}
+                  {formatDate(notification.startsAt, settings.timezone)}{" "}
                   {time(notification.startsAt)} · {notification.tableNumbers.join(" + ") || "—"} · {notification.reference}
                 </li>
               ))}

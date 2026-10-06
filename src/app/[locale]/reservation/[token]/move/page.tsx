@@ -3,10 +3,12 @@ import { gte } from "drizzle-orm";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { SITE } from "@/config/site";
+import { hasPermission } from "@/domain/permissions";
 import { zonedDate, zonedTime } from "@/domain/time";
 import { formatLongDate } from "@/i18n/intl-locale";
 import { localized } from "@/i18n/localized";
 import { Link, redirect } from "@/i18n/navigation";
+import { getStaff } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import * as schema from "@/server/db/schema";
 import { getFloorPlanView } from "@/server/floor/queries";
@@ -32,9 +34,14 @@ export default async function MoveReservationPage({ params, searchParams }: Page
   const found = await getReservationByToken(db, token);
   if (!found) notFound();
   const { reservation, tableNumbers, settings } = found;
-  if (!canMove(reservation, settings, new Date())) return redirect({ href: `/reservation/${token}`, locale });
+  // Staff signed in to the management pages may make the change for the guest, without the guest's limits.
+  const signedIn = await getStaff();
+  const staff = signedIn !== null && hasPermission(signedIn.role, "operations") && ["CONFIRMED", "LATE"].includes(reservation.status);
+  if (!staff && !canMove(reservation, settings, new Date())) return redirect({ href: `/reservation/${token}`, locale });
 
   const query = await searchParams;
+  const requestedGuests = Number(first(query.guests));
+  const guests = staff && Number.isInteger(requestedGuests) && requestedGuests > 0 ? requestedGuests : reservation.partySize;
   const date = first(query.date);
   const time = first(query.time);
   const errorCode = first(query.error);
@@ -49,7 +56,7 @@ export default async function MoveReservationPage({ params, searchParams }: Page
   let slotError: string | null = null;
   if (date && time) {
     try {
-      options = await getMoveOptions(db, reservation.id, { date, time });
+      options = await getMoveOptions(db, reservation.id, { date, time }, new Date(), staff ? { partySize: guests } : undefined);
     } catch (error) {
       if (!(error instanceof BookingError)) throw error;
       slotError = error.code;
@@ -67,6 +74,7 @@ export default async function MoveReservationPage({ params, searchParams }: Page
       />
 
       <div className="mx-auto max-w-5xl">
+        {staff && <p className="notice notice-warn mb-4 font-medium">{t("staffBanner")}</p>}
         <p className="notice notice-info mb-4">
           {t("current", {
             date: formatLongDate(reservation.startsAt, locale, settings.timezone),
@@ -75,7 +83,7 @@ export default async function MoveReservationPage({ params, searchParams }: Page
           })}
         </p>
         <BookingForm
-          key={`${date}-${time}`}
+          key={`${date}-${time}-${guests}`}
           locale={locale}
           today={today}
           opening={{
@@ -87,9 +95,9 @@ export default async function MoveReservationPage({ params, searchParams }: Page
           timeSlots={settings.timeSlots}
           minParty={settings.minOnlineParty}
           maxParty={settings.maxOnlineParty}
-          initial={{ date, time: time ?? zonedTime(reservation.startsAt, settings.timezone), guests: reservation.partySize }}
+          initial={{ date, time: time ?? zonedTime(reservation.startsAt, settings.timezone), guests }}
           path={path}
-          fixedGuests
+          fixedGuests={!staff}
           openOn={zonedDate(reservation.startsAt, settings.timezone)}
         />
         <p className="mt-4 text-center text-sm">
@@ -100,7 +108,7 @@ export default async function MoveReservationPage({ params, searchParams }: Page
       </div>
 
       {(failure || options) && (
-        <ScrollTarget id={RESULTS_ID} watch={`${date}-${time}-${failure}`} className="scroll-mt-6 space-y-8">
+        <ScrollTarget id={RESULTS_ID} watch={`${date}-${time}-${guests}-${failure}`} className="scroll-mt-6 space-y-8">
           {failure && (
             <p role="alert" className="notice notice-error mx-auto max-w-5xl">
               {tReserve.has(`errors.${failure}`) ? tReserve(`errors.${failure}`) : tReserve("errors.GENERIC")}
@@ -109,7 +117,8 @@ export default async function MoveReservationPage({ params, searchParams }: Page
           {options && date && time && (
             <MoveChoices
               options={options}
-              slot={{ date, time, guests: reservation.partySize }}
+              slot={{ date, time, guests }}
+              staff={staff}
               locale={locale}
               token={token}
               paid={format.number(options.paidCents / 100, { style: "currency", currency: "EUR" })}
@@ -134,6 +143,7 @@ async function MoveChoices({
   token,
   paid,
   areaLabels,
+  staff,
 }: {
   options: MoveOptions;
   slot: { date: string; time: string; guests: number };
@@ -141,6 +151,7 @@ async function MoveChoices({
   token: string;
   paid: string;
   areaLabels: Record<string, string>;
+  staff: boolean;
 }) {
   const t = await getTranslations("move");
   const [plan, config] = await Promise.all([getFloorPlanView(), loadFloorConfig(db)]);
@@ -190,7 +201,7 @@ async function MoveChoices({
                 : t("lowerOnly", { category })}
           </p>
         )}
-        <p className="text-sm text-muted">{t("paidNote", { amount: paid })}</p>
+        {!staff && <p className="text-sm text-muted">{t("paidNote", { amount: paid })}</p>}
       </div>
       <TablePicker
         plan={plan}
@@ -202,6 +213,7 @@ async function MoveChoices({
         move={{
           action: moveByGuest.bind(null, token),
           paidCents: options.paidCents,
+          staff,
           initialTableId: ownFree ? ownId : null,
         }}
       />

@@ -146,7 +146,7 @@ test("guest moves a paid reservation to another evening without paying again", a
   await page.getByRole("button", { name: "Move my reservation here" }).click();
 
   await expect(page.getByRole("status").filter({ hasText: "Your reservation has been moved." })).toBeVisible();
-  await expect(page.getByText(new RegExp(`${to} September 2027`))).toBeVisible();
+  await expect(page.getByText(new RegExp(`${to}/09/2027`))).toBeVisible();
   await expect(page.getByText("€70.00").first()).toBeVisible();
   await testInfo.attach("moved", { body: await page.screenshot({ fullPage: true, path: shot(testInfo, "moved") }), contentType: "image/png" });
 

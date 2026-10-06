@@ -158,3 +158,19 @@ Owner's rules, implemented in `src/server/services/reschedule.ts`:
 - After a move the cancellation cut-off counts from the new date.
 - The guest and the restaurant get an email each time, and the dashboard a notification.
 - A manager's block from a date with no time starts at opening time that day, never "now".
+- Staff changing a reservation for a guest (button in the reservations list, which opens the guest's
+  move page while signed in) are not bound by the guest's limits: any time before the reservation,
+  a different number of guests, any free table. Nothing is charged or refunded; the amounts stay as
+  paid and the change is recorded with the staff member's id.
+
+## Dates
+
+- Dates are written dd/mm/yyyy everywhere, in both languages, with the weekday in words where it
+  helps (`formatDate`, `formatLongDate` in `src/i18n/intl-locale.ts`). Native date pickers in the
+  management pages follow the browser's own language setting and cannot be forced.
+
+## Map and parking
+
+- The contact page has a Google map that loads only when the visitor asks for it, so the site sets
+  no third-party cookies by itself. Car parks are listed in `src/config/site.ts`; the owner should
+  confirm and extend the list.

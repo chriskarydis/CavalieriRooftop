@@ -62,11 +62,11 @@ export default async function ManageAppLayout({ children }: { children: React.Re
             {" · "}
             {SITE.street}, {SITE.postalCode} {SITE.city.en} · {SITE.phone}
           </p>
-          <p className="flex flex-wrap gap-x-5">
+          <p className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <a href="/" target="_blank" rel="noopener" className="hover:text-white">
               {t("footer.publicSite")}
             </a>
-            <span>{t("footer.staffOnly")}</span>
+            <span className="rounded border border-gold px-2 py-0.5 font-semibold tracking-[0.18em] text-gold uppercase">{t("footer.staffOnly")}</span>
           </p>
         </div>
       </footer>

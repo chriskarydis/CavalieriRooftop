@@ -112,7 +112,7 @@ test("settings: a closed date stops online booking, in Greek too", async ({ page
   await page.getByLabel("Date", { exact: true }).fill("2027-08-20");
   await page.getByLabel("Reason (optional)").fill("Private event");
   await page.getByRole("button", { name: "Close this date" }).click();
-  await expect(page.getByText("2027-08-20 · Private event")).toBeVisible();
+  await expect(page.getByText("20/08/2027 · Private event")).toBeVisible();
 
   await page.goto("/el/reserve?date=2027-08-20&time=20:00&guests=2");
   await expect(page.getByRole("alert").first()).toContainText("Είμαστε κλειστά εκείνη την ημέρα");

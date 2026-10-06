@@ -123,7 +123,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/manage/
           {closures.map((closure) => (
             <li key={closure.id} className="flex flex-wrap items-center justify-between gap-2">
               <span>
-                {closure.date}
+                {closure.date.split("-").reverse().join("/")}
                 {closure.reason && ` · ${closure.reason}`}
               </span>
               <form action={removeClosedDate.bind(null, closure.id)}>

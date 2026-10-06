@@ -29,7 +29,20 @@ import {
  *  - no money moves. The amount already paid stays as it is: a cheaper table
  *    gives no refund, and a dearer one cannot be picked here.
  * After the move, the cancellation cut-off counts from the new time.
+ *
+ * Staff acting for a guest (on the phone, say) are not bound by the first,
+ * second and last points: they may move a reservation at any time before it,
+ * change the number of guests and pick any free table. Money still does not
+ * move: nothing is charged or refunded, and the amounts stay as paid.
  */
+
+/** Set when a member of staff makes the change for the guest. */
+export interface StaffOverride {
+  /** Staff may change the party size; guests may not. */
+  partySize?: number;
+}
+
+const STAFF_MOVABLE = ["CONFIRMED", "LATE"];
 
 /** Last instant at which the guest may still move the reservation, or null if it cannot be moved at all. */
 export function moveDeadline(reservation: Pick<ReservationRow, "status" | "startsAt" | "totalCents">, settings: Settings): Date | null {
@@ -72,17 +85,20 @@ export async function getMoveOptions(
   reservationId: string,
   slot: { date: string; time: string },
   now = new Date(),
+  staff?: StaffOverride,
 ): Promise<MoveOptions> {
   const [reservation] = await db.select().from(schema.reservation).where(eq(schema.reservation.id, reservationId));
   if (!reservation) throw new BookingError("NOT_FOUND");
   const settings = await loadSettings(db);
-  if (!canMove(reservation, settings, now)) throw new BookingError("TOO_LATE_TO_MOVE");
+  const allowed = staff ? STAFF_MOVABLE.includes(reservation.status) : canMove(reservation, settings, now);
+  if (!allowed) throw new BookingError("TOO_LATE_TO_MOVE");
 
   const [availability, currentTableIds] = await Promise.all([
-    getAvailability(db, { ...slot, partySize: reservation.partySize }, now, { excludeReservationId: reservationId }),
+    getAvailability(db, { ...slot, partySize: staff?.partySize ?? reservation.partySize }, now, { excludeReservationId: reservationId }),
     activeTableIds(db, reservationId),
   ]);
   const paidCents = reservation.totalCents;
+  if (staff) return { ...availability, paidCents, currentTableIds };
   return {
     ...availability,
     tables: availability.tables.map((table) =>
@@ -110,6 +126,7 @@ export async function rescheduleReservation(
   request: { date: string; time: string; selection: Selection },
   actor: Actor = GUEST,
   now = new Date(),
+  staff?: StaffOverride,
 ): Promise<MoveResult> {
   try {
     return await db.transaction(async (tx) => {
@@ -121,9 +138,10 @@ export async function rescheduleReservation(
         .for("update");
       if (!reservation) throw new BookingError("NOT_FOUND");
       const settings = await loadSettings(tx);
-      if (!canMove(reservation, settings, now)) throw new BookingError("TOO_LATE_TO_MOVE");
+      const allowed = staff ? STAFF_MOVABLE.includes(reservation.status) : canMove(reservation, settings, now);
+      if (!allowed) throw new BookingError("TOO_LATE_TO_MOVE");
 
-      const { partySize } = reservation;
+      const partySize = staff?.partySize ?? reservation.partySize;
       const slot = await resolveSlot(tx, { date: request.date, time: request.time, partySize }, settings, now);
       const config = await loadFloorConfig(tx);
       const busy = await busyTables(tx, slot.startsAt, slot.blockEnd, now, reservationId);
@@ -139,7 +157,7 @@ export async function rescheduleReservation(
       const tableById = new Map(config.tables.map((table) => [table.id, table]));
       const mode = selection.mode === "AUTO" ? "AUTO" : "CHOSEN";
       const breakdown = priceCandidate(chosen, mode, partySize, config, settings, tableById);
-      if (breakdown.totalCents > reservation.totalCents) throw new BookingError("COSTS_MORE");
+      if (!staff && breakdown.totalCents > reservation.totalCents) throw new BookingError("COSTS_MORE");
 
       const previous = await tx
         .update(schema.tableAllocation)
@@ -152,29 +170,35 @@ export async function rescheduleReservation(
           period: toRange(slot.startsAt, slot.blockEnd),
           kind: "RESERVATION" as const,
           reservationId,
-          reason: "Moved by the guest",
+          reason: staff ? "Changed by staff" : "Moved by the guest",
         })),
       );
       // The money columns are left exactly as paid.
       await tx
         .update(schema.reservation)
-        .set({ startsAt: slot.startsAt, selectionMode: mode, updatedAt: now })
+        .set({ startsAt: slot.startsAt, partySize, selectionMode: mode, updatedAt: now })
         .where(eq(schema.reservation.id, reservationId));
 
       const numberOf = (ids: string[]): number[] => ids.map((id) => tableById.get(id)?.number ?? 0).sort((a, b) => a - b);
-      const before = { startsAt: reservation.startsAt.toISOString(), tables: numberOf(previous.map((row) => row.tableId)) };
+      const before = {
+        startsAt: reservation.startsAt.toISOString(),
+        tables: numberOf(previous.map((row) => row.tableId)),
+        partySize: reservation.partySize,
+      };
       const after = {
         startsAt: slot.startsAt.toISOString(),
         tables: numberOf(chosen.tableIds),
+        partySize,
+        byStaff: Boolean(staff),
         newPriceCents: breakdown.totalCents,
         paidCents: reservation.totalCents,
       };
       await tx.insert(schema.reservationEvent).values({
         reservationId,
-        fromStatus: "CONFIRMED",
-        toStatus: "CONFIRMED",
+        fromStatus: reservation.status,
+        toStatus: reservation.status,
         actor,
-        reason: `Moved from ${before.startsAt} (table ${before.tables.join("+")}) to ${after.startsAt} (table ${after.tables.join("+")}). Paid ${reservation.totalCents} cents, new table priced ${breakdown.totalCents} cents, nothing charged or refunded`,
+        reason: `${staff ? "Changed by staff" : "Moved by the guest"} from ${before.startsAt} (table ${before.tables.join("+")}, ${before.partySize} guests) to ${after.startsAt} (table ${after.tables.join("+")}, ${partySize} guests). Paid ${reservation.totalCents} cents, new table priced ${breakdown.totalCents} cents, nothing charged or refunded`,
       });
       await audit(tx, { actor, action: "reservation.rescheduled", entityType: "reservation", entityId: reservationId, before, after });
 

@@ -28,6 +28,11 @@ describe("message catalogues", () => {
     }
   });
 
+  // Owner's style rule: no semicolons in English text.
+  it("English text uses no semicolons", () => {
+    for (const key of keys(en)) expect(lookup(en, key).includes(";"), `';' in ${key}`).toBe(false);
+  });
+
   // Owner's style rule for Greek: no ano teleia, and ";" only as a question mark.
   it("Greek text uses no ano teleia and only uses ';' to end a question", () => {
     for (const key of keys(el)) {

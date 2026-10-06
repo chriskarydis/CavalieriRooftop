@@ -37,6 +37,9 @@ phases and documented here as they land.
 
 - No card data touches this application: the card form is served by Stripe.
 - The webhook rejects any request whose Stripe signature does not verify, before reading its body.
+- A reservation is confirmed only on Stripe's word: the signed webhook, or a server-to-server
+  check of the payment when the guest returns from paying. The return address in the browser only
+  triggers that check and is never taken as proof.
 - The amount is taken from the server's price snapshot; a refund can never exceed the payment.
 - Refunds outside the policy require the "refunds" permission and a written reason, and are audited.
 

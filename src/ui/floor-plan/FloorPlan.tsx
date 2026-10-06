@@ -5,6 +5,58 @@ export interface FloorPlanTable extends FloorTableView {
   label: string;
   /** Can be clicked or activated with the keyboard. */
   selectable?: boolean;
+  /** Colour of the table number; white unless the table colour is too pale for it. */
+  numberColor?: string;
+}
+
+const INK = "#1e1b17";
+const CHAIR_DEPTH = 13;
+const CHAIR_GAP = 5;
+const CHAIR_MAX_LENGTH = 44;
+
+interface Chair {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+}
+
+/**
+ * Where to draw the chairs of a table, in the table's own coordinates. Purely
+ * decorative: one chair per standard seat, along the two longer sides of a
+ * rectangular table or evenly around a round one.
+ */
+function chairsFor(table: Pick<FloorTableView, "shape" | "width" | "height" | "capacity">): Chair[] {
+  const { width, height, capacity } = table;
+  if (table.shape === "ROUND") {
+    const radius = Math.max(width, height) / 2 + CHAIR_GAP + CHAIR_DEPTH / 2;
+    return Array.from({ length: capacity }, (_, index) => {
+      const angle = (index / capacity) * 2 * Math.PI;
+      return {
+        x: Math.sin(angle) * radius,
+        y: -Math.cos(angle) * radius,
+        width: 36,
+        height: CHAIR_DEPTH,
+        rotation: (angle * 180) / Math.PI,
+      };
+    });
+  }
+
+  const upright = height > width;
+  const side = upright ? height : width;
+  const offset = (upright ? width : height) / 2 + CHAIR_GAP + CHAIR_DEPTH / 2;
+  const perSide = [Math.ceil(capacity / 2), Math.floor(capacity / 2)];
+  return perSide.flatMap((count, sideIndex) => {
+    const length = Math.min(CHAIR_MAX_LENGTH, side / count - 12);
+    const across = sideIndex === 0 ? -offset : offset;
+    return Array.from({ length: count }, (_, index) => {
+      const along = ((index + 0.5) / count) * side - side / 2;
+      return upright
+        ? { x: across, y: along, width: CHAIR_DEPTH, height: length, rotation: 0 }
+        : { x: along, y: across, width: length, height: CHAIR_DEPTH, rotation: 0 };
+    });
+  });
 }
 
 /**
@@ -32,6 +84,7 @@ export function FloorPlan({
     <svg viewBox={`0 0 ${plan.width} ${plan.height}`} role="group" aria-label={title} className="h-auto w-full">
       {plan.shapes.map((shape, index) => {
         if (shape.type === "rect") {
+          // The edge of the terrace: a pale floor inside a thin gold parapet.
           return (
             <rect
               key={index}
@@ -39,10 +92,10 @@ export function FloorPlan({
               y={shape.y}
               width={shape.width}
               height={shape.height}
-              fill="none"
-              stroke="#1f2a30"
-              strokeWidth={6}
-              strokeDasharray="4 14"
+              rx={16}
+              fill="#fffdf8"
+              stroke="#a8843f"
+              strokeWidth={4}
             />
           );
         }
@@ -52,13 +105,24 @@ export function FloorPlan({
               key={index}
               points={shape.points.map((point) => point.join(",")).join(" ")}
               fill="none"
-              stroke="#1f2a30"
-              strokeWidth={3}
+              stroke="#cdbfa5"
+              strokeWidth={7}
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
           );
         }
         return (
-          <text key={index} x={shape.x} y={shape.y} textAnchor="middle" fontSize={28} fill="#5b6870">
+          <text
+            key={index}
+            x={shape.x}
+            y={shape.y}
+            textAnchor="middle"
+            fontSize={21}
+            letterSpacing={4}
+            fill="#8a7f6d"
+            style={{ textTransform: "uppercase" }}
+          >
             {areaLabels[shape.key] ?? shape.key}
           </text>
         );
@@ -67,7 +131,7 @@ export function FloorPlan({
       {tables.map((table) => {
         const selected = selectedIds.includes(table.id);
         const interactive = Boolean(onSelect && table.selectable);
-        const outline = { stroke: selected ? "#111827" : "none", strokeWidth: selected ? 10 : 0 };
+        const outline = { stroke: selected ? INK : "none", strokeWidth: selected ? 9 : 0 };
         return (
           <g
             key={table.id}
@@ -88,17 +152,33 @@ export function FloorPlan({
             }
             transform={`translate(${table.x} ${table.y}) rotate(${table.rotation})`}
             opacity={table.muted ? 0.35 : 1}
-            className={interactive ? "cursor-pointer outline-none focus-visible:[&>:first-child]:stroke-[#111827] focus-visible:[&>:first-child]:[stroke-width:10]" : undefined}
+            // Tables that can be picked stand slightly off the floor.
+            style={interactive ? { filter: "drop-shadow(0 4px 4px rgb(30 27 23 / 0.22))" } : undefined}
+            className={interactive ? "cursor-pointer outline-none focus-visible:[&>.tabletop]:stroke-[#1e1b17] focus-visible:[&>.tabletop]:[stroke-width:9]" : undefined}
           >
+            {chairsFor(table).map((chair, index) => (
+              <rect
+                key={index}
+                x={-chair.width / 2}
+                y={-chair.height / 2}
+                width={chair.width}
+                height={chair.height}
+                rx={6}
+                fill={selected ? INK : table.color}
+                opacity={selected ? 0.85 : 0.5}
+                transform={`translate(${chair.x} ${chair.y}) rotate(${chair.rotation})`}
+              />
+            ))}
             {table.shape === "ROUND" ? (
-              <ellipse rx={table.width / 2} ry={table.height / 2} fill={table.color} {...outline} />
+              <ellipse className="tabletop" rx={table.width / 2} ry={table.height / 2} fill={table.color} {...outline} />
             ) : (
               <rect
+                className="tabletop"
                 x={-table.width / 2}
                 y={-table.height / 2}
                 width={table.width}
                 height={table.height}
-                rx={22}
+                rx={14}
                 fill={table.color}
                 {...outline}
               />
@@ -106,9 +186,9 @@ export function FloorPlan({
             <text
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={30}
-              fontWeight={700}
-              fill="#ffffff"
+              fontSize={32}
+              fontWeight={600}
+              fill={table.numberColor ?? "#ffffff"}
               transform={`rotate(${-table.rotation})`}
               pointerEvents="none"
             >

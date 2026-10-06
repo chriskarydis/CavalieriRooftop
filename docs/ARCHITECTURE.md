@@ -74,7 +74,9 @@ that, allocating transactions take an advisory lock so they run one at a time an
    for 10 minutes and stores the price as booked.
 3. `/[locale]/reserve/[token]` shows the countdown, collects details, and starts the Stripe payment.
 4. Stripe's webhook (`/api/stripe/webhook`) verifies the signature and calls
-   `handlePaymentSucceeded`, which confirms the reservation. Nothing else can confirm one.
+   `handlePaymentSucceeded`, which confirms the reservation. When the guest returns from paying
+   before the webhook has arrived, the checkout page asks Stripe directly (`reconcilePayment`) and
+   runs the same function. Only Stripe's own answer can confirm a reservation, never the browser.
 5. `notifyReservationEvent` emails the guest and the restaurant and adds a dashboard notification.
 
 ## Languages

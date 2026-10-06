@@ -34,9 +34,10 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
   return (
     <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-12">
       <header className="text-center">
-        <p className="eyebrow">{t("reference", { reference: reservation.reference })}</p>
-        <h1 className="mt-3 text-3xl sm:text-4xl">{t(`status.${reservation.status}`)}</h1>
+        <h1 className="text-3xl sm:text-4xl">{t(`status.${reservation.status}`)}</h1>
         <Ornament className="mt-5" />
+        <p className="eyebrow mt-6">{t("referenceLabel")}</p>
+        <p className="mt-1 font-display text-3xl tracking-wide">{reservation.reference}</p>
       </header>
 
       <section className="panel">

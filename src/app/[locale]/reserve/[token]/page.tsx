@@ -10,7 +10,8 @@ import { stripeConfigured, stripeGateway } from "@/server/payments/gateway";
 import { simulatedPaymentsEnabled } from "@/server/payments/mode";
 import { BookingError } from "@/server/services/context";
 import { getReservationByToken } from "@/server/services/guest-reservation";
-import { getPaymentSummary, preparePayment } from "@/server/services/payments";
+import { notifyReservationEvent } from "@/server/services/notifications";
+import { getPaymentSummary, preparePayment, reconcilePayment } from "@/server/services/payments";
 import { simulatePayment } from "../actions";
 import { PriceSummary } from "../PriceSummary";
 import { AwaitConfirmation } from "./AwaitConfirmation";
@@ -42,6 +43,18 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
     query: { date, time, guests: String(reservation.partySize) },
   };
 
+  // Back from the card form: ask Stripe whether the payment went through instead of waiting for its
+  // webhook. The answer comes from Stripe, not from the address the browser shows.
+  if (reservation.status === "PENDING_PAYMENT" && returnedFromPayment) {
+    const gateway = stripeGateway();
+    const outcome = gateway ? await reconcilePayment(db, gateway, reservation.id) : null;
+    if (outcome?.kind === "CONFIRMED") {
+      if (outcome.firstTime) await notifyReservationEvent(db, reservation.id, "CONFIRMED");
+      return redirect({ href: `/reservation/${token}`, locale });
+    }
+    if (outcome?.kind === "REFUNDED_HOLD_EXPIRED") return redirect({ href: `/reserve/${token}`, locale });
+  }
+
   const payment = await getPaymentSummary(db, reservation.id);
 
   // Paid, but the hold had lapsed and the table was gone: the payment was refunded automatically.
@@ -57,7 +70,7 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
     );
   }
 
-  // Back from the card form: wait for the payment provider to tell the server.
+  // Stripe has not settled the payment yet: keep asking until it has.
   if (reservation.status === "PENDING_PAYMENT" && returnedFromPayment) {
     return (
       <main className="mx-auto w-full max-w-xl space-y-5 px-4 py-12">

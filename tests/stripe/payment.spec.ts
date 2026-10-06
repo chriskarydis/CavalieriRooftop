@@ -73,7 +73,8 @@ test("guest pays by card, the webhook confirms, and cancelling refunds the card"
 
   // Stripe sends the guest back; the page waits until Stripe's webhook has confirmed the reservation.
   await expect(page.getByRole("heading", { name: "Your reservation is confirmed" })).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText(/Reservation CRG-\d+/)).toBeVisible();
+  await expect(page.getByText("Confirmation number")).toBeVisible();
+  await expect(page.getByText(/^CRG-\d+$/)).toBeVisible();
   await page.screenshot({ fullPage: true, path: shot("stripe-confirmed") });
 
   await page.getByText("Cancel reservation", { exact: true }).click();

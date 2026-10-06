@@ -4,8 +4,9 @@ import { notifyReservationEvent } from "@/server/services/notifications";
 import { alreadyProcessed, handlePaymentFailed, handlePaymentSucceeded, markProcessed } from "@/server/services/payments";
 
 /**
- * Stripe webhook: the authoritative source of payment results. A reservation
- * is confirmed here and nowhere else. An event is recorded as processed only
+ * Stripe webhook: the authoritative source of payment results. The checkout
+ * page may ask Stripe the same question first (reconcilePayment); both paths
+ * run the same code and neither trusts the browser. An event is recorded as processed only
  * after it was handled, so a failure makes Stripe deliver it again.
  */
 export async function POST(request: Request): Promise<Response> {

@@ -37,6 +37,8 @@ test("guest chooses a premium table, pays and cancels with a full refund", async
 
   // "Let us choose" is offered at the party-size price with no fee.
   await expect(page.getByRole("heading", { name: "Let us choose the best available table" })).toBeVisible();
+  // The page scrolls down to the results instead of jumping back to the top.
+  await expect(page.getByRole("heading", { name: "Let us choose the best available table" })).toBeInViewport();
 
   // Table 1 is a 4-seat Premium table: 2 guests pay for 4 seats plus the fee, explained up front.
   await page.getByRole("button", { name: /^Table 1, 4 seats, Premium, available/ }).click();
@@ -64,7 +66,8 @@ test("guest chooses a premium table, pays and cancels with a full refund", async
   await page.getByRole("button", { name: /Pay €170.00/ }).click();
 
   await expect(page.getByRole("heading", { name: "Your reservation is confirmed" })).toBeVisible();
-  await expect(page.getByText(/Reservation CRG-\d+/)).toBeVisible();
+  await expect(page.getByText("Confirmation number")).toBeVisible();
+  await expect(page.getByText(/^CRG-\d+$/)).toBeVisible();
   await expect(page.getByText("If you cancel now you will be refunded €170.00")).toBeVisible();
   await testInfo.attach("confirmed", { body: await page.screenshot({ fullPage: true, path: shot(testInfo, "confirmed") }), contentType: "image/png" });
 

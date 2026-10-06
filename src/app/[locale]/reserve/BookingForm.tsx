@@ -1,9 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { closedReason, type OpeningSettings } from "@/domain/time";
 import { intlLocale } from "@/i18n/intl-locale";
+import { useRouter } from "@/i18n/navigation";
+import { RESULTS_ID } from "./results";
 
 interface Month {
   year: number;
@@ -51,6 +53,8 @@ export function BookingForm({
   initial: { date?: string; time?: string; guests: number };
 }) {
   const t = useTranslations("reserve");
+  const router = useRouter();
+  const [searching, startSearch] = useTransition();
   const closed = new Set(closedDates);
   const isOpen = (date: string): boolean => date >= today && closedReason(date, { ...opening, timeSlots }, closed) === null;
   const hasOpenDay = (month: Month): boolean =>
@@ -88,7 +92,21 @@ export function BookingForm({
     "flex h-11 cursor-pointer items-center justify-center border border-line bg-paper text-sm tabular-nums hover:border-ink peer-checked:border-ink peer-checked:bg-ink peer-checked:text-ivory peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gold-deep";
 
   return (
-    <form method="get" className="panel grid gap-x-12 gap-y-8 md:grid-cols-[minmax(0,22rem)_1fr]">
+    <form
+      method="get"
+      // Searches in place so the page does not jump back to the top; without scripts it still works as a plain form.
+      onSubmit={(event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const query = { date, time: String(data.get("time") ?? ""), guests: String(data.get("guests") ?? "") };
+        const unchanged = query.date === initial.date && query.time === initial.time && query.guests === String(initial.guests);
+        if (unchanged) {
+          document.getElementById(RESULTS_ID)?.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+        startSearch(() => router.push({ pathname: "/reserve", query }, { scroll: false }));
+      }}
+      className="panel grid gap-x-12 gap-y-8 md:grid-cols-[minmax(0,22rem)_1fr]">
       <input type="hidden" name="date" value={date} />
 
       <fieldset>
@@ -169,7 +187,7 @@ export function BookingForm({
           <p aria-live="polite" className="mb-3 min-h-7 font-display text-xl">
             {date ? <span className="capitalize">{fullDate.format(at(date))}</span> : <span className="text-muted">{t("chooseDate")}</span>}
           </p>
-          <button type="submit" disabled={!date} className="btn btn-primary w-full">
+          <button type="submit" disabled={!date || searching} className="btn btn-primary w-full">
             {t("check")}
           </button>
         </div>

@@ -17,6 +17,7 @@ import {
   handlePaymentSucceeded,
   markProcessed,
   preparePayment,
+  reconcilePayment,
   refundPayment,
 } from "@/server/services/payments";
 import { openTestDatabase, resetTestDatabase } from "./test-db";
@@ -30,6 +31,8 @@ function fakeGateway() {
     intents: [] as Array<{ id: string; amountCents: number; reservationId: string; receiptEmail: string }>,
     refunds: [] as Array<{ paymentIntentId: string; amountCents: number; idempotencyKey: string }>,
     cancelled: [] as string[],
+    /** Intents Stripe would report as paid. */
+    paid: new Set<string>(),
   };
   const gateway: PaymentGateway = {
     async createPaymentIntent(input) {
@@ -39,6 +42,9 @@ function fakeGateway() {
     },
     async getClientSecret(id) {
       return `${id}_secret`;
+    },
+    async isPaid(id) {
+      return calls.paid.has(id);
     },
     async cancelPaymentIntent(id) {
       calls.cancelled.push(id);
@@ -100,6 +106,30 @@ describe("payments", () => {
         status: "REQUIRES_PAYMENT",
         amountCents: 17000,
         refundedCents: 0,
+      });
+    });
+
+    it("confirms when the guest returns and Stripe says the payment went through, before any webhook", async () => {
+      const held = await heldWithDetails();
+      await preparePayment(ctx.db, stripe.gateway, held.reservationId, NOW);
+
+      // Not paid yet: nothing changes, whatever the browser claims.
+      expect(await reconcilePayment(ctx.db, stripe.gateway, held.reservationId, NOW)).toBeNull();
+      expect(await statusOf(held.reservationId)).toBe("PENDING_PAYMENT");
+
+      stripe.calls.paid.add("pi_test_1");
+      expect(await reconcilePayment(ctx.db, stripe.gateway, held.reservationId, NOW)).toEqual({
+        kind: "CONFIRMED",
+        reservationId: held.reservationId,
+        firstTime: true,
+      });
+      expect(await statusOf(held.reservationId)).toBe("CONFIRMED");
+
+      // The webhook arriving afterwards changes nothing and does not announce the reservation twice.
+      expect(await handlePaymentSucceeded(ctx.db, stripe.gateway, "pi_test_1", NOW)).toEqual({
+        kind: "CONFIRMED",
+        reservationId: held.reservationId,
+        firstTime: false,
       });
     });
 

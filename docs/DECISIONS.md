@@ -139,3 +139,6 @@ access (once the site is nearly ready).
   out-of-season months cannot be picked, and the arrows skip months with no open evening. The server
   still validates every search.
 - The management application keeps its plain working style.
+- English text uses no semicolons (owner's preference, enforced by `messages.test.ts`).
+- After a search the page scrolls smoothly to the results. The floor plan is drawn large, with a
+  chair for every standard seat, and the price stays beside it on wide screens.

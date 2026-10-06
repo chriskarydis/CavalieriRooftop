@@ -9,9 +9,11 @@ import { getFloorPlanView } from "@/server/floor/queries";
 import { getAvailability, type Availability } from "@/server/services/booking";
 import { BookingError, loadFloorConfig, loadSettings } from "@/server/services/context";
 import { PageHeader } from "@/ui/PageHeader";
+import { ScrollTarget } from "@/ui/ScrollTarget";
 import { startHold } from "./actions";
 import { BookingForm } from "./BookingForm";
 import { PriceSummary } from "./PriceSummary";
+import { RESULTS_ID } from "./results";
 import { TablePicker, type PickerGroup, type PickerTable } from "./TablePicker";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/reserve">): Promise<Metadata> {
@@ -49,10 +51,10 @@ export default async function ReservePage({ params, searchParams }: PageProps<"/
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-10 px-4 py-12 sm:px-6 sm:py-16">
+    <main className="mx-auto w-full max-w-6xl space-y-10 px-4 py-12 sm:px-6 sm:py-16">
       <PageHeader eyebrow={tSite("name")} title={t("title")} intro={t("intro")} />
 
-      <div>
+      <div className="mx-auto max-w-5xl">
         <BookingForm
           // A new search starts again from the values in the address.
           key={`${date}-${time}-${guests}`}
@@ -77,14 +79,18 @@ export default async function ReservePage({ params, searchParams }: PageProps<"/
         </p>
       </div>
 
-      {(slotError || errorCode) && (
-        <p role="alert" className="notice notice-error">
-          {t.has(`errors.${slotError ?? errorCode}`) ? t(`errors.${slotError ?? errorCode}`) : t("errors.GENERIC")}
-        </p>
-      )}
+      {(slotError || errorCode || availability) && (
+        <ScrollTarget id={RESULTS_ID} watch={`${date}-${time}-${guests}-${slotError ?? errorCode}`} className="scroll-mt-6 space-y-10">
+          {(slotError || errorCode) && (
+            <p role="alert" className="notice notice-error mx-auto max-w-5xl">
+              {t.has(`errors.${slotError ?? errorCode}`) ? t(`errors.${slotError ?? errorCode}`) : t("errors.GENERIC")}
+            </p>
+          )}
 
-      {availability && date && time && (
-        <AvailabilitySection availability={availability} slot={{ date, time, guests }} locale={locale} />
+          {availability && date && time && (
+            <AvailabilitySection availability={availability} slot={{ date, time, guests }} locale={locale} />
+          )}
+        </ScrollTarget>
       )}
     </main>
   );
@@ -121,13 +127,13 @@ async function AvailabilitySection({
   const nothingFree = !availability.auto && groups.length === 0 && tables.every((table) => table.state !== "AVAILABLE");
 
   if (nothingFree) {
-    return <p className="notice notice-info">{t("errors.NO_AVAILABILITY")}</p>;
+    return <p className="notice notice-info mx-auto max-w-5xl">{t("errors.NO_AVAILABILITY")}</p>;
   }
 
   return (
     <>
       {availability.auto && (
-        <section className="panel grid gap-6 md:grid-cols-2 md:items-center">
+        <section className="panel mx-auto grid max-w-5xl gap-6 md:grid-cols-2 md:items-center">
           <div>
             <p className="eyebrow">{t("autoEyebrow")}</p>
             <h2 className="mt-2 text-2xl sm:text-3xl">{t("autoTitle")}</h2>

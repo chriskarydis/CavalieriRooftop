@@ -5,8 +5,9 @@ import { confirmReservation } from "./booking";
 import { audit, BookingError, SYSTEM, type Actor, type Db } from "./context";
 
 /**
- * Money movement for reservations. The payment provider's webhook is the only
- * thing that confirms a reservation; nothing the browser says is trusted.
+ * Money movement for reservations. A reservation is confirmed only on the
+ * payment provider's word: its webhook, or a direct question to it when the
+ * guest returns before the webhook has arrived. Nothing the browser says is trusted.
  * Every function is safe to call twice with the same input.
  */
 
@@ -100,6 +101,24 @@ export async function handlePaymentSucceeded(
     now,
   });
   return { kind: "REFUNDED_HOLD_EXPIRED", reservationId };
+}
+
+/**
+ * Asks the provider whether a reservation's payment went through and, if it
+ * did, confirms exactly as the webhook would. Used when the guest comes back
+ * from paying, so they are not left waiting if the webhook is slow or lost.
+ * Returns null when there is nothing to do yet.
+ */
+export async function reconcilePayment(
+  db: Db,
+  gateway: PaymentGateway,
+  reservationId: string,
+  now = new Date(),
+): Promise<PaymentOutcome | null> {
+  const [payment] = await db.select().from(schema.payment).where(eq(schema.payment.reservationId, reservationId));
+  if (!payment) return null;
+  if (!(await gateway.isPaid(payment.stripePaymentIntentId))) return null;
+  return handlePaymentSucceeded(db, gateway, payment.stripePaymentIntentId, now);
 }
 
 /** Handles the provider's "payment failed" event. The guest may try again while the hold lasts. */

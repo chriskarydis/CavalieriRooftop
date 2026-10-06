@@ -13,6 +13,8 @@ export interface PaymentGateway {
   }): Promise<{ id: string; clientSecret: string }>;
   /** Client secret of an existing intent, so a returning guest can finish paying. */
   getClientSecret(paymentIntentId: string): Promise<string>;
+  /** Whether Stripe itself reports the intent as paid. Asked server to server; the browser is not involved. */
+  isPaid(paymentIntentId: string): Promise<boolean>;
   /** Stops an unpaid intent from being paid later. Safe to call on an already-cancelled intent. */
   cancelPaymentIntent(paymentIntentId: string): Promise<void>;
   refund(input: {
@@ -80,6 +82,10 @@ export function stripeGateway(): PaymentGateway | null {
       const intent = await api.paymentIntents.retrieve(paymentIntentId);
       if (!intent.client_secret) throw new Error("Stripe returned no client secret");
       return intent.client_secret;
+    },
+
+    async isPaid(paymentIntentId) {
+      return (await api.paymentIntents.retrieve(paymentIntentId)).status === "succeeded";
     },
 
     async cancelPaymentIntent(paymentIntentId) {

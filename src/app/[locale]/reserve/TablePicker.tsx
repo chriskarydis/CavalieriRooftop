@@ -28,8 +28,8 @@ export interface PickerGroup {
 
 const STATE_COLOR: Record<Exclude<PickerState, "AVAILABLE">, string> = {
   HELD: "#e58a1f",
-  TAKEN: "#c9ced2",
-  NOT_SUITABLE: "#dfe3e6",
+  TAKEN: "#d9d2c5",
+  NOT_SUITABLE: "#ebe5d9",
 };
 
 type Choice = { kind: "TABLE"; tableId: string } | { kind: "GROUP"; index: number } | null;
@@ -79,6 +79,7 @@ export function TablePicker({
         color: available ? table.color : STATE_COLOR[entry.state as Exclude<PickerState, "AVAILABLE">],
         muted: false,
         selectable: available,
+        numberColor: available || entry.state === "HELD" ? undefined : "#8a7f6d",
         label: t("tableAria", {
           number: table.number,
           capacity: table.capacity,
@@ -96,8 +97,8 @@ export function TablePicker({
   const available = planTables.filter((table) => table.selectable);
 
   return (
-    <div className="grid gap-8 md:grid-cols-[minmax(0,26rem)_1fr]">
-      <div>
+    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_23rem]">
+      <div className="mx-auto w-full max-w-[42rem]">
         <FloorPlan
           plan={plan}
           tables={planTables}
@@ -106,7 +107,7 @@ export function TablePicker({
           selectedIds={selectedIds}
           onSelect={(tableId) => choose({ kind: "TABLE", tableId })}
         />
-        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
           {plan.categories.map((category) => (
             <li key={category.id} className="flex items-center gap-1.5">
               <span aria-hidden className="inline-block size-3 rounded-sm" style={{ background: category.color }} />
@@ -125,7 +126,7 @@ export function TablePicker({
         </ul>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-5 lg:sticky lg:top-6 lg:self-start">
         {groups.length > 0 && (
           <fieldset>
             <legend className="mb-2 font-display text-xl">{t("groupsTitle")}</legend>
@@ -148,31 +149,6 @@ export function TablePicker({
             </div>
           </fieldset>
         )}
-
-        <details className="border border-line bg-paper p-3">
-          <summary className="cursor-pointer font-medium">{t("listTitle")}</summary>
-          <div className="mt-3 space-y-1">
-            {available.length === 0 && <p className="text-sm text-muted">{t("noTables")}</p>}
-            {available.map((table) => (
-              <label key={table.id} className="flex cursor-pointer items-center gap-3 px-2 py-1.5 hover:bg-ivory">
-                <input
-                  type="radio"
-                  name="seating"
-                  checked={choice?.kind === "TABLE" && choice.tableId === table.id}
-                  onChange={() => choose({ kind: "TABLE", tableId: table.id })}
-                />
-                <span className="flex-1">
-                  {t("listRow", {
-                    number: table.number,
-                    capacity: table.capacity,
-                    category: info.get(table.id)!.categoryName,
-                  })}
-                </span>
-                <span className="tabular-nums">{euro(info.get(table.id)!.price!.totalCents)}</span>
-              </label>
-            ))}
-          </div>
-        </details>
 
         <section ref={panel} aria-live="polite" className="panel">
           {!price ? (
@@ -208,6 +184,31 @@ export function TablePicker({
             </form>
           )}
         </section>
+
+        <details className="border border-line bg-paper p-3">
+          <summary className="cursor-pointer font-medium">{t("listTitle")}</summary>
+          <div className="mt-3 space-y-1">
+            {available.length === 0 && <p className="text-sm text-muted">{t("noTables")}</p>}
+            {available.map((table) => (
+              <label key={table.id} className="flex cursor-pointer items-center gap-3 px-2 py-1.5 hover:bg-ivory">
+                <input
+                  type="radio"
+                  name="seating"
+                  checked={choice?.kind === "TABLE" && choice.tableId === table.id}
+                  onChange={() => choose({ kind: "TABLE", tableId: table.id })}
+                />
+                <span className="flex-1">
+                  {t("listRow", {
+                    number: table.number,
+                    capacity: table.capacity,
+                    category: info.get(table.id)!.categoryName,
+                  })}
+                </span>
+                <span className="tabular-nums">{euro(info.get(table.id)!.price!.totalCents)}</span>
+              </label>
+            ))}
+          </div>
+        </details>
       </div>
     </div>
   );

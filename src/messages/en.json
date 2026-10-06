@@ -88,7 +88,7 @@
     "deposit": "Deposit (minimum spend)",
     "depositDetail": "{seats} × {perPerson}, deducted from your bill",
     "tableFee": "Table selection fee",
-    "tableFeeDetail": "For the table you chose; not deducted from your bill",
+    "tableFeeDetail": "For the table you chose. Not deducted from your bill",
     "total": "Total to pay now",
     "credit": "Deducted from your final bill",
     "capacityNote": "This table seats {seats}. Because your party has {guests}, its minimum spend is {amount}.",
@@ -98,7 +98,7 @@
     "title": "Complete your reservation",
     "countdown": "Your table is held for {time}. Complete the reservation before the time runs out.",
     "expiredTitle": "The hold has expired",
-    "expiredText": "The 10 minutes ran out, so the table was released. You can choose again; if nobody has taken it, the same table is still available.",
+    "expiredText": "The 10 minutes ran out, so the table was released. You can choose again. If nobody has taken it, the same table is still available.",
     "chooseAgain": "Choose a table again",
     "summaryTitle": "Your reservation",
     "date": "Date",
@@ -112,7 +112,7 @@
     "email": "Email",
     "phone": "Mobile phone",
     "notes": "Notes (optional)",
-    "acceptPolicy": "I accept the reservation policy: a full refund if I cancel at least {hours} hours before; no refund after that or if I arrive more than {minutes} minutes late.",
+    "acceptPolicy": "I accept the reservation policy: a full refund if I cancel at least {hours} hours before, and no refund after that or if I arrive more than {minutes} minutes late.",
     "continue": "Continue to payment",
     "detailsError": {
       "INVALID": "Please check your name, email and phone number.",
@@ -126,12 +126,11 @@
     "paying": "Processing…",
     "paymentFailed": "The payment could not be completed. Please check your card details or try another card.",
     "paymentSecure": "Payment is handled by Stripe. We never see or store your card details.",
-    "confirming": "Payment received. We are confirming your reservation; this takes a few seconds.",
+    "confirming": "Payment received. We are confirming your reservation. This takes a few seconds.",
     "refundedTitle": "Your payment was refunded",
     "refundedText": "The payment arrived after the 10 minutes had run out and the table had been released, so we refunded it in full. It can take a few working days to appear on your card. You are welcome to choose a table again."
   },
   "reservation": {
-    "reference": "Reservation {reference}",
     "status": {
       "CONFIRMED": "Your reservation is confirmed",
       "LATE": "We are expecting you",
@@ -155,7 +154,8 @@
     "cancelButton": "Cancel reservation",
     "cancelConfirmText": "This cannot be undone.",
     "cancelConfirm": "Yes, cancel my reservation",
-    "refunded": "{amount} has been refunded to your card. It can take a few working days to appear."
+    "refunded": "{amount} has been refunded to your card. It can take a few working days to appear.",
+    "referenceLabel": "Confirmation number"
   },
   "manage": {
     "title": "Cavalieri Roof Garden · Management",
@@ -229,7 +229,7 @@
       "seating": "Table",
       "name": "Name (optional)",
       "notes": "Notes (optional)",
-      "override": "Seat them anyway; they must leave before the reservation",
+      "override": "Seat them anyway (they must leave before the reservation)",
       "submit": "Seat walk-in",
       "created": "Walk-in seated until {time}."
     },
@@ -264,7 +264,7 @@
       "close": "Close",
       "summary": "From table {from} to table {to}, for the same time.",
       "samePrice": "The price of the new table is the same as what the guest paid.",
-      "priceChange": "The guest paid a table fee of {paidFee} and a deposit of {paidDeposit}. The new table would be {newFee} and {newDeposit}. Nothing is charged or refunded; the difference is recorded.",
+      "priceChange": "The guest paid a table fee of {paidFee} and a deposit of {paidDeposit}. The new table would be {newFee} and {newDeposit}. Nothing is charged or refunded. The difference is recorded.",
       "confirm": "Confirm move"
     },
     "details": {
@@ -320,7 +320,7 @@
     },
     "tables": {
       "title": "Tables",
-      "intro": "Capacity, category and availability of each table. Changes apply to new bookings; existing reservations keep their table and price.",
+      "intro": "Capacity, category and availability of each table. Changes apply to new bookings. Existing reservations keep their table and price.",
       "table": "Table {number}",
       "spare": "Spare",
       "seats": "{capacity} seats (up to {max})",
@@ -529,11 +529,11 @@
     },
     "deposit": {
       "title": "Deposit and minimum spend",
-      "text": "A deposit of {deposit} per person is paid online to confirm the reservation. It is deducted in full from your bill on the day of your visit. The same amount is the minimum spend per person; if your order comes to less, the difference is not refunded or credited. A reservation for one guest is charged as for two."
+      "text": "A deposit of {deposit} per person is paid online to confirm the reservation. It is deducted in full from your bill on the day of your visit. The same amount is the minimum spend per person. If your order comes to less, the difference is not refunded or credited. A reservation for one guest is charged as for two."
     },
     "tables": {
       "title": "Choosing a table",
-      "text": "You may choose your table. Some tables carry a selection fee, shown before you pay; this fee is separate from the deposit and is not deducted from your bill. If you choose a table that seats more guests than a regular table for your party, the minimum spend is that of the table's seats; this too is shown before you pay. If you let us choose, no selection fee applies."
+      "text": "You may choose your table. Some tables carry a selection fee, shown before you pay. This fee is separate from the deposit and is not deducted from your bill. If you choose a table that seats more guests than a regular table for your party, the minimum spend is that of the table's seats. This too is shown before you pay. If you let us choose, no selection fee applies."
     },
     "arrival": {
       "title": "Arrival",
@@ -561,7 +561,7 @@
     },
     "share": {
       "title": "Who receives it",
-      "text": "Card payments are processed by Stripe; your card details go directly to Stripe and never reach us. Our hosting and email providers process data on our behalf. We do not sell your data or use it for advertising."
+      "text": "Card payments are processed by Stripe. Your card details go directly to Stripe and never reach us. Our hosting and email providers process data on our behalf. We do not sell your data or use it for advertising."
     },
     "keep": {
       "title": "How long we keep it",
@@ -610,7 +610,7 @@
     "guest_cancellation": {
       "subject": "Your reservation {reference} was cancelled",
       "heading": "Reservation cancelled",
-      "refund": "Your reservation for {date} at {time} has been cancelled. {refund} will be refunded to the card you paid with; it can take a few working days to appear.",
+      "refund": "Your reservation for {date} at {time} has been cancelled. {refund} will be refunded to the card you paid with. It can take a few working days to appear.",
       "noRefund": "Your reservation for {date} at {time} has been cancelled. As it was cancelled less than {hours} hours before the visit, the amount paid is not refunded."
     },
     "restaurant_new": {
@@ -710,8 +710,8 @@
   },
   "errorPage": {
     "title": "Something went wrong",
-    "text": "The page could not be shown. Nothing was charged. Please try again; if it keeps happening, call us on +30 26610 39041.",
-    "staffText": "The page could not be shown. Try again; if it keeps happening, note the code below for the developer.",
+    "text": "The page could not be shown. Nothing was charged. Please try again. If it keeps happening, call us on +30 26610 39041.",
+    "staffText": "The page could not be shown. Try again. If it keeps happening, note the code below for the developer.",
     "retry": "Try again",
     "reference": "Code: {code}",
     "notFoundTitle": "Page not found",
@@ -725,7 +725,7 @@
   },
   "staff": {
     "title": "Staff accounts",
-    "intro": "Who can sign in to the management pages. Managers run the restaurant; developers can also manage accounts.",
+    "intro": "Who can sign in to the management pages. Managers run the restaurant. Developers can also manage accounts.",
     "you": "you",
     "role": "Role",
     "changeRole": "Change role",

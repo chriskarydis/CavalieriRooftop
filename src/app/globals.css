@@ -1,39 +1,132 @@
 @import "tailwindcss";
 
+/*
+ * Visual identity, taken from the restaurant's logo: gold on warm white,
+ * classical lettering, thin lines instead of boxes.
+ */
 :root {
-  --background: #faf7f2;
-  --foreground: #1f2a30;
+  --ivory: #f8f4ec;
+  --paper: #fffdf8;
+  --ink: #1e1b17;
+  --muted: #655e53;
+  --gold: #a8843f;
+  /* Gold dark enough to read as text on ivory (WCAG AA). */
+  --gold-deep: #76581c;
+  --line: #e2d8c5;
+  --night: #15171a;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  /* Terracotta of Corfu Old Town roofs; white text on it meets WCAG AA. */
-  --color-accent: #a8481f;
-  --color-accent-dark: #8a3a18;
-  /* Ionian sea at dusk. */
+  --color-background: var(--ivory);
+  --color-foreground: var(--ink);
+  --color-ivory: var(--ivory);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+  --color-line: var(--line);
+  --color-night: var(--night);
+  /* Used by the management application's charts. */
   --color-sea: #17323f;
-  --color-sand: #f1e9dc;
-  /* --font-inter and --font-noto are set by next/font on the public pages. */
-  --font-sans: var(--font-inter, system-ui), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-display: var(--font-noto, Georgia), "Times New Roman", serif;
+  /* --font-body and --font-heading are set by next/font on the public pages. */
+  --font-sans: var(--font-body, system-ui), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: var(--font-heading, Georgia), "Times New Roman", serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter, system-ui), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--font-body, system-ui), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* Stand-in for the hero photograph: sky after sunset over the sea. */
-.hero-sunset {
-  background:
-    linear-gradient(to top, rgb(23 50 63 / 0.85) 0%, rgb(23 50 63 / 0) 45%),
-    linear-gradient(to bottom, #1d2f4f 0%, #5b4a78 32%, #c2644a 62%, #eda65a 82%, #f6cf8a 100%);
+@layer base {
+  /* Public pages only: the management application keeps plain system headings. */
+  .site :is(h1, h2, h3) {
+    font-family: var(--font-heading, Georgia), "Times New Roman", serif;
+    font-weight: 400;
+    line-height: 1.2;
+  }
+  /* GFS Didot sets its words far apart; at heading sizes they read better closer. */
+  .site :is(h1, h2, h3, .font-display) {
+    word-spacing: -0.12em;
+  }
+}
+
+@layer components {
+  /* Small spaced capitals above a heading. */
+  .eyebrow {
+    @apply text-xs font-medium tracking-[0.28em] text-gold-deep uppercase;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center px-7 py-3.5 text-center text-[0.8rem] font-medium tracking-[0.16em] uppercase transition-colors;
+  }
+  .btn:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+  .btn-primary {
+    @apply bg-ink text-ivory hover:bg-gold-deep;
+  }
+  .btn-outline {
+    @apply border border-ink text-ink hover:bg-ink hover:text-ivory;
+  }
+  /* On photographs and dark bands. */
+  .btn-light {
+    @apply border border-white/80 text-white hover:bg-white hover:text-ink;
+  }
+  .btn-solid-light {
+    @apply bg-ivory text-ink hover:bg-white;
+  }
+  .btn-danger {
+    @apply bg-red-800 text-white hover:bg-red-900;
+  }
+
+  /* A quiet surface for forms and summaries: paper on ivory, one hairline. */
+  .panel {
+    @apply border border-line bg-paper p-5 sm:p-6;
+  }
+
+  .field {
+    @apply mt-1.5 w-full border border-line bg-paper px-3 py-2.5 text-base font-normal text-ink;
+  }
+
+  .text-link {
+    @apply underline decoration-gold decoration-1 underline-offset-4 hover:text-gold-deep;
+  }
+
+  /* A thin gold line with a small diamond, between sections. */
+  .ornament {
+    @apply mx-auto flex w-40 items-center gap-3 text-gold;
+  }
+  .ornament > span {
+    @apply block size-1.5 rotate-45 bg-gold;
+  }
+  .ornament::before,
+  .ornament::after {
+    content: "";
+    @apply h-px flex-1 bg-gold/60;
+  }
+
+  .notice {
+    @apply border-l-2 px-4 py-3 text-sm;
+  }
+  .notice-info {
+    @apply border-gold bg-paper text-ink;
+  }
+  .notice-warn {
+    @apply border-amber-600 bg-amber-50 text-amber-950;
+  }
+  .notice-error {
+    @apply border-red-700 bg-red-50 text-red-900;
+  }
+  .notice-ok {
+    @apply border-emerald-700 bg-emerald-50 text-emerald-900;
+  }
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-sea);
+  outline: 2px solid var(--gold-deep);
   outline-offset: 2px;
 }
 

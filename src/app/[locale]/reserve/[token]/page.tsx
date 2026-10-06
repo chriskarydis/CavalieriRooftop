@@ -47,10 +47,10 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
   // Paid, but the hold had lapsed and the table was gone: the payment was refunded automatically.
   if (reservation.status === "EXPIRED" && payment?.status === "REFUNDED") {
     return (
-      <main className="mx-auto w-full max-w-xl space-y-4 p-4">
-        <h1 className="text-2xl font-semibold">{t("refundedTitle")}</h1>
+      <main className="mx-auto w-full max-w-xl space-y-5 px-4 py-12">
+        <h1 className="text-3xl sm:text-4xl">{t("refundedTitle")}</h1>
         <p>{t("refundedText")}</p>
-        <Link href={restart} className="inline-block rounded-md bg-stone-900 px-4 py-3 font-medium text-white">
+        <Link href={restart} className="btn btn-primary">
           {t("chooseAgain")}
         </Link>
       </main>
@@ -60,8 +60,8 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
   // Back from the card form: wait for the payment provider to tell the server.
   if (reservation.status === "PENDING_PAYMENT" && returnedFromPayment) {
     return (
-      <main className="mx-auto w-full max-w-xl space-y-4 p-4">
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
+      <main className="mx-auto w-full max-w-xl space-y-5 px-4 py-12">
+        <h1 className="text-3xl sm:text-4xl">{t("title")}</h1>
         <AwaitConfirmation message={t("confirming")} />
       </main>
     );
@@ -69,10 +69,10 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
 
   if (!found.holdActive) {
     return (
-      <main className="mx-auto w-full max-w-xl space-y-4 p-4">
-        <h1 className="text-2xl font-semibold">{t("expiredTitle")}</h1>
+      <main className="mx-auto w-full max-w-xl space-y-5 px-4 py-12">
+        <h1 className="text-3xl sm:text-4xl">{t("expiredTitle")}</h1>
         <p>{t("expiredText")}</p>
-        <Link href={restart} className="inline-block rounded-md bg-stone-900 px-4 py-3 font-medium text-white">
+        <Link href={restart} className="btn btn-primary">
           {t("chooseAgain")}
         </Link>
       </main>
@@ -101,27 +101,27 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl space-y-5 p-4 pb-16">
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
+    <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-12">
+      <h1 className="text-3xl sm:text-4xl">{t("title")}</h1>
       <HoldCountdown expiresAt={reservation.holdExpiresAt!.toISOString()} restartHref={restart} />
 
-      <section className="rounded-xl border border-stone-300 bg-white p-4">
-        <h2 className="mb-2 font-semibold">{t("summaryTitle")}</h2>
+      <section className="panel">
+        <h2 className="mb-3 text-2xl">{t("summaryTitle")}</h2>
         <dl className="mb-4 grid grid-cols-2 gap-y-1 text-sm">
-          <dt className="text-stone-600">{t("date")}</dt>
+          <dt className="text-muted">{t("date")}</dt>
           <dd>{formatLongDate(reservation.startsAt, locale, settings.timezone)}</dd>
-          <dt className="text-stone-600">{t("time")}</dt>
+          <dt className="text-muted">{t("time")}</dt>
           <dd>{time}</dd>
-          <dt className="text-stone-600">{t("guests")}</dt>
+          <dt className="text-muted">{t("guests")}</dt>
           <dd>{reservation.partySize}</dd>
-          <dt className="text-stone-600">{t("table")}</dt>
+          <dt className="text-muted">{t("table")}</dt>
           <dd>
             {tableNumbers.join(" + ")}
             {reservation.selectionMode === "AUTO" && ` (${t("assigned")})`}
           </dd>
           {reservation.tableCategoryName && reservation.tableFeeCents > 0 && (
             <>
-              <dt className="text-stone-600">{t("category")}</dt>
+              <dt className="text-muted">{t("category")}</dt>
               <dd>{reservation.tableCategoryName}</dd>
             </>
           )}
@@ -130,14 +130,14 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
       </section>
 
       {!customer ? (
-        <section className="rounded-xl border border-stone-300 bg-white p-4">
-          <h2 className="mb-3 font-semibold">{t("detailsTitle")}</h2>
+        <section className="panel">
+          <h2 className="mb-3 text-2xl">{t("detailsTitle")}</h2>
           <DetailsForm token={token} locale={locale} refundHours={settings.refundCutoffHours} graceMinutes={settings.graceMinutes} />
         </section>
       ) : (
-        <section className="rounded-xl border border-stone-300 bg-white p-4">
-          <h2 className="mb-2 font-semibold">{t("paymentTitle")}</h2>
-          <p className="mb-3 text-sm text-stone-700">
+        <section className="panel">
+          <h2 className="mb-3 text-2xl">{t("paymentTitle")}</h2>
+          <p className="mb-3 text-sm text-muted">
             {customer.name} · {customer.email}
           </p>
           {clientSecret ? (
@@ -150,13 +150,13 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
             />
           ) : simulatedPaymentsEnabled() ? (
             <form action={simulatePayment.bind(null, token, locale)}>
-              <button type="submit" className="w-full rounded-md bg-stone-900 px-4 py-3 font-medium text-white">
+              <button type="submit" className="btn btn-primary w-full">
                 {t("simulatePay", { amount })}
               </button>
               <p className="mt-2 text-xs text-amber-800">{t("simulateNote")}</p>
             </form>
           ) : (
-            <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">{t("paymentUnavailable")}</p>
+            <p className="notice notice-warn">{t("paymentUnavailable")}</p>
           )}
         </section>
       )}

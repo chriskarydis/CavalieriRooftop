@@ -14,9 +14,9 @@ export default function PublicError({ error, retry }: { error: Error & { digest?
 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-start justify-center gap-4 p-6">
-      <h1 className="font-display text-3xl font-semibold">{t("title")}</h1>
-      <p className="text-stone-700">{t("text")}</p>
-      <button type="button" onClick={() => retry()} className="rounded-md bg-accent px-5 py-3 font-semibold text-white hover:bg-accent-dark">
+      <h1 className="text-4xl">{t("title")}</h1>
+      <p className="text-muted">{t("text")}</p>
+      <button type="button" onClick={() => retry()} className="btn btn-primary">
         {t("retry")}
       </button>
       {error.digest && <p className="text-xs text-stone-500">{t("reference", { code: error.digest })}</p>}

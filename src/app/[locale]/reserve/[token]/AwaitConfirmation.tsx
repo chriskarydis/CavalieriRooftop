@@ -17,7 +17,7 @@ export function AwaitConfirmation({ message }: { message: string }) {
   }, [router]);
 
   return (
-    <p role="status" className="rounded-md bg-orange-50 p-4 text-orange-900">
+    <p role="status" className="notice notice-warn">
       {message}
     </p>
   );

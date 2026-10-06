@@ -23,9 +23,16 @@ test("guest chooses a premium table, pays and cancels with a full refund", async
   const date = DATES[testInfo.project.name];
 
   await page.goto("/en/reserve");
-  await page.getByLabel("Date").fill(date);
-  await page.getByLabel("Time").selectOption("20:00");
-  await page.getByLabel("Guests").selectOption("2");
+  // The calendar opens on the next month with an open evening; walk forward to the booking month.
+  const submit = page.getByRole("button", { name: "See available tables" });
+  await expect(submit).toBeDisabled();
+  while (!(await page.getByText("August 2027", { exact: true }).isVisible())) {
+    await page.getByRole("button", { name: "Next month" }).click();
+  }
+  await page.getByRole("button", { name: new RegExp(`${Number(date.slice(8))} August 2027`) }).click();
+  await page.getByRole("group", { name: "Time" }).getByText("20:00", { exact: true }).click();
+  await page.getByRole("group", { name: "Guests" }).getByText("2", { exact: true }).click();
+  await testInfo.attach("calendar", { body: await page.screenshot({ fullPage: true, path: shot(testInfo, "calendar") }), contentType: "image/png" });
   await page.getByRole("button", { name: "See available tables" }).click();
 
   // "Let us choose" is offered at the party-size price with no fee.

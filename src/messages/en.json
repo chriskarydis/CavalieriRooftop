@@ -16,7 +16,8 @@
     "season": "Open {from} to {to}",
     "hours": "{opens} – {closes}",
     "closedOn": "Closed on {days}",
-    "gallery": "Gallery"
+    "gallery": "Gallery",
+    "follow": "Follow us"
   },
   "floorPlan": {
     "title": "Floor plan",
@@ -76,7 +77,12 @@
       "HOLD_EXPIRED": "The 10 minutes ran out, so the table was released. Please choose again.",
       "GENERIC": "Something went wrong. Please try again.",
       "TOO_MANY_HOLDS": "You have too many reservations in progress. Complete one of them or wait a few minutes."
-    }
+    },
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "chooseDate": "Choose an evening on the calendar",
+    "autoEyebrow": "The simple way",
+    "chooseEyebrow": "Or pick it yourself"
   },
   "price": {
     "deposit": "Deposit (minimum spend)",

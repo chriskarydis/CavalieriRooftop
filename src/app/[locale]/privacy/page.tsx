@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SITE } from "@/config/site";
+import { PageHeader } from "@/ui/PageHeader";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/privacy">): Promise<Metadata> {
   const { locale } = await params;
@@ -20,15 +21,12 @@ export default async function PrivacyPage({ params }: PageProps<"/[locale]/priva
   const t = await getTranslations("privacy");
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-6 p-4 py-10">
-      <header>
-        <h1 className="font-display text-4xl font-semibold">{t("title")}</h1>
-        <p className="mt-2 text-stone-700">{t("intro", { company: SITE.legalName })}</p>
-      </header>
+    <main className="mx-auto w-full max-w-2xl space-y-10 px-4 py-12 sm:px-6 sm:py-16">
+      <PageHeader title={t("title")} intro={t("intro", { company: SITE.legalName })} />
       {SECTIONS.map((section) => (
         <section key={section}>
-          <h2 className="font-display text-2xl font-semibold">{t(`${section}.title`)}</h2>
-          <p className="mt-2 leading-relaxed text-stone-800">{t(`${section}.text`, { email: SITE.email })}</p>
+          <h2 className="text-3xl">{t(`${section}.title`)}</h2>
+          <p className="mt-3 text-lg leading-relaxed text-muted">{t(`${section}.text`, { email: SITE.email })}</p>
         </section>
       ))}
     </main>

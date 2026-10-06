@@ -19,7 +19,7 @@ export function DetailsForm({
 }) {
   const t = useTranslations("checkout");
   const [state, action, pending] = useActionState(submitDetails.bind(null, token, locale), INITIAL);
-  const inputClass = "mt-1 w-full rounded-md border border-stone-300 px-3 py-2";
+  const inputClass = "field";
 
   return (
     <form action={action} className="space-y-3">
@@ -48,7 +48,7 @@ export function DetailsForm({
           {t(`detailsError.${state.error}`)}
         </p>
       )}
-      <button type="submit" disabled={pending} className="w-full rounded-md bg-stone-900 px-4 py-3 font-medium text-white disabled:opacity-60">
+      <button type="submit" disabled={pending} className="btn btn-primary w-full">
         {t("continue")}
       </button>
     </form>

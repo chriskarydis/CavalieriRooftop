@@ -125,3 +125,17 @@ access (once the site is nearly ready).
 - **Translatable database content** is stored as JSON per locale (`{ "en": ..., "el": ... }`), so a
   new language needs no schema change.
 - **Repository** lives at `C:\dev\cavalieri-roof-garden`, outside OneDrive.
+
+## Visual identity (public site)
+
+- Taken from the restaurant's logo: gold on warm white, near-black text, thin gold lines, square buttons
+  with spaced capitals. Tokens and shared classes (`btn`, `panel`, `eyebrow`, `notice`, `field`) live in
+  `src/app/globals.css`.
+- Headings in GFS Didot, the classic face of Greek book printing; body text in Commissioner. Both were
+  chosen because their Greek is as good as their Latin.
+- Languages are switched with flags (drawn as SVG so they look the same on every device); the language
+  name remains the accessible label.
+- Booking starts from our own calendar (`reserve/BookingForm.tsx`): closed weekdays, closed dates and
+  out-of-season months cannot be picked, and the arrows skip months with no open evening. The server
+  still validates every search.
+- The management application keeps its plain working style.

@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
+import { gte } from "drizzle-orm";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { zonedDate } from "@/domain/time";
 import { localized } from "@/i18n/localized";
 import { db } from "@/server/db/client";
+import * as schema from "@/server/db/schema";
 import { getFloorPlanView } from "@/server/floor/queries";
 import { getAvailability, type Availability } from "@/server/services/booking";
 import { BookingError, loadFloorConfig, loadSettings } from "@/server/services/context";
+import { PageHeader } from "@/ui/PageHeader";
 import { startHold } from "./actions";
+import { BookingForm } from "./BookingForm";
 import { PriceSummary } from "./PriceSummary";
 import { TablePicker, type PickerGroup, type PickerTable } from "./TablePicker";
 
@@ -23,6 +27,7 @@ export default async function ReservePage({ params, searchParams }: PageProps<"/
   setRequestLocale(locale);
   const query = await searchParams;
   const t = await getTranslations("reserve");
+  const tSite = await getTranslations("site");
   const settings = await loadSettings(db);
 
   const date = first(query.date);
@@ -30,6 +35,7 @@ export default async function ReservePage({ params, searchParams }: PageProps<"/
   const guests = Number(first(query.guests) ?? 2);
   const errorCode = first(query.error);
   const today = zonedDate(new Date(), settings.timezone);
+  const closures = await db.select({ date: schema.closure.date }).from(schema.closure).where(gte(schema.closure.date, today));
 
   let availability: Availability | null = null;
   let slotError: string | null = null;
@@ -42,49 +48,37 @@ export default async function ReservePage({ params, searchParams }: PageProps<"/
     }
   }
 
-  const inputClass = "mt-1 w-full rounded-md border border-stone-300 bg-white px-3 py-2";
-
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-8 p-4 pb-16">
-      <header>
-        <h1 className="text-3xl font-semibold">{t("title")}</h1>
-        <p className="mt-1 text-stone-700">{t("intro")}</p>
-      </header>
+    <main className="mx-auto w-full max-w-5xl space-y-10 px-4 py-12 sm:px-6 sm:py-16">
+      <PageHeader eyebrow={tSite("name")} title={t("title")} intro={t("intro")} />
 
-      <form method="get" className="grid gap-4 rounded-xl border border-stone-300 bg-white p-4 sm:grid-cols-4 sm:items-end">
-        <label className="text-sm font-medium">
-          {t("date")}
-          <input type="date" name="date" required min={today} defaultValue={date ?? ""} className={inputClass} />
-        </label>
-        <label className="text-sm font-medium">
-          {t("time")}
-          <select name="time" required defaultValue={time ?? "20:00"} className={inputClass}>
-            {settings.timeSlots.map((slot) => (
-              <option key={slot}>{slot}</option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm font-medium">
-          {t("guests")}
-          <select name="guests" defaultValue={guests} className={inputClass}>
-            {Array.from({ length: settings.maxOnlineParty - settings.minOnlineParty + 1 }, (_, index) => (
-              <option key={index}>{settings.minOnlineParty + index}</option>
-            ))}
-          </select>
-        </label>
-        <button type="submit" className="rounded-md bg-stone-900 px-4 py-2.5 font-medium text-white">
-          {t("check")}
-        </button>
-        <p className="text-sm text-stone-600 sm:col-span-4">
+      <div>
+        <BookingForm
+          // A new search starts again from the values in the address.
+          key={`${date}-${time}-${guests}`}
+          locale={locale}
+          today={today}
+          opening={{
+            seasonStart: settings.seasonStart,
+            seasonEnd: settings.seasonEnd,
+            closedWeekdays: settings.closedWeekdays,
+          }}
+          closedDates={closures.map((row) => row.date)}
+          timeSlots={settings.timeSlots}
+          minParty={settings.minOnlineParty}
+          maxParty={settings.maxOnlineParty}
+          initial={{ date, time, guests }}
+        />
+        <p className="mt-4 text-center text-sm text-muted">
           {t("largeParty", { max: settings.maxOnlineParty })}{" "}
-          <a href="tel:+302661039041" className="underline">
+          <a href="tel:+302661039041" className="text-link">
             {t("contactUs")}
           </a>
         </p>
-      </form>
+      </div>
 
       {(slotError || errorCode) && (
-        <p role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-red-900">
+        <p role="alert" className="notice notice-error">
           {t.has(`errors.${slotError ?? errorCode}`) ? t(`errors.${slotError ?? errorCode}`) : t("errors.GENERIC")}
         </p>
       )}
@@ -127,24 +121,27 @@ async function AvailabilitySection({
   const nothingFree = !availability.auto && groups.length === 0 && tables.every((table) => table.state !== "AVAILABLE");
 
   if (nothingFree) {
-    return <p className="rounded-md border border-stone-300 bg-white p-4">{t("errors.NO_AVAILABILITY")}</p>;
+    return <p className="notice notice-info">{t("errors.NO_AVAILABILITY")}</p>;
   }
 
   return (
     <>
       {availability.auto && (
-        <section className="rounded-xl border border-stone-300 bg-white p-4">
-          <h2 className="text-xl font-semibold">{t("autoTitle")}</h2>
-          <p className="mb-3 text-stone-700">{t("autoText")}</p>
-          <div className="max-w-sm">
+        <section className="panel grid gap-6 md:grid-cols-2 md:items-center">
+          <div>
+            <p className="eyebrow">{t("autoEyebrow")}</p>
+            <h2 className="mt-2 text-2xl sm:text-3xl">{t("autoTitle")}</h2>
+            <p className="mt-2 text-muted">{t("autoText")}</p>
+          </div>
+          <div>
             <PriceSummary price={availability.auto.price} />
-            <form action={startHold} className="mt-3">
+            <form action={startHold} className="mt-4">
               <input type="hidden" name="locale" value={locale} />
               <input type="hidden" name="date" value={slot.date} />
               <input type="hidden" name="time" value={slot.time} />
               <input type="hidden" name="guests" value={slot.guests} />
               <input type="hidden" name="mode" value="AUTO" />
-              <button type="submit" className="w-full rounded-md bg-stone-900 px-4 py-3 font-medium text-white">
+              <button type="submit" className="btn btn-outline w-full">
                 {t("autoButton")}
               </button>
             </form>
@@ -153,8 +150,11 @@ async function AvailabilitySection({
       )}
 
       <section>
-        <h2 className="text-xl font-semibold">{t("chooseTitle")}</h2>
-        <p className="mb-4 text-stone-700">{t("chooseText")}</p>
+        <div className="mb-8 text-center">
+          <p className="eyebrow">{t("chooseEyebrow")}</p>
+          <h2 className="mt-2 text-3xl sm:text-4xl">{t("chooseTitle")}</h2>
+          <p className="mt-2 text-muted">{t("chooseText")}</p>
+        </div>
         <TablePicker
           plan={plan}
           tables={tables}

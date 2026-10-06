@@ -27,7 +27,7 @@ export function PriceSummary({ price }: { price: PriceSummaryData }) {
         <div className="flex justify-between gap-4">
           <dt>
             {t("deposit")}
-            <span className="block text-xs text-stone-600">
+            <span className="block text-xs text-muted">
               {t("depositDetail", { seats: price.billableSeats, perPerson: euro(price.depositPerPersonCents) })}
             </span>
           </dt>
@@ -37,27 +37,27 @@ export function PriceSummary({ price }: { price: PriceSummaryData }) {
           <div className="flex justify-between gap-4">
             <dt>
               {t("tableFee")}
-              <span className="block text-xs text-stone-600">{t("tableFeeDetail")}</span>
+              <span className="block text-xs text-muted">{t("tableFeeDetail")}</span>
             </dt>
             <dd className="tabular-nums">{euro(price.tableFeeCents)}</dd>
           </div>
         )}
-        <div className="flex justify-between gap-4 border-t border-stone-200 pt-2 text-base font-semibold">
+        <div className="flex justify-between gap-4 border-t border-line pt-2 text-base font-semibold">
           <dt>{t("total")}</dt>
           <dd className="tabular-nums">{euro(price.totalCents)}</dd>
         </div>
-        <div className="flex justify-between gap-4 text-stone-700">
+        <div className="flex justify-between gap-4 text-muted">
           <dt>{t("credit")}</dt>
           <dd className="tabular-nums">{euro(price.creditTowardBillCents)}</dd>
         </div>
       </dl>
       {price.billableBasis === "TABLE_CAPACITY" && (
-        <p className="rounded-md bg-amber-50 p-2 text-amber-900">
+        <p className="notice notice-warn">
           {t("capacityNote", { seats: price.billableSeats, guests: price.partySize, amount: euro(price.depositCents) })}
         </p>
       )}
       {price.billableBasis === "MINIMUM_GUESTS" && (
-        <p className="rounded-md bg-amber-50 p-2 text-amber-900">
+        <p className="notice notice-warn">
           {t("minimumGuestsNote", { seats: price.billableSeats, amount: euro(price.depositCents) })}
         </p>
       )}

@@ -5,8 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-
-const NAMES: Record<string, string> = { en: "English", el: "Ελληνικά" };
+import { Flag, LANGUAGE_NAMES } from "./Flag";
 
 function Links({ label }: { label: string }) {
   const pathname = usePathname();
@@ -14,17 +13,19 @@ function Links({ label }: { label: string }) {
   const current = useLocale();
 
   return (
-    <nav aria-label={label} className="flex gap-2 text-sm">
+    <nav aria-label={label} className="flex items-center gap-2">
       {routing.locales.map((locale) => (
         <Link
           key={locale}
           href={{ pathname, query }}
           locale={locale}
           lang={locale}
+          aria-label={LANGUAGE_NAMES[locale]}
+          title={LANGUAGE_NAMES[locale]}
           aria-current={locale === current ? "true" : undefined}
-          className={locale === current ? "font-semibold underline" : "text-stone-600 hover:underline"}
+          className={`p-1 transition-opacity ${locale === current ? "border-b border-gold-deep" : "border-b border-transparent opacity-60 hover:opacity-100"}`}
         >
-          {NAMES[locale]}
+          <Flag locale={locale} />
         </Link>
       ))}
     </nav>

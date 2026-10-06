@@ -38,11 +38,11 @@ function PayForm({ returnUrl, payLabel }: { returnUrl: string; payLabel: string 
       <button
         type="submit"
         disabled={!stripe || pending}
-        className="w-full rounded-md bg-accent px-4 py-3 font-medium text-white hover:bg-accent-dark disabled:opacity-60"
+        className="btn btn-primary w-full"
       >
         {pending ? t("paying") : payLabel}
       </button>
-      <p className="text-xs text-stone-600">{t("paymentSecure")}</p>
+      <p className="text-xs text-muted">{t("paymentSecure")}</p>
     </form>
   );
 }

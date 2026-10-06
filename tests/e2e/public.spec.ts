@@ -13,7 +13,7 @@ test("home page presents the restaurant and leads to booking, in both languages"
   const data = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent()) ?? "{}");
   expect(data).toMatchObject({ "@type": "Restaurant", name: "Cavalieri Roof Garden", telephone: "+30 26610 39041" });
 
-  await page.getByRole("link", { name: "Choose your table" }).click();
+  await page.getByRole("link", { name: "Choose your table" }).first().click();
   await expect(page).toHaveURL(/\/en\/reserve$/);
 
   await page.goto("/el");

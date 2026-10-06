@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { Inter, Noto_Serif_Display } from "next/font/google";
+import { Commissioner, GFS_Didot } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -12,8 +12,15 @@ import { routing } from "@/i18n/routing";
 import { LocaleSwitcher } from "@/ui/LocaleSwitcher";
 import "../globals.css";
 
-const sans = Inter({ subsets: ["latin", "greek"], variable: "--font-inter", display: "swap" });
-const display = Noto_Serif_Display({ subsets: ["latin", "greek"], variable: "--font-noto", display: "swap" });
+// GFS Didot is the classic face of Greek book printing and Commissioner was drawn with Greek from
+// the start, so the two languages look equally at home.
+const body = Commissioner({ subsets: ["latin", "greek"], variable: "--font-body", display: "swap" });
+const heading = GFS_Didot({
+  weight: "400",
+  subsets: ["latin", "greek"],
+  variable: "--font-heading",
+  display: "swap",
+});
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -41,35 +48,42 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
   const t = await getTranslations("site");
-  const footerLink = "hover:underline";
+  const navLink = "border-b border-transparent pb-1 hover:border-gold";
+  const footerLink = "hover:text-white hover:underline hover:decoration-gold hover:underline-offset-4";
+  const footerTitle = "mb-4 text-xs font-medium tracking-[0.28em] text-gold uppercase";
 
   return (
-    <html lang={locale} className={`${sans.variable} ${display.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">
+    <html lang={locale} className={`${body.variable} ${heading.variable} h-full antialiased`}>
+      <body className="site flex min-h-full flex-col">
         <NextIntlClientProvider>
           <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:p-3">
             {t("skipToContent")}
           </a>
-          <header className="border-b border-stone-200 bg-white">
-            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
+          <header className="border-b border-line bg-paper">
+            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-3 px-4 py-3 sm:px-6 md:gap-x-8">
               <Link href="/" className="shrink-0">
                 <Image src={logo} alt={t("name")} priority sizes="170px" className="h-12 w-auto sm:h-14" />
               </Link>
-              <nav aria-label={t("mainNav")} className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                <Link href="/menu" className="hover:underline">
+              <nav
+                aria-label={t("mainNav")}
+                className="order-3 flex w-full items-center justify-center gap-x-7 text-xs font-medium tracking-[0.2em] uppercase md:order-2 md:w-auto md:flex-1 md:justify-end"
+              >
+                <Link href="/menu" className={navLink}>
                   {t("menu")}
                 </Link>
-                <Link href="/gallery" className="hover:underline">
+                <Link href="/gallery" className={navLink}>
                   {t("gallery")}
                 </Link>
-                <Link href="/contact" className="hover:underline">
+                <Link href="/contact" className={navLink}>
                   {t("contact")}
                 </Link>
+              </nav>
+              <div className="order-2 flex items-center gap-2 sm:gap-4 md:order-3">
                 <LocaleSwitcher label={t("language")} />
-                <Link href="/reserve" className="rounded-md bg-accent px-3 py-2 font-medium whitespace-nowrap text-white hover:bg-accent-dark">
+                <Link href="/reserve" className="btn btn-primary px-3 py-2.5 text-[0.65rem] tracking-[0.1em] whitespace-nowrap sm:px-5 sm:text-[0.7rem] sm:tracking-[0.16em]">
                   {t("reserveCta")}
                 </Link>
-              </nav>
+              </div>
             </div>
           </header>
 
@@ -77,11 +91,11 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
             {children}
           </div>
 
-          <footer className="mt-12 bg-sea text-stone-100">
-            <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm sm:grid-cols-3">
+          <footer className="bg-night text-stone-300">
+            <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 text-sm sm:grid-cols-3 sm:px-6">
               <div>
-                <Image src={logoOnDark} alt={t("name")} sizes="200px" className="h-14 w-auto" />
-                <address className="mt-2 not-italic leading-relaxed">
+                <Image src={logoOnDark} alt={t("name")} sizes="200px" className="h-16 w-auto" />
+                <address className="mt-5 leading-relaxed not-italic">
                   {SITE.street}, {SITE.postalCode} {SITE.city[locale as "en" | "el"]}
                   <br />
                   <a href={SITE.phoneHref} className={footerLink}>
@@ -94,7 +108,10 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
                 </address>
               </div>
               <nav aria-label={t("footerNav")}>
-                <ul className="space-y-1.5">
+                <p aria-hidden className={footerTitle}>
+                  {t("footerNav")}
+                </p>
+                <ul className="space-y-2">
                   <li>
                     <Link href="/reserve" className={footerLink}>
                       {t("reserveCta")}
@@ -127,25 +144,30 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
                   </li>
                 </ul>
               </nav>
-              <ul className="space-y-1.5">
-                <li>
-                  <a href={SITE.social.instagram} rel="noopener" className={footerLink}>
-                    Instagram
-                  </a>
-                </li>
-                <li>
-                  <a href={SITE.social.facebook} rel="noopener" className={footerLink}>
-                    Facebook
-                  </a>
-                </li>
-                <li>
-                  <a href={SITE.social.tripadvisor} rel="noopener" className={footerLink}>
-                    Tripadvisor
-                  </a>
-                </li>
-              </ul>
+              <div>
+                <p aria-hidden className={footerTitle}>
+                  {t("follow")}
+                </p>
+                <ul className="space-y-2">
+                  <li>
+                    <a href={SITE.social.instagram} rel="noopener" className={footerLink}>
+                      Instagram
+                    </a>
+                  </li>
+                  <li>
+                    <a href={SITE.social.facebook} rel="noopener" className={footerLink}>
+                      Facebook
+                    </a>
+                  </li>
+                  <li>
+                    <a href={SITE.social.tripadvisor} rel="noopener" className={footerLink}>
+                      Tripadvisor
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
-            <p className="border-t border-white/15 px-4 py-4 text-center text-xs text-stone-300">
+            <p className="border-t border-white/10 px-4 py-5 text-center text-xs tracking-wide text-stone-400">
               {SITE.legalName} · {t("vat", { number: SITE.vatNumber })}
             </p>
           </footer>

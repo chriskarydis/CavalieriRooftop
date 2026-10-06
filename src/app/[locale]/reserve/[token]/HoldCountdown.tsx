@@ -43,9 +43,7 @@ export function HoldCountdown({
   return (
     <p
       role="timer"
-      className={`rounded-md p-3 text-sm font-medium ${
-        remaining <= WARNING_SECONDS ? "bg-red-50 text-red-900" : "bg-orange-50 text-orange-900"
-      }`}
+      className={`notice font-medium ${remaining <= WARNING_SECONDS ? "notice-error" : "notice-warn"}`}
     >
       {t("countdown", { time: `${minutes}:${seconds}` })}
     </p>

@@ -7,6 +7,7 @@ import { redirect } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
 import { getReservationByToken } from "@/server/services/guest-reservation";
 import { getPaymentSummary } from "@/server/services/payments";
+import { Ornament } from "@/ui/PageHeader";
 import { cancelByGuest } from "../../reserve/actions";
 import { PriceSummary } from "../../reserve/PriceSummary";
 
@@ -31,25 +32,26 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
   const payment = await getPaymentSummary(db, reservation.id);
 
   return (
-    <main className="mx-auto w-full max-w-xl space-y-5 p-4 pb-16">
-      <header>
-        <p className="text-sm text-stone-600">{t("reference", { reference: reservation.reference })}</p>
-        <h1 className="text-2xl font-semibold">{t(`status.${reservation.status}`)}</h1>
+    <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-12">
+      <header className="text-center">
+        <p className="eyebrow">{t("reference", { reference: reservation.reference })}</p>
+        <h1 className="mt-3 text-3xl sm:text-4xl">{t(`status.${reservation.status}`)}</h1>
+        <Ornament className="mt-5" />
       </header>
 
-      <section className="rounded-xl border border-stone-300 bg-white p-4">
+      <section className="panel">
         <dl className="mb-4 grid grid-cols-2 gap-y-1 text-sm">
-          <dt className="text-stone-600">{t("date")}</dt>
+          <dt className="text-muted">{t("date")}</dt>
           <dd>{formatLongDate(reservation.startsAt, locale, settings.timezone)}</dd>
-          <dt className="text-stone-600">{t("time")}</dt>
+          <dt className="text-muted">{t("time")}</dt>
           <dd>{zonedTime(reservation.startsAt, settings.timezone)}</dd>
-          <dt className="text-stone-600">{t("guests")}</dt>
+          <dt className="text-muted">{t("guests")}</dt>
           <dd>{reservation.partySize}</dd>
-          <dt className="text-stone-600">{t("table")}</dt>
+          <dt className="text-muted">{t("table")}</dt>
           <dd>{tableNumbers.join(" + ")}</dd>
           {customer && (
             <>
-              <dt className="text-stone-600">{t("name")}</dt>
+              <dt className="text-muted">{t("name")}</dt>
               <dd>{customer.name}</dd>
             </>
           )}
@@ -66,14 +68,14 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
           }}
         />
         {payment && payment.refundedCents > 0 && (
-          <p className="mt-3 rounded-md bg-emerald-50 p-2 text-sm text-emerald-900">
+          <p className="notice notice-ok mt-3">
             {t("refunded", { amount: euro(payment.refundedCents) })}
           </p>
         )}
       </section>
 
-      <section className="rounded-xl border border-stone-300 bg-white p-4 text-sm">
-        <h2 className="mb-2 text-base font-semibold">{t("policyTitle")}</h2>
+      <section className="panel text-sm">
+        <h2 className="mb-3 text-2xl">{t("policyTitle")}</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>{t("policyGrace", { minutes: settings.graceMinutes })}</li>
           <li>{t("policyRefund", { hours: settings.refundCutoffHours })}</li>
@@ -82,8 +84,8 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
       </section>
 
       {canCancel && (
-        <section className="rounded-xl border border-stone-300 bg-white p-4">
-          <h2 className="mb-2 font-semibold">{t("cancelTitle")}</h2>
+        <section className="panel">
+          <h2 className="mb-3 text-2xl">{t("cancelTitle")}</h2>
           <p className="mb-3 text-sm">
             {cancellation.refundable
               ? t("cancelRefund", {
@@ -98,12 +100,12 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
               : t("cancelNoRefund", { hours: settings.refundCutoffHours })}
           </p>
           <details>
-            <summary className="cursor-pointer rounded-md border border-red-300 px-4 py-2 text-center font-medium text-red-800">
+            <summary className="btn cursor-pointer border border-red-800 text-red-800 hover:bg-red-50">
               {t("cancelButton")}
             </summary>
             <form action={cancelByGuest.bind(null, token, locale)} className="mt-3">
               <p className="mb-2 text-sm">{t("cancelConfirmText")}</p>
-              <button type="submit" className="w-full rounded-md bg-red-700 px-4 py-3 font-medium text-white">
+              <button type="submit" className="btn btn-danger w-full">
                 {t("cancelConfirm")}
               </button>
             </form>

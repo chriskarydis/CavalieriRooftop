@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { connection } from "next/server";
 import { SITE } from "@/config/site";
+import { PageHeader } from "@/ui/PageHeader";
 import { db } from "@/server/db/client";
 import { getOpeningSummary } from "@/server/services/opening";
 
@@ -33,18 +34,15 @@ export default async function PolicyPage({ params }: PageProps<"/[locale]/policy
   };
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-6 p-4 py-10">
-      <header>
-        <h1 className="font-display text-4xl font-semibold">{t("title")}</h1>
-        <p className="mt-2 text-stone-700">{t("intro")}</p>
-      </header>
+    <main className="mx-auto w-full max-w-2xl space-y-10 px-4 py-12 sm:px-6 sm:py-16">
+      <PageHeader title={t("title")} intro={t("intro")} />
       {SECTIONS.map((section) => (
         <section key={section}>
-          <h2 className="font-display text-2xl font-semibold">{t(`${section}.title`)}</h2>
-          <p className="mt-2 leading-relaxed text-stone-800">{t(`${section}.text`, values)}</p>
+          <h2 className="text-3xl">{t(`${section}.title`)}</h2>
+          <p className="mt-3 text-lg leading-relaxed text-muted">{t(`${section}.text`, values)}</p>
         </section>
       ))}
-      <footer className="border-t border-stone-200 pt-4 text-sm text-stone-600">
+      <footer className="border-t border-line pt-5 text-sm text-muted">
         {SITE.legalName} · {SITE.street}, {SITE.postalCode} {SITE.city.en} · {SITE.phone} · {SITE.email}
       </footer>
     </main>

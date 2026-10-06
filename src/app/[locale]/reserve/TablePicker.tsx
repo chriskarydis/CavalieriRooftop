@@ -96,7 +96,7 @@ export function TablePicker({
   const available = planTables.filter((table) => table.selectable);
 
   return (
-    <div className="grid gap-6 md:grid-cols-[minmax(0,26rem)_1fr]">
+    <div className="grid gap-8 md:grid-cols-[minmax(0,26rem)_1fr]">
       <div>
         <FloorPlan
           plan={plan}
@@ -128,11 +128,11 @@ export function TablePicker({
       <div className="space-y-5">
         {groups.length > 0 && (
           <fieldset>
-            <legend className="mb-2 font-semibold">{t("groupsTitle")}</legend>
-            <p className="mb-2 text-sm text-stone-600">{t("groupsNote")}</p>
+            <legend className="mb-2 font-display text-xl">{t("groupsTitle")}</legend>
+            <p className="mb-2 text-sm text-muted">{t("groupsNote")}</p>
             <div className="space-y-2">
               {groups.map((group, index) => (
-                <label key={group.combinationIds.join()} className="flex cursor-pointer items-center gap-3 rounded-lg border border-stone-300 bg-white p-3 has-checked:border-stone-900">
+                <label key={group.combinationIds.join()} className="flex cursor-pointer items-center gap-3 border border-line bg-paper p-3 has-checked:border-ink">
                   <input
                     type="radio"
                     name="seating"
@@ -141,7 +141,7 @@ export function TablePicker({
                   />
                   <span>
                     {t("groupLabel", { tables: group.tableNumbers.join(" + "), capacity: group.capacity })}
-                    <span className="block text-sm text-stone-600">{euro(group.price.totalCents)}</span>
+                    <span className="block text-sm text-muted">{euro(group.price.totalCents)}</span>
                   </span>
                 </label>
               ))}
@@ -149,12 +149,12 @@ export function TablePicker({
           </fieldset>
         )}
 
-        <details className="rounded-lg border border-stone-300 bg-white p-3">
+        <details className="border border-line bg-paper p-3">
           <summary className="cursor-pointer font-medium">{t("listTitle")}</summary>
           <div className="mt-3 space-y-1">
-            {available.length === 0 && <p className="text-sm text-stone-600">{t("noTables")}</p>}
+            {available.length === 0 && <p className="text-sm text-muted">{t("noTables")}</p>}
             {available.map((table) => (
-              <label key={table.id} className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-stone-100">
+              <label key={table.id} className="flex cursor-pointer items-center gap-3 px-2 py-1.5 hover:bg-ivory">
                 <input
                   type="radio"
                   name="seating"
@@ -174,18 +174,18 @@ export function TablePicker({
           </div>
         </details>
 
-        <section ref={panel} aria-live="polite" className="rounded-xl border border-stone-300 bg-white p-4">
+        <section ref={panel} aria-live="polite" className="panel">
           {!price ? (
-            <p className="text-stone-600">{t("selectPrompt")}</p>
+            <p className="text-muted">{t("selectPrompt")}</p>
           ) : (
             <form action={startHold} className="space-y-3">
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-2xl">
                 {selectedGroup
                   ? t("groupLabel", { tables: selectedGroup.tableNumbers.join(" + "), capacity: selectedGroup.capacity })
                   : t("tableTitle", { number: selectedPlanTable?.number ?? 0 })}
               </h3>
               {selectedTable && selectedPlanTable && (
-                <p className="text-sm text-stone-600">
+                <p className="text-sm text-muted">
                   {t("tableMeta", { capacity: selectedPlanTable.capacity, category: selectedTable.categoryName })}
                   {selectedTable.viewDescription && ` · ${selectedTable.viewDescription}`}
                 </p>
@@ -201,10 +201,10 @@ export function TablePicker({
               ) : (
                 <input type="hidden" name="tableId" value={choice?.kind === "TABLE" ? choice.tableId : ""} />
               )}
-              <button type="submit" className="w-full rounded-md bg-stone-900 px-4 py-3 font-medium text-white">
+              <button type="submit" className="btn btn-primary w-full">
                 {t("holdButton")}
               </button>
-              <p className="text-xs text-stone-600">{t("holdNote")}</p>
+              <p className="text-xs text-muted">{t("holdNote")}</p>
             </form>
           )}
         </section>

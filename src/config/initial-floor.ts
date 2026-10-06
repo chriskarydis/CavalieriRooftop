@@ -90,56 +90,66 @@ export interface InitialTable {
   notes?: string;
 }
 
-const tall = { shape: "RECT", width: 76, height: 148 } as const;
-const wide = { shape: "RECT", width: 163, height: 93 } as const;
-const square = { shape: "RECT", width: 95, height: 95 } as const;
+// One size per kind of table: every table for two is the same square and every
+// table for four the same rectangle, standing upright or lying on its side.
+const tall = { shape: "RECT", width: 76, height: 140 } as const;
+const wide = { shape: "RECT", width: 140, height: 76 } as const;
+const square = { shape: "RECT", width: 90, height: 90 } as const;
 /** A table for two whose guests sit left and right. */
 const sideways = { ...square, rotation: 90 } as const;
+
+// The grid the tables stand on, so that gaps are even. Columns A to E run across
+// the top of the terrace; F, G and E are the three columns beside the bar.
+const A = 128, B = 368, C = 608, D = 847, E = 1087;
+const F = 793, G = 940;
+const ROW = { premium: 148, two: 306, twoBehind: 439, wall: 597 } as const;
+// The right-hand column from table 11 down to table 23, evenly spaced.
+const RIGHT = [362, 543, 725, 907, 1095, 1291, 1487, 1682, 1871] as const;
 
 export const SPARE_TABLE_NUMBER = 99;
 
 export const TABLES: readonly InitialTable[] = [
-  { number: 1, capacity: 4, maxCapacity: 5, category: "PREMIUM", ...tall, x: 110, y: 165 },
-  { number: 2, capacity: 4, category: "PREMIUM", ...tall, x: 364, y: 165 },
-  { number: 3, capacity: 4, category: "PREMIUM", ...tall, x: 618, y: 165 },
-  { number: 4, capacity: 4, category: "PREMIUM", ...tall, x: 872, y: 165 },
-  { number: 5, capacity: 4, maxCapacity: 5, category: "PREMIUM", ...tall, x: 1076, y: 165 },
-  { number: 6, capacity: 4, category: "PREFERRED", ...wide, x: 148, y: 370 },
-  { number: 7, capacity: 2, category: "STANDARD", ...sideways, x: 364, y: 464 },
-  { number: 70, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: 364, y: 328 },
-  { number: 8, capacity: 2, category: "STANDARD", ...sideways, x: 618, y: 464 },
-  { number: 80, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: 618, y: 328 },
-  { number: 9, capacity: 2, category: "STANDARD", ...sideways, x: 872, y: 464 },
-  { number: 90, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: 872, y: 328 },
-  { number: 11, capacity: 4, category: "PREFERRED", ...wide, x: 1076, y: 370 },
-  { number: 12, capacity: 4, category: "PREFERRED", ...tall, height: 138, x: 110, y: 615 },
-  { number: 13, capacity: 4, category: "STANDARD", ...tall, height: 138, x: 280, y: 615 },
-  { number: 14, capacity: 4, category: "STANDARD", ...tall, height: 138, x: 460, y: 615 },
-  { number: 15, capacity: 6, category: "STANDARD", shape: "ROUND", width: 148, height: 148, x: 766, y: 615 },
-  { number: 16, capacity: 4, category: "PREFERRED", ...wide, x: 1076, y: 526 },
-  { number: 17, capacity: 4, maxCapacity: 5, category: "STANDARD", ...wide, x: 1076, y: 681 },
-  { number: 18, capacity: 4, maxCapacity: 5, category: "STANDARD", ...wide, x: 1076, y: 837 },
-  { number: 19, capacity: 2, category: "STANDARD", ...square, x: 1118, y: 978 },
-  { number: 20, capacity: 2, category: "STANDARD", ...square, x: 1118, y: 1240 },
-  { number: 21, capacity: 2, category: "STANDARD", ...square, x: 1118, y: 1462 },
-  { number: 22, capacity: 2, category: "STANDARD", ...square, x: 1118, y: 1686 },
-  { number: 23, capacity: 5, category: "STANDARD", ...wide, x: 1076, y: 1862 },
-  { number: 24, capacity: 5, category: "STANDARD", ...wide, x: 872, y: 1862 },
-  { number: 25, capacity: 2, category: "STANDARD", ...square, x: 956, y: 1686 },
-  { number: 26, capacity: 2, category: "STANDARD", ...square, x: 956, y: 1462 },
-  { number: 27, capacity: 2, category: "STANDARD", ...square, x: 956, y: 1240 },
-  { number: 28, capacity: 2, category: "STANDARD", ...square, x: 956, y: 978 },
+  { number: 1, capacity: 4, maxCapacity: 5, category: "PREMIUM", ...tall, x: A, y: ROW.premium },
+  { number: 2, capacity: 4, category: "PREMIUM", ...tall, x: B, y: ROW.premium },
+  { number: 3, capacity: 4, category: "PREMIUM", ...tall, x: C, y: ROW.premium },
+  { number: 4, capacity: 4, category: "PREMIUM", ...tall, x: D, y: ROW.premium },
+  { number: 5, capacity: 4, maxCapacity: 5, category: "PREMIUM", ...tall, x: E, y: ROW.premium },
+  { number: 6, capacity: 4, category: "PREFERRED", ...wide, x: 150, y: RIGHT[0] },
+  { number: 7, capacity: 2, category: "STANDARD", ...sideways, x: B, y: ROW.twoBehind },
+  { number: 70, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: B, y: ROW.two },
+  { number: 8, capacity: 2, category: "STANDARD", ...sideways, x: C, y: ROW.twoBehind },
+  { number: 80, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: C, y: ROW.two },
+  { number: 9, capacity: 2, category: "STANDARD", ...sideways, x: D, y: ROW.twoBehind },
+  { number: 90, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: D, y: ROW.two },
+  { number: 11, capacity: 4, category: "PREFERRED", ...wide, x: E, y: RIGHT[0] },
+  { number: 12, capacity: 4, category: "PREFERRED", ...tall, x: A, y: ROW.wall },
+  { number: 13, capacity: 4, category: "STANDARD", ...tall, x: B, y: ROW.wall },
+  { number: 14, capacity: 4, category: "STANDARD", ...tall, x: C, y: ROW.wall },
+  { number: 15, capacity: 6, category: "STANDARD", shape: "ROUND", width: 140, height: 140, x: D, y: ROW.wall },
+  { number: 16, capacity: 4, category: "PREFERRED", ...wide, x: E, y: RIGHT[1] },
+  { number: 17, capacity: 4, maxCapacity: 5, category: "STANDARD", ...wide, x: E, y: RIGHT[2] },
+  { number: 18, capacity: 4, maxCapacity: 5, category: "STANDARD", ...wide, x: E, y: RIGHT[3] },
+  { number: 19, capacity: 2, category: "STANDARD", ...square, x: E, y: RIGHT[4] },
+  { number: 20, capacity: 2, category: "STANDARD", ...square, x: E, y: RIGHT[5] },
+  { number: 21, capacity: 2, category: "STANDARD", ...square, x: E, y: RIGHT[6] },
+  { number: 22, capacity: 2, category: "STANDARD", ...square, x: E, y: RIGHT[7] },
+  { number: 23, capacity: 5, category: "STANDARD", ...wide, x: E, y: RIGHT[8] },
+  { number: 24, capacity: 5, category: "STANDARD", ...wide, x: 867, y: RIGHT[8] },
+  { number: 25, capacity: 2, category: "STANDARD", ...square, x: G, y: RIGHT[7] },
+  { number: 26, capacity: 2, category: "STANDARD", ...square, x: G, y: RIGHT[6] },
+  { number: 27, capacity: 2, category: "STANDARD", ...square, x: G, y: RIGHT[5] },
+  { number: 28, capacity: 2, category: "STANDARD", ...square, x: G, y: RIGHT[4] },
   {
-    number: 29, capacity: 3, category: "STANDARD", ...square, x: 794, y: 1686,
+    number: 29, capacity: 3, category: "STANDARD", ...square, x: F, y: RIGHT[7],
     autoAssignable: false,
     notes: "Mostly used for drinks. Guests may choose it online; never auto-assigned.",
   },
-  { number: 30, capacity: 2, category: "STANDARD", ...square, x: 794, y: 1462 },
-  { number: 31, capacity: 2, category: "STANDARD", ...square, x: 794, y: 1240 },
-  { number: 32, capacity: 2, category: "STANDARD", ...square, x: 794, y: 978 },
-  { number: 33, capacity: 2, category: "STANDARD", ...square, x: 872, y: 809 },
+  { number: 30, capacity: 2, category: "STANDARD", ...square, x: F, y: RIGHT[6] },
+  { number: 31, capacity: 2, category: "STANDARD", ...square, x: F, y: RIGHT[5] },
+  { number: 32, capacity: 2, category: "STANDARD", ...square, x: F, y: RIGHT[4] },
+  { number: 33, capacity: 2, category: "STANDARD", ...square, x: G, y: RIGHT[3] },
   {
-    number: SPARE_TABLE_NUMBER, capacity: 2, category: "STANDARD", ...square, x: 920, y: 681,
+    number: SPARE_TABLE_NUMBER, capacity: 2, category: "STANDARD", ...square, x: G, y: RIGHT[2],
     status: "INACTIVE", onlineBookable: false, autoAssignable: false, isSpare: true,
     notes: "Spare table kept in storage. Activate to join it to table 17.",
   },

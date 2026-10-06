@@ -24,15 +24,22 @@ interface Chair {
 
 /**
  * Where to draw the chairs of a table, in the table's own coordinates. Purely
- * decorative: one chair per standard seat, along the two longer sides of a
- * rectangular table or evenly around a round one.
+ * decorative: one chair per seat, counting the extra chair a table can take.
+ * A rectangular table has its chairs along the two longer sides; when the
+ * number is odd, the last one stands at the head of the table, at the end
+ * that faces the middle of the terrace (the other end is usually the parapet).
+ * A round table has them evenly around it.
  */
-function chairsFor(table: Pick<FloorTableView, "shape" | "width" | "height" | "capacity">): Chair[] {
-  const { width, height, capacity } = table;
+function chairsFor(
+  table: Pick<FloorTableView, "shape" | "width" | "height" | "capacity" | "maxCapacity" | "x" | "y" | "rotation">,
+  centre: { x: number; y: number },
+): Chair[] {
+  const { width, height } = table;
+  const seats = Math.max(table.capacity, table.maxCapacity);
   if (table.shape === "ROUND") {
     const radius = Math.max(width, height) / 2 + CHAIR_GAP + CHAIR_DEPTH / 2;
-    return Array.from({ length: capacity }, (_, index) => {
-      const angle = (index / capacity) * 2 * Math.PI;
+    return Array.from({ length: seats }, (_, index) => {
+      const angle = (index / seats) * 2 * Math.PI;
       return {
         x: Math.sin(angle) * radius,
         y: -Math.cos(angle) * radius,
@@ -45,18 +52,35 @@ function chairsFor(table: Pick<FloorTableView, "shape" | "width" | "height" | "c
 
   const upright = height > width;
   const side = upright ? height : width;
-  const offset = (upright ? width : height) / 2 + CHAIR_GAP + CHAIR_DEPTH / 2;
-  const perSide = [Math.ceil(capacity / 2), Math.floor(capacity / 2)];
-  return perSide.flatMap((count, sideIndex) => {
-    const length = Math.min(CHAIR_MAX_LENGTH, side / count - 12);
-    const across = sideIndex === 0 ? -offset : offset;
-    return Array.from({ length: count }, (_, index) => {
-      const along = ((index + 0.5) / count) * side - side / 2;
+  const end = upright ? width : height;
+  const offset = end / 2 + CHAIR_GAP + CHAIR_DEPTH / 2;
+  const atHead = seats % 2;
+  const perSide = (seats - atHead) / 2;
+  const length = Math.min(CHAIR_MAX_LENGTH, side / Math.max(perSide, 1) - 12);
+  const chairs: Chair[] = [-offset, offset].flatMap((across) =>
+    Array.from({ length: perSide }, (_, index) => {
+      const along = ((index + 0.5) / perSide) * side - side / 2;
       return upright
         ? { x: across, y: along, width: CHAIR_DEPTH, height: length, rotation: 0 }
         : { x: along, y: across, width: length, height: CHAIR_DEPTH, rotation: 0 };
-    });
-  });
+    }),
+  );
+
+  if (atHead) {
+    // Which end faces the middle of the terrace, allowing for a turned table.
+    const turn = (-table.rotation * Math.PI) / 180;
+    const dx = centre.x - table.x;
+    const dy = centre.y - table.y;
+    const towards = upright ? dx * Math.sin(turn) + dy * Math.cos(turn) : dx * Math.cos(turn) - dy * Math.sin(turn);
+    const along = (towards < 0 ? -1 : 1) * (side / 2 + CHAIR_GAP + CHAIR_DEPTH / 2);
+    const headLength = Math.min(CHAIR_MAX_LENGTH, end - 12);
+    chairs.push(
+      upright
+        ? { x: 0, y: along, width: headLength, height: CHAIR_DEPTH, rotation: 0 }
+        : { x: along, y: 0, width: CHAIR_DEPTH, height: headLength, rotation: 0 },
+    );
+  }
+  return chairs;
 }
 
 /**
@@ -157,7 +181,7 @@ export function FloorPlan({
             style={interactive ? { filter: "drop-shadow(0 4px 4px rgb(30 27 23 / 0.22))" } : undefined}
             className={interactive ? "cursor-pointer outline-none focus-visible:[&>.tabletop]:stroke-[#1e1b17] focus-visible:[&>.tabletop]:[stroke-width:9]" : undefined}
           >
-            {chairsFor(table).map((chair, index) => (
+            {chairsFor(table, { x: plan.width / 2, y: plan.height / 2 }).map((chair, index) => (
               <rect
                 key={index}
                 x={-chair.width / 2}

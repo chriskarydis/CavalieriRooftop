@@ -27,7 +27,11 @@ export type BookingErrorCode =
   | "UPCOMING_RESERVATION"
   | "NOT_FOUND"
   | "HOLD_EXPIRED"
-  | "DETAILS_REQUIRED";
+  | "DETAILS_REQUIRED"
+  /** Too close to the reservation (or not confirmed) for the guest to move it. */
+  | "TOO_LATE_TO_MOVE"
+  /** The chosen table costs more than the guest has paid. */
+  | "COSTS_MORE";
 
 /** A business-rule failure that is safe to show to the person who caused it. */
 export class BookingError extends Error {
@@ -130,7 +134,14 @@ export type BusyKind = "HELD" | "TAKEN";
  * Tables with a live allocation overlapping [start, end). Holds past their
  * expiry are ignored even if they have not been cleaned up yet.
  */
-export async function busyTables(tx: Tx | Db, start: Date, end: Date, now: Date): Promise<Map<string, BusyKind>> {
+export async function busyTables(
+  tx: Tx | Db,
+  start: Date,
+  end: Date,
+  now: Date,
+  /** A reservation whose own tables do not count, for moving it. */
+  excludeReservationId?: string,
+): Promise<Map<string, BusyKind>> {
   const rows = await tx
     .select({ tableId: schema.tableAllocation.tableId, kind: schema.tableAllocation.kind })
     .from(schema.tableAllocation)
@@ -139,6 +150,7 @@ export async function busyTables(tx: Tx | Db, start: Date, end: Date, now: Date)
         isNull(schema.tableAllocation.releasedAt),
         sql`${schema.tableAllocation.period} && ${toRange(start, end)}::tstzrange`,
         sql`(${schema.tableAllocation.kind} <> 'HOLD' OR ${schema.tableAllocation.expiresAt} > ${now.toISOString()}::timestamptz)`,
+        excludeReservationId ? sql`${schema.tableAllocation.reservationId} IS DISTINCT FROM ${excludeReservationId}::uuid` : undefined,
       ),
     );
   const busy = new Map<string, BusyKind>();

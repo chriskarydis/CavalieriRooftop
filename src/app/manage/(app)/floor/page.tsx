@@ -37,6 +37,8 @@ export default async function FloorEditorPage({ searchParams }: PageProps<"/mana
           id: table.id,
           number: table.number,
           isSpare: table.isSpare,
+          capacity: table.capacity,
+          maxCapacity: table.maxCapacity,
           active: !table.muted,
           color: table.color,
           x: table.x,

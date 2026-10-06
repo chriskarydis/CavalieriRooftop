@@ -19,6 +19,7 @@ import { cancelReservation } from "@/server/services/floor-service";
 import { getReservationByToken } from "@/server/services/guest-reservation";
 import { notifyReservationEvent } from "@/server/services/notifications";
 import { refundPayment } from "@/server/services/payments";
+import { rescheduleReservation } from "@/server/services/reschedule";
 
 const holdSchema = z.object({
   locale: z.string(),
@@ -125,6 +126,29 @@ export async function simulatePayment(token: string, locale: string): Promise<vo
   if (!result.confirmed) return redirect({ href: `/reserve/${token}`, locale });
   if (!result.alreadyConfirmed) await notifyReservationEvent(db, found.reservation.id, "CONFIRMED");
   return redirect({ href: `/reservation/${token}`, locale });
+}
+
+/** Guest moves their confirmed reservation to another date or time, from their manage link. */
+export async function moveByGuest(token: string, formData: FormData): Promise<void> {
+  const input = holdSchema.parse(Object.fromEntries(formData));
+  const found = await getReservationByToken(db, token);
+  if (!found) return redirect({ href: "/reserve", locale: input.locale });
+
+  let selection: Selection;
+  if (input.mode === "TABLE" && input.tableId) selection = { mode: "TABLE", tableId: input.tableId };
+  else if (input.mode === "GROUP" && input.combinationIds) {
+    selection = { mode: "GROUP", combinationIds: z.array(z.string().uuid()).parse(input.combinationIds.split(",")) };
+  } else selection = { mode: "AUTO" };
+
+  try {
+    await rescheduleReservation(db, found.reservation.id, { date: input.date, time: input.time, selection });
+  } catch (error) {
+    if (!(error instanceof BookingError)) throw error;
+    const query = new URLSearchParams({ date: input.date, time: input.time, error: error.code });
+    return redirect({ href: `/reservation/${token}/move?${query}`, locale: input.locale });
+  }
+  await notifyReservationEvent(db, found.reservation.id, "RESCHEDULED");
+  return redirect({ href: `/reservation/${token}?moved=1`, locale: input.locale });
 }
 
 /** Guest cancels from their manage link. The refund, if due, is issued by the payment layer. */

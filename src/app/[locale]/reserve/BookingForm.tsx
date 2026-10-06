@@ -41,6 +41,9 @@ export function BookingForm({
   minParty,
   maxParty,
   initial,
+  path = "/reserve",
+  fixedGuests = false,
+  openOn,
 }: {
   locale: string;
   /** Today's date at the restaurant, as YYYY-MM-DD. */
@@ -51,6 +54,12 @@ export function BookingForm({
   minParty: number;
   maxParty: number;
   initial: { date?: string; time?: string; guests: number };
+  /** Where the search goes; the booking page unless the form is reused elsewhere. */
+  path?: string;
+  /** The party size cannot be changed (moving an existing reservation). */
+  fixedGuests?: boolean;
+  /** A date whose month the calendar shows first when none is chosen yet. */
+  openOn?: string;
 }) {
   const t = useTranslations("reserve");
   const router = useRouter();
@@ -72,6 +81,7 @@ export function BookingForm({
   const [date, setDate] = useState(initial.date && isOpen(initial.date) ? initial.date : "");
   const [month, setMonth] = useState<Month>(() => {
     if (date) return monthOf(date);
+    if (openOn && hasOpenDay(monthOf(openOn))) return monthOf(openOn);
     const current = monthOf(today);
     return hasOpenDay(current) ? current : (seek(current, 1) ?? current);
   });
@@ -104,7 +114,7 @@ export function BookingForm({
           document.getElementById(RESULTS_ID)?.scrollIntoView({ behavior: "smooth", block: "start" });
           return;
         }
-        startSearch(() => router.push({ pathname: "/reserve", query }, { scroll: false }));
+        startSearch(() => router.push(`${path}?${new URLSearchParams(query)}`, { scroll: false }));
       }}
       className="panel grid gap-x-12 gap-y-8 md:grid-cols-[minmax(0,22rem)_1fr]">
       <input type="hidden" name="date" value={date} />
@@ -171,7 +181,8 @@ export function BookingForm({
           </div>
         </fieldset>
 
-        <fieldset>
+        {fixedGuests && <input type="hidden" name="guests" value={initial.guests} />}
+        <fieldset hidden={fixedGuests} disabled={fixedGuests}>
           <legend className="eyebrow">{t("guests")}</legend>
           <div className="mt-3 grid grid-cols-6 gap-2 sm:grid-cols-8">
             {Array.from({ length: maxParty - minParty + 1 }, (_, index) => minParty + index).map((count) => (

@@ -7,13 +7,24 @@ import { loadSettings, type Db, type ReservationRow, type Settings } from "./con
 export interface GuestReservation {
   reservation: ReservationRow;
   customer: { name: string; email: string; phone: string | null } | null;
-  /** Numbers of every table ever allocated to this reservation, ascending. */
+  /** The reservation's tables, ascending: those it holds now, or its last ones once it is over. */
   tableNumbers: number[];
   settings: Settings;
   /** The table is still held for this unpaid reservation. */
   holdActive: boolean;
   /** What cancelling right now would refund. */
   cancellation: CancellationOutcome;
+}
+
+/**
+ * The tables a reservation has now. Once every allocation is released (the
+ * reservation was cancelled or is over), the tables it had last.
+ */
+export function currentTableNumbers(rows: Array<{ number: number; releasedAt: Date | null }>): number[] {
+  const active = rows.filter((row) => row.releasedAt === null);
+  if (active.length > 0) return [...new Set(active.map((row) => row.number))].sort((a, b) => a - b);
+  const last = Math.max(0, ...rows.map((row) => row.releasedAt?.getTime() ?? 0));
+  return [...new Set(rows.filter((row) => row.releasedAt?.getTime() === last).map((row) => row.number))].sort((a, b) => a - b);
 }
 
 /**
@@ -31,7 +42,7 @@ export async function getReservationByToken(db: Db, token: string, now = new Dat
 
   const [tables, settings] = await Promise.all([
     db
-      .selectDistinct({ number: schema.diningTable.number })
+      .select({ number: schema.diningTable.number, releasedAt: schema.tableAllocation.releasedAt })
       .from(schema.tableAllocation)
       .innerJoin(schema.diningTable, eq(schema.tableAllocation.tableId, schema.diningTable.id))
       .where(eq(schema.tableAllocation.reservationId, row.reservation.id))
@@ -44,7 +55,7 @@ export async function getReservationByToken(db: Db, token: string, now = new Dat
     customer: row.customer
       ? { name: row.customer.name, email: row.customer.email, phone: row.customer.phone }
       : null,
-    tableNumbers: tables.map((table) => table.number),
+    tableNumbers: currentTableNumbers(tables),
     settings,
     holdActive:
       row.reservation.status === "PENDING_PAYMENT" &&

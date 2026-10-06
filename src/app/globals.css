@@ -157,6 +157,10 @@ body {
   outline: 2px solid var(--gold-deep);
   outline-offset: 2px;
 }
+/* Tables on a floor plan show focus with a dark edge on the table itself. */
+svg g:focus-visible {
+  outline: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
   * {

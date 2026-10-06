@@ -3,12 +3,15 @@
 import { useTranslations } from "next-intl";
 import { useRef, useState, useTransition } from "react";
 import type { FloorShape } from "@/server/db/schema";
+import { FloorBackdrop, TableGlyph } from "@/ui/floor-plan/FloorPlan";
 import { saveFloorLayoutAction } from "../floor-actions";
 
 export interface EditorTable {
   id: string;
   number: number;
   isSpare: boolean;
+  capacity: number;
+  maxCapacity: number;
   active: boolean;
   color: string;
   x: number;
@@ -113,27 +116,12 @@ export function FloorEditor({
     );
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,30rem)_1fr]">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,34rem)_1fr] 2xl:grid-cols-[minmax(0,44rem)_1fr]">
       <div className="rounded-lg border border-line bg-white shadow-sm p-3">
         <svg ref={svg} viewBox={`0 0 ${plan.width} ${plan.height}`} role="group" aria-label={t("title")} className="h-auto w-full touch-none select-none">
-          {plan.shapes.map((shape, index) => {
-            if (shape.type === "rect") {
-              return (
-                <rect key={index} x={shape.x} y={shape.y} width={shape.width} height={shape.height} fill="none" stroke="#1f2a30" strokeWidth={6} strokeDasharray="4 14" />
-              );
-            }
-            if (shape.type === "polyline") {
-              return <polyline key={index} points={shape.points.map((point) => point.join(",")).join(" ")} fill="none" stroke="#1f2a30" strokeWidth={3} />;
-            }
-            return (
-              <text key={index} transform={`translate(${shape.x} ${shape.y}) rotate(${shape.rotation ?? 0})`} textAnchor="middle" fontSize={shape.style === "view" ? 22 : 28} fill="#5b6870">
-                {areaLabels[shape.key] ?? shape.key}
-              </text>
-            );
-          })}
+          <FloorBackdrop shapes={plan.shapes} areaLabels={areaLabels} />
           {tables.map((table) => {
             const isSelected = table.id === selectedId;
-            const outline = { stroke: isSelected ? "#111827" : "none", strokeWidth: isSelected ? 10 : 0 };
             return (
               <g
                 key={table.id}
@@ -143,7 +131,7 @@ export function FloorEditor({
                 aria-label={t("tableAria", { number: table.isSpare ? "S" : String(table.number) })}
                 transform={`translate(${table.x} ${table.y}) rotate(${table.rotation})`}
                 opacity={table.active ? 1 : 0.45}
-                className="cursor-move outline-none focus-visible:[&>:first-child]:stroke-[#111827] focus-visible:[&>:first-child]:[stroke-width:10]"
+                className="cursor-move outline-none focus-visible:[&>.tabletop]:stroke-[#1e1b17] focus-visible:[&>.tabletop]:[stroke-width:9]"
                 onPointerDown={onPointerDown(table)}
                 onPointerMove={onPointerMove}
                 onPointerUp={() => (drag.current = null)}
@@ -151,14 +139,7 @@ export function FloorEditor({
                 onFocus={() => setSelectedId(table.id)}
                 onKeyDown={onKeyDown(table)}
               >
-                {table.shape === "ROUND" ? (
-                  <ellipse rx={table.width / 2} ry={table.height / 2} fill={table.color} {...outline} />
-                ) : (
-                  <rect x={-table.width / 2} y={-table.height / 2} width={table.width} height={table.height} rx={22} fill={table.color} {...outline} />
-                )}
-                <text textAnchor="middle" dominantBaseline="central" fontSize={30} fontWeight={700} fill="#ffffff" transform={`rotate(${-table.rotation})`} pointerEvents="none">
-                  {table.isSpare ? "S" : table.number}
-                </text>
+                <TableGlyph table={table} centre={{ x: plan.width / 2, y: plan.height / 2 }} selected={isSelected} />
               </g>
             );
           })}

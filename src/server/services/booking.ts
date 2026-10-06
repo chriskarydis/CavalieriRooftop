@@ -58,7 +58,7 @@ interface Slot {
   blockEnd: Date;
 }
 
-async function resolveSlot(tx: Tx | Db, request: SlotRequest, settings: Settings, now: Date): Promise<Slot> {
+export async function resolveSlot(tx: Tx | Db, request: SlotRequest, settings: Settings, now: Date): Promise<Slot> {
   const { date, time, partySize } = request;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !settings.timeSlots.includes(time)) throw new BookingError("INVALID_SLOT");
   if (!Number.isInteger(partySize) || partySize < settings.minOnlineParty || partySize > settings.maxOnlineParty) {
@@ -73,7 +73,7 @@ async function resolveSlot(tx: Tx | Db, request: SlotRequest, settings: Settings
   return { startsAt, blockEnd: addMinutes(startsAt, settings.blockMinutes) };
 }
 
-function priceCandidate(
+export function priceCandidate(
   candidate: Candidate,
   mode: "AUTO" | "CHOSEN",
   partySize: number,
@@ -94,10 +94,18 @@ function priceCandidate(
 const sameIds = (a: readonly string[], b: readonly string[]): boolean =>
   a.length === b.length && [...a].sort().join() === [...b].sort().join();
 
-export async function getAvailability(db: Db, request: SlotRequest, now = new Date()): Promise<Availability> {
+export async function getAvailability(
+  db: Db,
+  request: SlotRequest,
+  now = new Date(),
+  options: { excludeReservationId?: string } = {},
+): Promise<Availability> {
   const settings = await loadSettings(db);
   const slot = await resolveSlot(db, request, settings, now);
-  const [config, busy] = await Promise.all([loadFloorConfig(db), busyTables(db, slot.startsAt, slot.blockEnd, now)]);
+  const [config, busy] = await Promise.all([
+    loadFloorConfig(db),
+    busyTables(db, slot.startsAt, slot.blockEnd, now, options.excludeReservationId),
+  ]);
   const tableById = new Map(config.tables.map((table) => [table.id, table]));
   const base = { partySize: request.partySize, ...config, busyTableIds: new Set(busy.keys()) };
 
@@ -241,6 +249,35 @@ async function enforceHoldLimits(tx: Tx, holder: Holder, now: Date): Promise<voi
   }
 }
 
+/** The candidate the guest's selection refers to, or the reason it cannot be had. */
+export function pickCandidate(
+  candidates: Candidate[],
+  selection: Selection,
+  config: FloorConfig,
+  busy: ReadonlyMap<string, unknown>,
+): Candidate {
+  if (selection.mode === "AUTO") {
+    const [best] = candidates;
+    if (!best) throw new BookingError("NO_AVAILABILITY");
+    return best;
+  }
+  if (selection.mode === "TABLE") {
+    const table = candidates.find((candidate) => candidate.kind === "TABLE" && candidate.tableIds[0] === selection.tableId);
+    if (!table) throw new BookingError(busy.has(selection.tableId) ? "TABLE_UNAVAILABLE" : "INVALID_SELECTION");
+    return table;
+  }
+  const group = candidates.find(
+    (candidate) => candidate.kind !== "TABLE" && sameIds(candidate.combinationIds, selection.combinationIds),
+  );
+  if (!group) {
+    const members = config.combinations
+      .filter((combination) => selection.combinationIds.includes(combination.id))
+      .flatMap((combination) => combination.tableIds);
+    throw new BookingError(members.some((id) => busy.has(id)) ? "TABLE_UNAVAILABLE" : "INVALID_SELECTION");
+  }
+  return group;
+}
+
 async function holdInTransaction(tx: Tx, request: HoldRequest, now: Date): Promise<HoldResult> {
   await lockAllocations(tx);
   await releaseExpiredHolds(tx, now);
@@ -258,26 +295,7 @@ async function holdInTransaction(tx: Tx, request: HoldRequest, now: Date): Promi
     purpose: selection.mode === "AUTO" ? "ONLINE_AUTO" : "ONLINE_CHOICE",
   });
 
-  let chosen: Candidate | undefined;
-  if (selection.mode === "AUTO") {
-    chosen = candidates[0];
-    if (!chosen) throw new BookingError("NO_AVAILABILITY");
-  } else if (selection.mode === "TABLE") {
-    chosen = candidates.find((candidate) => candidate.kind === "TABLE" && candidate.tableIds[0] === selection.tableId);
-    if (!chosen) {
-      throw new BookingError(busy.has(selection.tableId) ? "TABLE_UNAVAILABLE" : "INVALID_SELECTION");
-    }
-  } else {
-    chosen = candidates.find(
-      (candidate) => candidate.kind !== "TABLE" && sameIds(candidate.combinationIds, selection.combinationIds),
-    );
-    if (!chosen) {
-      const members = config.combinations
-        .filter((combination) => selection.combinationIds.includes(combination.id))
-        .flatMap((combination) => combination.tableIds);
-      throw new BookingError(members.some((id) => busy.has(id)) ? "TABLE_UNAVAILABLE" : "INVALID_SELECTION");
-    }
-  }
+  const chosen = pickCandidate(candidates, selection, config, busy);
 
   const tableById = new Map(config.tables.map((table) => [table.id, table]));
   const mode = selection.mode === "AUTO" ? "AUTO" : "CHOSEN";

@@ -4,6 +4,7 @@ import * as schema from "@/server/db/schema";
 import { renderEmail, type EmailData, type EmailTemplate } from "@/server/email/templates";
 import { sendEmail, type EmailTransport } from "@/server/email/transport";
 import { manageTokenFor } from "./booking";
+import { currentTableNumbers } from "./guest-reservation";
 import { loadSettings, type Db } from "./context";
 
 /**
@@ -12,13 +13,18 @@ import { loadSettings, type Db } from "./context";
  * committed. A failure here is recorded and never undoes the reservation.
  */
 
-export type ReservationEventKind = "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "REMINDER";
+export type ReservationEventKind = "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "REMINDER" | "RESCHEDULED";
 
-const PLAN: Record<ReservationEventKind, { guest?: EmailTemplate; restaurant?: EmailTemplate; dashboard: boolean }> = {
+const PLAN: Record<
+  ReservationEventKind,
+  /** repeatable: can happen more than once per reservation, so each occurrence gets its own emails. */
+  { guest?: EmailTemplate; restaurant?: EmailTemplate; dashboard: boolean; repeatable?: boolean }
+> = {
   CONFIRMED: { guest: "guest_confirmation", restaurant: "restaurant_new", dashboard: true },
   CANCELLED: { guest: "guest_cancellation", restaurant: "restaurant_cancelled", dashboard: true },
   NO_SHOW: { restaurant: "restaurant_no_show", dashboard: true },
   REMINDER: { guest: "guest_reminder", dashboard: false },
+  RESCHEDULED: { guest: "guest_rescheduled", restaurant: "restaurant_rescheduled", dashboard: true, repeatable: true },
 };
 
 async function loadEmailData(db: Db, reservationId: string, refundCents?: number): Promise<(EmailData & { guestEmail: string }) | null> {
@@ -31,7 +37,7 @@ async function loadEmailData(db: Db, reservationId: string, refundCents?: number
 
   const [tables, settings] = await Promise.all([
     db
-      .selectDistinct({ number: schema.diningTable.number })
+      .select({ number: schema.diningTable.number, releasedAt: schema.tableAllocation.releasedAt })
       .from(schema.tableAllocation)
       .innerJoin(schema.diningTable, eq(schema.tableAllocation.tableId, schema.diningTable.id))
       .where(eq(schema.tableAllocation.reservationId, reservationId))
@@ -45,7 +51,7 @@ async function loadEmailData(db: Db, reservationId: string, refundCents?: number
     startsAt: reservation.startsAt,
     timezone: settings.timezone,
     partySize: reservation.partySize,
-    tableNumbers: tables.map((table) => table.number),
+    tableNumbers: currentTableNumbers(tables),
     tableCategoryName: reservation.tableCategoryName,
     guestName: customer.name,
     guestPhone: customer.phone,
@@ -69,11 +75,12 @@ async function deliver(
   template: EmailTemplate,
   recipient: string,
   data: EmailData,
+  occurrence = "",
 ): Promise<void> {
   const claimed = await db
     .insert(schema.emailLog)
     .values({
-      idempotencyKey: `${reservationId}:${template}`,
+      idempotencyKey: `${reservationId}:${template}${occurrence}`,
       template,
       recipient,
       locale: data.locale,
@@ -123,11 +130,12 @@ export async function notifyReservationEvent(
       },
     });
   }
-  if (plan.guest) await deliver(db, transport, reservationId, plan.guest, data.guestEmail, data);
+  const occurrence = plan.repeatable ? `:${data.startsAt.toISOString()}:${data.tableNumbers.join("+")}` : "";
+  if (plan.guest) await deliver(db, transport, reservationId, plan.guest, data.guestEmail, data, occurrence);
 
   const restaurantAddress = process.env.RESTAURANT_NOTIFICATION_EMAIL;
   if (plan.restaurant && restaurantAddress) {
-    await deliver(db, transport, reservationId, plan.restaurant, restaurantAddress, data);
+    await deliver(db, transport, reservationId, plan.restaurant, restaurantAddress, data, occurrence);
   }
 }
 

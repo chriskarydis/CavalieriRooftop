@@ -80,7 +80,9 @@
       "INVALID_SELECTION": "That table cannot be reserved for this party. Please choose another one.",
       "HOLD_EXPIRED": "The 10 minutes ran out, so the table was released. Please choose again.",
       "GENERIC": "Something went wrong. Please try again.",
-      "TOO_MANY_HOLDS": "You have too many reservations in progress. Complete one of them or wait a few minutes."
+      "TOO_MANY_HOLDS": "You have too many reservations in progress. Complete one of them or wait a few minutes.",
+      "TOO_LATE_TO_MOVE": "This reservation can no longer be moved online. Please call us.",
+      "COSTS_MORE": "That table costs more than you have paid, so it cannot be chosen here."
     },
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
@@ -166,7 +168,11 @@
     "cancelledNoRefund": "The reservation was cancelled less than {hours} hours before the visit, so the {paid} you paid is not refunded.",
     "cancelledNothingPaid": "Nothing was charged for this reservation.",
     "cancelledContact": "Questions about this cancellation? Contact us:",
-    "bookAgain": "Make a new reservation"
+    "bookAgain": "Make a new reservation",
+    "moveTitle": "Change date or time",
+    "moveText": "You can move your reservation to another evening or time until {deadline}. You choose a table again. The amount you paid stays as it is.",
+    "moveButton": "Choose a new date",
+    "moved": "Your reservation has been moved. The details below are the new ones."
   },
   "manage": {
     "title": "Cavalieri Roof Garden · Management",
@@ -313,7 +319,8 @@
       "type": {
         "CONFIRMED": "New reservation",
         "CANCELLED": "Cancelled",
-        "NO_SHOW": "No-show"
+        "NO_SHOW": "No-show",
+        "RESCHEDULED": "Moved by guest"
       }
     }
   },
@@ -553,7 +560,7 @@
     },
     "cancellation": {
       "title": "Cancellation",
-      "text": "If you cancel at least {hours} hours before your reservation, everything you paid online is refunded. If you cancel later, the amount paid is not refunded. You can cancel from the link in your confirmation."
+      "text": "If you cancel at least {hours} hours before your reservation, everything you paid online is refunded. If you cancel later, the amount paid is not refunded. Until the same time you can also move your reservation to another evening or time, as often as you like. You choose a table again and no money is refunded or charged for the change. You can cancel or move from the link in your confirmation."
     },
     "payment": {
       "title": "Payment",
@@ -589,7 +596,7 @@
     }
   },
   "email": {
-    "manageLink": "View or cancel your reservation",
+    "manageLink": "View, change or cancel your reservation",
     "row": {
       "reference": "Reservation",
       "date": "Date",
@@ -639,6 +646,16 @@
       "subject": "No-show {reference}: {date} {time}",
       "heading": "No-show",
       "intro": "{name} did not arrive for the reservation on {date} at {time}. The table has been released."
+    },
+    "guest_rescheduled": {
+      "subject": "Your reservation {reference} was moved to {date}",
+      "heading": "Your reservation has a new date",
+      "intro": "{name}, your reservation is now for {date} at {time}. The amount you paid stays as it is."
+    },
+    "restaurant_rescheduled": {
+      "subject": "Moved {reference}: now {date} {time}",
+      "heading": "Reservation moved by the guest",
+      "intro": "{name} moved the reservation to {date} at {time}. Nothing was charged or refunded."
     }
   },
   "timeline": {
@@ -761,5 +778,21 @@
       "mismatch": "The two new passwords are not the same.",
       "failed": "The password could not be changed. Please try again."
     }
+  },
+  "move": {
+    "title": "Move your reservation",
+    "intro": "Choose the new evening and time. Your party stays at {guests, plural, one {# guest} other {# guests}}. To change the number of guests, please call us on {phone}.",
+    "current": "Now: {date} at {time}, table {table}",
+    "back": "Keep my reservation as it is",
+    "chooseTitle": "Choose your table for the new evening",
+    "sameTable": "Your table {table} is free at that time and is already selected. You can also pick another one.",
+    "sameCategory": "Your table is taken at that time. These {category} tables are free: {tables}.",
+    "lowerOnly": "Neither your table nor another {category} table is free at that time. You can try another evening, or take one of the tables shown for the amount you already paid. The difference is not refunded.",
+    "nothing": "No table is free for your party at that time. Please try another evening or time.",
+    "paidNote": "You have paid {amount}. Tables that cost more are not offered here.",
+    "noCharge": "Nothing more to pay.",
+    "cheaper": "This table costs less than you paid. The difference is not refunded.",
+    "confirm": "Move my reservation here",
+    "policy": "After the move, free cancellation counts from the new date."
   }
 }

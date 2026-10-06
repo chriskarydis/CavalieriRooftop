@@ -18,6 +18,8 @@ export type EmailTemplate =
   | "guest_confirmation"
   | "guest_cancellation"
   | "guest_reminder"
+  | "guest_rescheduled"
+  | "restaurant_rescheduled"
   | "restaurant_new"
   | "restaurant_cancelled"
   | "restaurant_no_show";
@@ -171,6 +173,14 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
       return {
         subject,
         ...layout(heading, [t("guest_reminder.intro", values), t("policy.grace", values)], reservationRows, {
+          href: manageUrl,
+          label: t("manageLink"),
+        }),
+      };
+    case "guest_rescheduled":
+      return {
+        subject,
+        ...layout(heading, [t("guest_rescheduled.intro", values), t("policy.grace", values), t("policy.refund", values)], reservationRows, {
           href: manageUrl,
           label: t("manageLink"),
         }),

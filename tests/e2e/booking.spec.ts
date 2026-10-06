@@ -120,3 +120,37 @@ test("language switch keeps the page and the search", async ({ page }, testInfo)
   await expect(page).toHaveURL(/\/el\/reserve\?.*guests=2/);
   await expect(page.getByRole("heading", { name: "Διαλέξτε το τραπέζι σας" })).toBeVisible();
 });
+
+test("guest moves a paid reservation to another evening without paying again", async ({ page }, testInfo) => {
+  const [from, to] = testInfo.project.name === "desktop" ? ["2027-09-14", "16"] : ["2027-09-15", "17"];
+  await search(page, "en", from, 2);
+  await page.getByRole("button", { name: /^Table 70, 2 seats, Best for Two, available/ }).click();
+  await page.getByRole("button", { name: "Reserve this table" }).click();
+  await fillDetails(page);
+  await page.getByRole("button", { name: /Pay €70.00/ }).click();
+  await expect(page.getByRole("heading", { name: "Your reservation is confirmed" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Choose a new date" }).click();
+  await expect(page.getByRole("heading", { name: "Move your reservation" })).toBeVisible();
+  // The calendar opens on the month of the reservation, and the party size cannot be changed here.
+  await expect(page.getByText("September 2027", { exact: true })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Guests" })).toHaveCount(0);
+  await page.getByRole("button", { name: new RegExp(`${to} September 2027`) }).click();
+  await page.getByRole("button", { name: "See available tables" }).click();
+
+  // Their own table is suggested and already selected; a dearer table cannot be picked.
+  await expect(page.getByText("Your table 70 is free at that time and is already selected.")).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Table 1, 4 seats, Premium/ })).toHaveCount(0);
+  await expect(page.locator("section[aria-live]")).toContainText("Nothing more to pay.");
+  await testInfo.attach("move", { body: await page.screenshot({ fullPage: true, path: shot(testInfo, "move") }), contentType: "image/png" });
+  await page.getByRole("button", { name: "Move my reservation here" }).click();
+
+  await expect(page.getByRole("status").filter({ hasText: "Your reservation has been moved." })).toBeVisible();
+  await expect(page.getByText(new RegExp(`${to} September 2027`))).toBeVisible();
+  await expect(page.getByText("€70.00").first()).toBeVisible();
+  await testInfo.attach("moved", { body: await page.screenshot({ fullPage: true, path: shot(testInfo, "moved") }), contentType: "image/png" });
+
+  // The old evening is free again.
+  await search(page, "en", from, 2);
+  await expect(page.getByRole("button", { name: /^Table 70, 2 seats, Best for Two, available/ })).toBeVisible();
+});

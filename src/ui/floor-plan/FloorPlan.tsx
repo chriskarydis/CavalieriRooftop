@@ -83,30 +83,11 @@ function chairsFor(
   return chairs;
 }
 
-/**
- * Data-driven SVG floor plan. Purely presentational: it draws the tables and
- * static shapes it is given and decides nothing about availability or price.
- * Coordinates are in the plan's own unit space, so the drawing scales to any
- * container through the viewBox. Works as a server or a client component.
- */
-export function FloorPlan({
-  plan,
-  tables,
-  title,
-  areaLabels,
-  selectedIds = [],
-  onSelect,
-}: {
-  plan: Pick<FloorPlanView, "width" | "height" | "shapes">;
-  tables: FloorPlanTable[];
-  title: string;
-  areaLabels: Record<string, string>;
-  selectedIds?: readonly string[];
-  onSelect?: (tableId: string) => void;
-}) {
+/** The terrace itself: floor and parapet, the walls of the service block, and the labels. */
+export function FloorBackdrop({ shapes, areaLabels }: { shapes: FloorPlanView["shapes"]; areaLabels: Record<string, string> }) {
   return (
-    <svg viewBox={`0 0 ${plan.width} ${plan.height}`} role="group" aria-label={title} className="h-auto w-full">
-      {plan.shapes.map((shape, index) => {
+    <>
+      {shapes.map((shape, index) => {
         if (shape.type === "rect") {
           // The edge of the terrace: a pale floor inside a thin gold parapet.
           return (
@@ -152,11 +133,104 @@ export function FloorPlan({
           </text>
         );
       })}
+    </>
+  );
+}
+
+export type GlyphTable = Pick<
+  FloorTableView,
+  "shape" | "width" | "height" | "capacity" | "maxCapacity" | "x" | "y" | "rotation" | "color" | "number" | "isSpare"
+>;
+
+/**
+ * One table as drawn on every floor plan: its chairs, its top and its number.
+ * Goes inside a <g> that is already moved and turned to the table's position.
+ */
+export function TableGlyph({
+  table,
+  centre,
+  selected = false,
+  numberColor = "#ffffff",
+}: {
+  table: GlyphTable;
+  /** Middle of the plan, to decide which end of a table is the inner one. */
+  centre: { x: number; y: number };
+  selected?: boolean;
+  numberColor?: string;
+}) {
+  const outline = { stroke: selected ? INK : "none", strokeWidth: selected ? 9 : 0 };
+  return (
+    <>
+      {chairsFor(table, centre).map((chair, index) => (
+        <rect
+          key={index}
+          x={-chair.width / 2}
+          y={-chair.height / 2}
+          width={chair.width}
+          height={chair.height}
+          rx={6}
+          fill={selected ? INK : table.color}
+          opacity={selected ? 0.85 : 0.5}
+          transform={`translate(${chair.x} ${chair.y}) rotate(${chair.rotation})`}
+        />
+      ))}
+      {table.shape === "ROUND" ? (
+        <ellipse className="tabletop" rx={table.width / 2} ry={table.height / 2} fill={table.color} {...outline} />
+      ) : (
+        <rect
+          className="tabletop"
+          x={-table.width / 2}
+          y={-table.height / 2}
+          width={table.width}
+          height={table.height}
+          rx={14}
+          fill={table.color}
+          {...outline}
+        />
+      )}
+      <text
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={32}
+        fontWeight={600}
+        fill={numberColor}
+        transform={`rotate(${-table.rotation})`}
+        pointerEvents="none"
+      >
+        {table.isSpare ? "S" : table.number}
+      </text>
+    </>
+  );
+}
+
+/**
+ * Data-driven SVG floor plan. Purely presentational: it draws the tables and
+ * static shapes it is given and decides nothing about availability or price.
+ * Coordinates are in the plan's own unit space, so the drawing scales to any
+ * container through the viewBox. Works as a server or a client component.
+ */
+export function FloorPlan({
+  plan,
+  tables,
+  title,
+  areaLabels,
+  selectedIds = [],
+  onSelect,
+}: {
+  plan: Pick<FloorPlanView, "width" | "height" | "shapes">;
+  tables: FloorPlanTable[];
+  title: string;
+  areaLabels: Record<string, string>;
+  selectedIds?: readonly string[];
+  onSelect?: (tableId: string) => void;
+}) {
+  return (
+    <svg viewBox={`0 0 ${plan.width} ${plan.height}`} role="group" aria-label={title} className="h-auto w-full">
+      <FloorBackdrop shapes={plan.shapes} areaLabels={areaLabels} />
 
       {tables.map((table) => {
         const selected = selectedIds.includes(table.id);
         const interactive = Boolean(onSelect && table.selectable);
-        const outline = { stroke: selected ? INK : "none", strokeWidth: selected ? 9 : 0 };
         return (
           <g
             key={table.id}
@@ -181,44 +255,7 @@ export function FloorPlan({
             style={interactive ? { filter: "drop-shadow(0 4px 4px rgb(30 27 23 / 0.22))" } : undefined}
             className={interactive ? "cursor-pointer outline-none focus-visible:[&>.tabletop]:stroke-[#1e1b17] focus-visible:[&>.tabletop]:[stroke-width:9]" : undefined}
           >
-            {chairsFor(table, { x: plan.width / 2, y: plan.height / 2 }).map((chair, index) => (
-              <rect
-                key={index}
-                x={-chair.width / 2}
-                y={-chair.height / 2}
-                width={chair.width}
-                height={chair.height}
-                rx={6}
-                fill={selected ? INK : table.color}
-                opacity={selected ? 0.85 : 0.5}
-                transform={`translate(${chair.x} ${chair.y}) rotate(${chair.rotation})`}
-              />
-            ))}
-            {table.shape === "ROUND" ? (
-              <ellipse className="tabletop" rx={table.width / 2} ry={table.height / 2} fill={table.color} {...outline} />
-            ) : (
-              <rect
-                className="tabletop"
-                x={-table.width / 2}
-                y={-table.height / 2}
-                width={table.width}
-                height={table.height}
-                rx={14}
-                fill={table.color}
-                {...outline}
-              />
-            )}
-            <text
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={32}
-              fontWeight={600}
-              fill={table.numberColor ?? "#ffffff"}
-              transform={`rotate(${-table.rotation})`}
-              pointerEvents="none"
-            >
-              {table.isSpare ? "S" : table.number}
-            </text>
+            <TableGlyph table={table} centre={{ x: plan.width / 2, y: plan.height / 2 }} selected={selected} numberColor={table.numberColor} />
           </g>
         );
       })}

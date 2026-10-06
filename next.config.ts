@@ -48,7 +48,7 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders },
       // Pages that carry a secret token or staff data must never be stored by a shared cache.
       {
-        source: "/:locale/(reserve|reservation)/:token",
+        source: "/:locale/(reserve|reservation)/:token/:rest*",
         headers: [
           { key: "Cache-Control", value: "private, no-store" },
           { key: "Referrer-Policy", value: "no-referrer" },

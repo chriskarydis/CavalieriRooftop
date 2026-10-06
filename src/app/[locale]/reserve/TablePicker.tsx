@@ -46,6 +46,7 @@ export function TablePicker({
   slot,
   locale,
   areaLabels,
+  move,
 }: {
   plan: FloorPlanView;
   tables: PickerTable[];
@@ -53,10 +54,17 @@ export function TablePicker({
   slot: { date: string; time: string; guests: number };
   locale: string;
   areaLabels: Record<string, string>;
+  /**
+   * Set when the guest is moving a reservation they have already paid for:
+   * nothing is held or charged, the form goes to `action`, and prices are
+   * replaced by a note that the amount paid stays as it is.
+   */
+  move?: { action: (formData: FormData) => Promise<void>; paidCents: number; initialTableId: string | null };
 }) {
   const t = useTranslations("reserve");
+  const tMove = useTranslations("move");
   const format = useFormatter();
-  const [choice, setChoice] = useState<Choice>(null);
+  const [choice, setChoice] = useState<Choice>(move?.initialTableId ? { kind: "TABLE", tableId: move.initialTableId } : null);
   const panel = useRef<HTMLElement>(null);
 
   // On a phone the price panel sits below the tall floor plan, so bring it into view.
@@ -142,7 +150,7 @@ export function TablePicker({
                   />
                   <span>
                     {t("groupLabel", { tables: group.tableNumbers.join(" + "), capacity: group.capacity })}
-                    <span className="block text-sm text-muted">{euro(group.price.totalCents)}</span>
+                    {!move && <span className="block text-sm text-muted">{euro(group.price.totalCents)}</span>}
                   </span>
                 </label>
               ))}
@@ -154,7 +162,7 @@ export function TablePicker({
           {!price ? (
             <p className="text-muted">{t("selectPrompt")}</p>
           ) : (
-            <form action={startHold} className="space-y-3">
+            <form action={move ? move.action : startHold} className="space-y-3">
               <h3 className="text-2xl">
                 {selectedGroup
                   ? t("groupLabel", { tables: selectedGroup.tableNumbers.join(" + "), capacity: selectedGroup.capacity })
@@ -166,7 +174,14 @@ export function TablePicker({
                   {selectedTable.viewDescription && ` · ${selectedTable.viewDescription}`}
                 </p>
               )}
-              <PriceSummary price={price} />
+              {move ? (
+                <>
+                  <p>{tMove("noCharge")}</p>
+                  {price.totalCents < move.paidCents && <p className="notice notice-warn">{tMove("cheaper")}</p>}
+                </>
+              ) : (
+                <PriceSummary price={price} />
+              )}
               <input type="hidden" name="locale" value={locale} />
               <input type="hidden" name="date" value={slot.date} />
               <input type="hidden" name="time" value={slot.time} />
@@ -178,9 +193,9 @@ export function TablePicker({
                 <input type="hidden" name="tableId" value={choice?.kind === "TABLE" ? choice.tableId : ""} />
               )}
               <button type="submit" className="btn btn-primary w-full">
-                {t("holdButton")}
+                {move ? tMove("confirm") : t("holdButton")}
               </button>
-              <p className="text-xs text-muted">{t("holdNote")}</p>
+              <p className="text-xs text-muted">{move ? tMove("policy") : t("holdNote")}</p>
             </form>
           )}
         </section>
@@ -204,7 +219,7 @@ export function TablePicker({
                     category: info.get(table.id)!.categoryName,
                   })}
                 </span>
-                <span className="tabular-nums">{euro(info.get(table.id)!.price!.totalCents)}</span>
+                {!move && <span className="tabular-nums">{euro(info.get(table.id)!.price!.totalCents)}</span>}
               </label>
             ))}
           </div>

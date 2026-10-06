@@ -8,6 +8,7 @@ import { Link, redirect } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
 import { getReservationByToken } from "@/server/services/guest-reservation";
 import { getPaymentSummary } from "@/server/services/payments";
+import { canMove, moveDeadline } from "@/server/services/reschedule";
 import { Ornament } from "@/ui/PageHeader";
 import { cancelByGuest } from "../../reserve/actions";
 import { PriceSummary } from "../../reserve/PriceSummary";
@@ -15,7 +16,7 @@ import { PriceSummary } from "../../reserve/PriceSummary";
 // Manage links carry a secret token and must never be indexed.
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
-export default async function ManageReservationPage({ params }: PageProps<"/[locale]/reservation/[token]">) {
+export default async function ManageReservationPage({ params, searchParams }: PageProps<"/[locale]/reservation/[token]">) {
   const { locale, token } = await params;
   setRequestLocale(locale);
   const found = await getReservationByToken(db, token);
@@ -32,12 +33,26 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
   const canCancel = reservation.status === "CONFIRMED" || reservation.status === "LATE";
   const payment = await getPaymentSummary(db, reservation.id);
   const cancelled = reservation.status === "CANCELLED";
+  const justMoved = (await searchParams).moved === "1";
+  const movable = canMove(reservation, settings, new Date());
+  const deadline = (instant: Date): string =>
+    new Intl.DateTimeFormat(intlLocale(locale), {
+      dateStyle: "medium",
+      timeStyle: "short",
+      hourCycle: "h23",
+      timeZone: settings.timezone,
+    }).format(instant);
 
   return (
     <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-12">
       <header className="text-center">
         <h1 className="text-3xl sm:text-4xl">{t(`status.${reservation.status}`)}</h1>
         <Ornament className="mt-5" />
+        {justMoved && (
+          <p role="status" className="notice notice-ok mt-6 text-left">
+            {t("moved")}
+          </p>
+        )}
         <p className="eyebrow mt-6">{t("referenceLabel")}</p>
         <p className="mt-1 font-display text-3xl tracking-wide">{reservation.reference}</p>
       </header>
@@ -116,6 +131,16 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
       </section>
       )}
 
+      {movable && (
+        <section className="panel">
+          <h2 className="mb-3 text-2xl">{t("moveTitle")}</h2>
+          <p className="mb-4 text-sm">{t("moveText", { deadline: deadline(moveDeadline(reservation, settings)!) })}</p>
+          <Link href={`/reservation/${token}/move`} className="btn btn-outline w-full">
+            {t("moveButton")}
+          </Link>
+        </section>
+      )}
+
       {canCancel && (
         <section className="panel">
           <h2 className="mb-3 text-2xl">{t("cancelTitle")}</h2>
@@ -123,12 +148,7 @@ export default async function ManageReservationPage({ params }: PageProps<"/[loc
             {cancellation.refundable
               ? t("cancelRefund", {
                   amount: euro(cancellation.refundCents),
-                  deadline: new Intl.DateTimeFormat(intlLocale(locale), {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                    hourCycle: "h23",
-                    timeZone: settings.timezone,
-                  }).format(cancellation.refundDeadline),
+                  deadline: deadline(cancellation.refundDeadline),
                 })
               : t("cancelNoRefund", { hours: settings.refundCutoffHours })}
           </p>

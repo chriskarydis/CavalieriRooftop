@@ -142,3 +142,19 @@ access (once the site is nearly ready).
 - English text uses no semicolons (owner's preference, enforced by `messages.test.ts`).
 - After a search the page scrolls smoothly to the results. The floor plan is drawn large, with a
   chair for every standard seat, and the price stays beside it on wide screens.
+
+## Moving a reservation (guest)
+
+Owner's rules, implemented in `src/server/services/reschedule.ts`:
+
+- A guest may move a confirmed reservation to another date or time from their link, as often as they
+  like, until the free-cancellation cut-off (24 hours before the reservation as it stands).
+- Only date and time change. For a different number of guests they call the restaurant.
+- They choose a table again. Their own table is suggested first, then tables of the same category.
+- No money moves. A cheaper table gives no refund of the difference.
+- A table that costs more than was paid cannot be picked when moving. This was not asked for
+  explicitly: it was chosen so that moving never needs a second payment. A guest who wants a dearer
+  table cancels (full refund, as it is before the cut-off) and books again.
+- After a move the cancellation cut-off counts from the new date.
+- The guest and the restaurant get an email each time, and the dashboard a notification.
+- A manager's block from a date with no time starts at opening time that day, never "now".

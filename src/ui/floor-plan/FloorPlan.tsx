@@ -112,15 +112,16 @@ export function FloorPlan({
             />
           );
         }
+        const view = shape.style === "view";
         return (
           <text
             key={index}
-            x={shape.x}
-            y={shape.y}
             textAnchor="middle"
-            fontSize={21}
-            letterSpacing={4}
-            fill="#8a7f6d"
+            fontSize={view ? 23 : 21}
+            fontWeight={view ? 500 : 400}
+            letterSpacing={view ? 5 : 4}
+            fill={view ? "#76581c" : "#8a7f6d"}
+            transform={`translate(${shape.x} ${shape.y}) rotate(${shape.rotation ?? 0})`}
             style={{ textTransform: "uppercase" }}
           >
             {areaLabels[shape.key] ?? shape.key}

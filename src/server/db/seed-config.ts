@@ -65,6 +65,7 @@ export async function seedInitialConfiguration(db: PostgresJsDatabase<typeof sch
           width: table.width,
           height: table.height,
           shape: table.shape,
+          rotation: table.rotation ?? 0,
         })),
       )
       .returning({ id: schema.diningTable.id, number: schema.diningTable.number });

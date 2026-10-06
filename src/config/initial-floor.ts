@@ -53,18 +53,19 @@ export const FLOOR_PLAN = {
   height: 2000,
   shapes: [
     { type: "rect", x: 45, y: 50, width: 1145, height: 1905, style: "boundary" },
-    { type: "polyline", points: [[18, 698], [690, 698]], style: "wall" },
-    { type: "polyline", points: [[218, 705], [218, 1790]], style: "wall" },
-    { type: "polyline", points: [[685, 700], [685, 1545]], style: "wall" },
-    { type: "polyline", points: [[230, 813], [690, 813]], style: "wall" },
-    { type: "polyline", points: [[540, 813], [540, 1548]], style: "wall" },
-    { type: "polyline", points: [[402, 1545], [690, 1545]], style: "wall" },
-    { type: "polyline", points: [[402, 1545], [402, 1777]], style: "wall" },
-    { type: "polyline", points: [[218, 1777], [425, 1777]], style: "wall" },
+    // Walls of the service block. Every line ends exactly where it meets another.
+    { type: "polyline", points: [[45, 698], [690, 698], [690, 1545], [402, 1545], [402, 1777], [218, 1777], [218, 698]], style: "wall" },
+    { type: "polyline", points: [[218, 813], [690, 813]], style: "wall" },
+    { type: "polyline", points: [[540, 813], [540, 1545]], style: "wall" },
     { type: "label", x: 148, y: 810, key: "toilets" },
     { type: "label", x: 445, y: 753, key: "entrance" },
     { type: "label", x: 330, y: 1206, key: "kitchen" },
-    { type: "label", x: 612, y: 1157, key: "bar" },
+    { type: "label", x: 615, y: 1157, key: "bar" },
+    // What guests look at from each side of the terrace, written outside the parapet.
+    { type: "label", x: 617, y: 34, key: "viewTop", style: "view" },
+    { type: "label", x: 617, y: 1989, key: "viewBottom", style: "view" },
+    { type: "label", x: 22, y: 1002, key: "viewLeft", style: "view", rotation: -90 },
+    { type: "label", x: 1212, y: 1002, key: "viewRight", style: "view", rotation: 90 },
   ],
 } as const;
 
@@ -79,6 +80,8 @@ export interface InitialTable {
   y: number;
   width: number;
   height: number;
+  /** Degrees. A square table turned a quarter has its chairs at the sides instead of top and bottom. */
+  rotation?: number;
   /** Defaults: active, online bookable, auto-assignable, not spare. */
   status?: "ACTIVE" | "INACTIVE";
   onlineBookable?: boolean;
@@ -90,6 +93,8 @@ export interface InitialTable {
 const tall = { shape: "RECT", width: 76, height: 148 } as const;
 const wide = { shape: "RECT", width: 163, height: 93 } as const;
 const square = { shape: "RECT", width: 95, height: 95 } as const;
+/** A table for two whose guests sit left and right. */
+const sideways = { ...square, rotation: 90 } as const;
 
 export const SPARE_TABLE_NUMBER = 99;
 
@@ -100,29 +105,29 @@ export const TABLES: readonly InitialTable[] = [
   { number: 4, capacity: 4, category: "PREMIUM", ...tall, x: 872, y: 165 },
   { number: 5, capacity: 4, maxCapacity: 5, category: "PREMIUM", ...tall, x: 1076, y: 165 },
   { number: 6, capacity: 4, category: "PREFERRED", ...wide, x: 148, y: 370 },
-  { number: 7, capacity: 2, category: "STANDARD", ...square, x: 364, y: 464 },
-  { number: 70, capacity: 2, category: "BEST_FOR_TWO", ...square, x: 364, y: 328 },
-  { number: 8, capacity: 2, category: "STANDARD", ...square, x: 579, y: 469 },
-  { number: 80, capacity: 2, category: "BEST_FOR_TWO", ...square, x: 579, y: 328 },
-  { number: 9, capacity: 2, category: "STANDARD", ...square, x: 794, y: 464 },
-  { number: 90, capacity: 2, category: "BEST_FOR_TWO", ...square, x: 794, y: 328 },
+  { number: 7, capacity: 2, category: "STANDARD", ...sideways, x: 364, y: 464 },
+  { number: 70, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: 364, y: 328 },
+  { number: 8, capacity: 2, category: "STANDARD", ...sideways, x: 618, y: 464 },
+  { number: 80, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: 618, y: 328 },
+  { number: 9, capacity: 2, category: "STANDARD", ...sideways, x: 872, y: 464 },
+  { number: 90, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: 872, y: 328 },
   { number: 11, capacity: 4, category: "PREFERRED", ...wide, x: 1076, y: 370 },
   { number: 12, capacity: 4, category: "PREFERRED", ...tall, height: 138, x: 110, y: 615 },
   { number: 13, capacity: 4, category: "STANDARD", ...tall, height: 138, x: 280, y: 615 },
   { number: 14, capacity: 4, category: "STANDARD", ...tall, height: 138, x: 460, y: 615 },
-  { number: 15, capacity: 6, category: "STANDARD", shape: "ROUND", width: 148, height: 148, x: 766, y: 616 },
+  { number: 15, capacity: 6, category: "STANDARD", shape: "ROUND", width: 148, height: 148, x: 766, y: 615 },
   { number: 16, capacity: 4, category: "PREFERRED", ...wide, x: 1076, y: 526 },
   { number: 17, capacity: 4, maxCapacity: 5, category: "STANDARD", ...wide, x: 1076, y: 681 },
   { number: 18, capacity: 4, maxCapacity: 5, category: "STANDARD", ...wide, x: 1076, y: 837 },
   { number: 19, capacity: 2, category: "STANDARD", ...square, x: 1118, y: 978 },
-  { number: 20, capacity: 2, category: "STANDARD", ...square, x: 1118, y: 1238 },
+  { number: 20, capacity: 2, category: "STANDARD", ...square, x: 1118, y: 1240 },
   { number: 21, capacity: 2, category: "STANDARD", ...square, x: 1118, y: 1462 },
-  { number: 22, capacity: 2, category: "STANDARD", ...square, x: 1118, y: 1685 },
+  { number: 22, capacity: 2, category: "STANDARD", ...square, x: 1118, y: 1686 },
   { number: 23, capacity: 5, category: "STANDARD", ...wide, x: 1076, y: 1862 },
   { number: 24, capacity: 5, category: "STANDARD", ...wide, x: 872, y: 1862 },
   { number: 25, capacity: 2, category: "STANDARD", ...square, x: 956, y: 1686 },
   { number: 26, capacity: 2, category: "STANDARD", ...square, x: 956, y: 1462 },
-  { number: 27, capacity: 2, category: "STANDARD", ...square, x: 956, y: 1248 },
+  { number: 27, capacity: 2, category: "STANDARD", ...square, x: 956, y: 1240 },
   { number: 28, capacity: 2, category: "STANDARD", ...square, x: 956, y: 978 },
   {
     number: 29, capacity: 3, category: "STANDARD", ...square, x: 794, y: 1686,

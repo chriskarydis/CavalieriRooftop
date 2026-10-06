@@ -172,6 +172,10 @@ async function AvailabilitySection({
             entrance: tPlan("areas.entrance"),
             kitchen: tPlan("areas.kitchen"),
             bar: tPlan("areas.bar"),
+            viewTop: tPlan("areas.viewTop"),
+            viewBottom: tPlan("areas.viewBottom"),
+            viewLeft: tPlan("areas.viewLeft"),
+            viewRight: tPlan("areas.viewRight"),
           }}
         />
       </section>

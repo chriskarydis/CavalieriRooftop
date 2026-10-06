@@ -126,7 +126,7 @@ export function FloorEditor({
               return <polyline key={index} points={shape.points.map((point) => point.join(",")).join(" ")} fill="none" stroke="#1f2a30" strokeWidth={3} />;
             }
             return (
-              <text key={index} x={shape.x} y={shape.y} textAnchor="middle" fontSize={28} fill="#5b6870">
+              <text key={index} transform={`translate(${shape.x} ${shape.y}) rotate(${shape.rotation ?? 0})`} textAnchor="middle" fontSize={shape.style === "view" ? 22 : 28} fill="#5b6870">
                 {areaLabels[shape.key] ?? shape.key}
               </text>
             );

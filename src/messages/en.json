@@ -27,7 +27,11 @@
       "toilets": "Toilets",
       "entrance": "Entrance",
       "kitchen": "Kitchen",
-      "bar": "Bar"
+      "bar": "Bar",
+      "viewTop": "Old Fortress view",
+      "viewLeft": "Old Town view",
+      "viewRight": "Garitsa bay and sea view",
+      "viewBottom": "Old Town and sunset view"
     },
     "legend": "Table categories",
     "noFee": "no extra fee",

@@ -86,6 +86,10 @@ export interface InitialTable {
   status?: "ACTIVE" | "INACTIVE";
   onlineBookable?: boolean;
   autoAssignable?: boolean;
+  /** Defaults to true; see DomainTable.billBySeats. */
+  billBySeats?: boolean;
+  /** What guests look at from this table, shown when they choose it. */
+  view?: { en: string; el: string };
   isSpare?: boolean;
   notes?: string;
 }
@@ -98,6 +102,32 @@ const square = { shape: "RECT", width: 90, height: 90 } as const;
 /** A table for two whose guests sit left and right. */
 const sideways = { ...square, rotation: 90 } as const;
 
+// Written from the floor plan and the owner's photographs of October 2026.
+const FRONT = {
+  en: "Front row at the parapet, facing the Old Fortress and the sea",
+  el: "Πρώτη σειρά στο στηθαίο, με θέα το Παλαιό Φρούριο και τη θάλασσα",
+};
+const FRONT_LEFT = {
+  en: "Front-row corner at the parapet: the Old Fortress and the sea ahead, the Old Town beside you",
+  el: "Γωνιακό στην πρώτη σειρά: μπροστά το Παλαιό Φρούριο και η θάλασσα, δίπλα σας η Παλιά Πόλη",
+};
+const FRONT_RIGHT = {
+  en: "Front-row corner at the parapet: the Old Fortress and the channel ahead, Garitsa bay beside you",
+  el: "Γωνιακό στην πρώτη σειρά: μπροστά το Παλαιό Φρούριο και το κανάλι, δίπλα σας ο κόλπος της Γαρίτσας",
+};
+const SECOND = {
+  en: "Second row, just behind the front tables, facing the Old Fortress and the sea",
+  el: "Δεύτερη σειρά, ακριβώς πίσω από τα μπροστινά τραπέζια, με θέα το Παλαιό Φρούριο και τη θάλασσα",
+};
+const TOWN = {
+  en: "At the parapet on the Old Town side, above the rooftops with the mountains beyond",
+  el: "Στο στηθαίο προς την Παλιά Πόλη, πάνω από τις στέγες με φόντο τα βουνά",
+};
+const BAY = {
+  en: "At the parapet on the Garitsa side, looking over the bay to the mountains",
+  el: "Στο στηθαίο προς τη Γαρίτσα, με θέα τον κόλπο και τα βουνά απέναντι",
+};
+
 // The grid the tables stand on, so that gaps are even. Columns A to E run across
 // the top of the terrace; F, G and E are the three columns beside the bar.
 const A = 128, B = 368, C = 608, D = 847, E = 1087;
@@ -109,24 +139,24 @@ const RIGHT = [362, 543, 725, 907, 1095, 1291, 1487, 1682, 1871] as const;
 export const SPARE_TABLE_NUMBER = 99;
 
 export const TABLES: readonly InitialTable[] = [
-  { number: 1, capacity: 4, maxCapacity: 5, category: "PREMIUM", ...tall, x: A, y: ROW.premium },
-  { number: 2, capacity: 4, category: "PREMIUM", ...tall, x: B, y: ROW.premium },
-  { number: 3, capacity: 4, category: "PREMIUM", ...tall, x: C, y: ROW.premium },
-  { number: 4, capacity: 4, category: "PREMIUM", ...tall, x: D, y: ROW.premium },
-  { number: 5, capacity: 4, maxCapacity: 5, category: "PREMIUM", ...tall, x: E, y: ROW.premium },
-  { number: 6, capacity: 4, category: "PREFERRED", ...wide, x: 150, y: RIGHT[0] },
+  { number: 1, capacity: 4, maxCapacity: 5, category: "PREMIUM", ...tall, x: A, y: ROW.premium, view: FRONT_LEFT },
+  { number: 2, capacity: 4, category: "PREMIUM", ...tall, x: B, y: ROW.premium, view: FRONT },
+  { number: 3, capacity: 4, category: "PREMIUM", ...tall, x: C, y: ROW.premium, view: FRONT },
+  { number: 4, capacity: 4, category: "PREMIUM", ...tall, x: D, y: ROW.premium, view: FRONT },
+  { number: 5, capacity: 4, maxCapacity: 5, category: "PREMIUM", ...tall, x: E, y: ROW.premium, view: FRONT_RIGHT },
+  { number: 6, capacity: 4, category: "PREFERRED", ...wide, x: 150, y: RIGHT[0], view: TOWN },
   { number: 7, capacity: 2, category: "STANDARD", ...sideways, x: B, y: ROW.twoBehind },
-  { number: 70, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: B, y: ROW.two },
+  { number: 70, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: B, y: ROW.two, view: SECOND },
   { number: 8, capacity: 2, category: "STANDARD", ...sideways, x: C, y: ROW.twoBehind },
-  { number: 80, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: C, y: ROW.two },
+  { number: 80, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: C, y: ROW.two, view: SECOND },
   { number: 9, capacity: 2, category: "STANDARD", ...sideways, x: D, y: ROW.twoBehind },
-  { number: 90, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: D, y: ROW.two },
-  { number: 11, capacity: 4, category: "PREFERRED", ...wide, x: E, y: RIGHT[0] },
-  { number: 12, capacity: 4, category: "PREFERRED", ...tall, x: A, y: ROW.wall },
+  { number: 90, capacity: 2, category: "BEST_FOR_TWO", ...sideways, x: D, y: ROW.two, view: SECOND },
+  { number: 11, capacity: 4, category: "PREFERRED", ...wide, x: E, y: RIGHT[0], view: BAY },
+  { number: 12, capacity: 4, category: "PREFERRED", ...tall, x: A, y: ROW.wall, view: TOWN },
   { number: 13, capacity: 4, category: "STANDARD", ...tall, x: B, y: ROW.wall },
   { number: 14, capacity: 4, category: "STANDARD", ...tall, x: C, y: ROW.wall },
   { number: 15, capacity: 6, category: "STANDARD", shape: "ROUND", width: 140, height: 140, x: D, y: ROW.wall },
-  { number: 16, capacity: 4, category: "PREFERRED", ...wide, x: E, y: RIGHT[1] },
+  { number: 16, capacity: 4, category: "PREFERRED", ...wide, x: E, y: RIGHT[1], view: BAY },
   { number: 17, capacity: 4, maxCapacity: 5, category: "STANDARD", ...wide, x: E, y: RIGHT[2] },
   { number: 18, capacity: 4, maxCapacity: 5, category: "STANDARD", ...wide, x: E, y: RIGHT[3] },
   { number: 19, capacity: 2, category: "STANDARD", ...square, x: E, y: RIGHT[4] },
@@ -142,7 +172,8 @@ export const TABLES: readonly InitialTable[] = [
   {
     number: 29, capacity: 3, category: "STANDARD", ...square, x: F, y: RIGHT[7],
     autoAssignable: false,
-    notes: "Mostly used for drinks. Guests may choose it online; never auto-assigned.",
+    billBySeats: false,
+    notes: "Mostly used for drinks. Guests may choose it online; never auto-assigned. Two guests pay for two.",
   },
   { number: 30, capacity: 2, category: "STANDARD", ...square, x: F, y: RIGHT[6] },
   { number: 31, capacity: 2, category: "STANDARD", ...square, x: F, y: RIGHT[5] },

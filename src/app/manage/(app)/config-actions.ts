@@ -59,6 +59,7 @@ export async function saveTable(tableId: string, form: FormData): Promise<void> 
         statusReason: text(form, "statusReason"),
         onlineBookable: checked(form, "onlineBookable"),
         autoAssignable: checked(form, "autoAssignable"),
+        billBySeats: checked(form, "billBySeats"),
         priority: number(form, "priority"),
         viewDescription: { en: text(form, "viewEn"), el: text(form, "viewEl") },
         notes: text(form, "notes"),

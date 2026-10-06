@@ -320,7 +320,8 @@
       "refundReason": "Reason (kept on record)",
       "refundConfirm": "Refund to the guest's card",
       "refundDone": "Refund of {amount} sent to the guest's card.",
-      "changeDate": "Change date or time"
+      "changeDate": "Change date or time",
+      "print": "Print this list"
     },
     "notifications": {
       "title": "New ({count})",
@@ -335,6 +336,26 @@
     "footer": {
       "publicSite": "Open the public site",
       "staffOnly": "For staff only"
+    },
+    "dragHint": "Drag a reserved table onto another table to move the reservation.",
+    "chime": {
+      "on": "Sound on",
+      "off": "Sound off",
+      "hint": "Plays a sound when a new reservation comes in"
+    },
+    "totals": {
+      "title": "The evening in numbers",
+      "reservations": "Reservations",
+      "guests": "Guests",
+      "deposits": "Deposits",
+      "tableFees": "Table fees",
+      "total": "Paid online in total",
+      "chosen": "Tables chosen with a fee",
+      "cancelled": "Cancelled",
+      "noShows": "No-shows",
+      "refunded": "Refunded",
+      "keptFromLost": "Kept from cancellations and no-shows",
+      "note": "Reservations, guests, deposits and fees count the reservations that stand. Cancelled and no-show reservations are counted separately. The numbers follow the filters above."
     }
   },
   "config": {
@@ -380,7 +401,8 @@
       "bulkClose": "Take out of service",
       "bulkOpen": "Put back in service",
       "bulkChanged": "{count, plural, =0 {No table needed changing.} one {# table changed.} other {# tables changed.}}",
-      "bulkUpcomingWarning": "{count, plural, one {# upcoming reservation is} other {# upcoming reservations are}} on these tables. They were not changed: move them or contact the guests."
+      "bulkUpcomingWarning": "{count, plural, one {# upcoming reservation is} other {# upcoming reservations are}} on these tables. They were not changed: move them or contact the guests.",
+      "billBySeats": "A smaller party pays the minimum spend of all its seats"
     },
     "categories": {
       "title": "Table categories",

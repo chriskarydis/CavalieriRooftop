@@ -103,7 +103,7 @@ export function price(input: PriceInput): PriceBreakdown {
       feeCredited = seating.table.feeCountsTowardMinSpend;
       const smallest = input.smallestSuitableCapacity;
       const isLargerThanNeeded = smallest !== null && seating.table.capacity > smallest;
-      if (isLargerThanNeeded && seating.table.capacity > billableSeats) {
+      if (seating.table.billBySeats && isLargerThanNeeded && seating.table.capacity > billableSeats) {
         billableSeats = seating.table.capacity;
         billableBasis = "TABLE_CAPACITY";
       }

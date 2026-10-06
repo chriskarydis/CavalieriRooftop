@@ -4,8 +4,8 @@ import { FLOOR_PLAN, TABLES } from "@/config/initial-floor";
 
 /**
  * Copies the drawing in src/config/initial-floor.ts (walls, labels, and each
- * table's position, size and rotation) over the floor plan in the database.
- * Nothing else about a table changes. Positions set in the floor-plan editor
+ * table's position, size, rotation, view description and seat-billing rule)
+ * over the floor plan in the database. Nothing else about a table changes. Positions set in the floor-plan editor
  * are overwritten, so this is for development databases and first set-up.
  *
  *   npx tsx scripts/sync-floor.ts
@@ -22,7 +22,15 @@ async function main(): Promise<void> {
     for (const table of TABLES) {
       await tx
         .update(schema.diningTable)
-        .set({ x: table.x, y: table.y, width: table.width, height: table.height, rotation: table.rotation ?? 0 })
+        .set({
+          x: table.x,
+          y: table.y,
+          width: table.width,
+          height: table.height,
+          rotation: table.rotation ?? 0,
+          billBySeats: table.billBySeats ?? true,
+          ...(table.view ? { viewDescription: table.view } : {}),
+        })
         .where(eq(schema.diningTable.number, table.number));
     }
   });

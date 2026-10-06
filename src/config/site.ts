@@ -21,12 +21,25 @@ export const SITE = {
   mapEmbedUrl: "https://www.google.com/maps?q=Cavalieri+Hotel+Kapodistriou+4+Corfu&z=16&output=embed",
   directionsUrl: "https://www.google.com/maps/dir/?api=1&destination=Cavalieri+Hotel+Kapodistriou+4+Corfu",
   parkingSearchUrl: "https://www.google.com/maps/search/parking+near+Cavalieri+Hotel+Kapodistriou+4+Corfu",
-  /** Car parks to suggest. Position taken from OpenStreetMap; the owner should confirm the list. */
+  /**
+   * The three public car parks nearest the hotel, nearest first. Positions and details are from
+   * OpenStreetMap (October 2026) and have not been checked on the spot.
+   */
   parking: [
     {
-      name: { en: "Spianada public car park", el: "Δημοτικό πάρκινγκ Σπιανάδας" },
-      note: { en: "Open-air, with a fee.", el: "Υπαίθριο, με χρέωση." },
+      name: { en: "Spianada car park", el: "Πάρκινγκ Σπιανάδας" },
+      note: { en: "Open-air, with a fee. About 450 m.", el: "Υπαίθριο, με χρέωση. Περίπου 450 μ." },
       directionsUrl: "https://www.google.com/maps/dir/?api=1&destination=39.6243733,19.9247055",
+    },
+    {
+      name: { en: "Underground car park, town centre", el: "Υπόγειο πάρκινγκ, κέντρο πόλης" },
+      note: { en: "Underground. About 750 m.", el: "Υπόγειο. Περίπου 750 μ." },
+      directionsUrl: "https://www.google.com/maps/dir/?api=1&destination=39.6220769,19.9158872",
+    },
+    {
+      name: { en: "Underground car park, towards Garitsa", el: "Υπόγειο πάρκινγκ, προς Γαρίτσα" },
+      note: { en: "Underground. About 800 m.", el: "Υπόγειο. Περίπου 800 μ." },
+      directionsUrl: "https://www.google.com/maps/dir/?api=1&destination=39.61724,19.9158327",
     },
   ],
   social: {

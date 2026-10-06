@@ -57,6 +57,10 @@ temporarily; install it properly. See TESTING.md.
 
 ## To check by hand
 
+- Dragging a reservation to another table on the live floor, and the new-reservation sound: built on
+  2026-10-07, not covered by automated tests (the live floor only shows the next 12 hours).
+- The printed reservations list (Reservations, "Print this list").
+
 - The three menus: wording and spellings against the printed cards, especially wines.
 - The view photographs on the booking page (16 tables so far) and the photo proposal in
   `photos/protasi-fotografion.jpg`, which the owner has still to approve.
@@ -102,7 +106,6 @@ owner's email address. Its first password was shown once in chat and should be c
 
 ## Rules worth re-confirming when convenient
 
-- Two guests who choose table 29 pay 90 (its 3 seats). Should that be 60?
 - When a guest moves a reservation, tables that cost more than they paid are not offered (so no second
   payment is needed). The owner agreed on 2026-10-06.
 - The "My reservation" page opens a reservation with its number and the phone or email. Safer

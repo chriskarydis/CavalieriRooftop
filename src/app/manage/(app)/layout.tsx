@@ -36,7 +36,7 @@ export default async function ManageAppLayout({ children }: { children: React.Re
 
   return (
     <>
-      <header className="bg-night px-4 text-stone-300 sm:px-6">
+      <header className="bg-night px-4 text-stone-300 sm:px-6 print:hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 py-3">
           <Link href="/manage" className="flex items-center gap-4">
             <Image src={logoOnDark} alt="Cavalieri Roof Garden" priority sizes="160px" className="h-11 w-auto" />
@@ -55,7 +55,7 @@ export default async function ManageAppLayout({ children }: { children: React.Re
         <NavLinks label={t("nav.label")} links={links.map((link) => ({ href: link.href, label: t(`nav.${link.key}`) }))} />
       </header>
       <div className="flex-1 px-4 py-6 sm:px-6">{children}</div>
-      <footer className="bg-night px-4 py-5 text-xs text-stone-400 sm:px-6">
+      <footer className="bg-night px-4 py-5 text-xs text-stone-400 sm:px-6 print:hidden">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
           <p>
             <span className="tracking-[0.2em] text-gold uppercase">{SITE.name}</span>

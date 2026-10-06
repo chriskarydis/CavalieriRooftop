@@ -24,6 +24,7 @@ import {
 } from "../actions";
 import { AutoRefresh } from "./AutoRefresh";
 import { LiveFloorPlan } from "./LiveFloorPlan";
+import { NewReservationChime } from "./NewReservationChime";
 import { ReservationActions } from "./ReservationActions";
 import { cardClass, inputClass, primaryButton, secondaryButton } from "./ui";
 import { WalkInForm, type SeatingOption } from "./WalkInForm";
@@ -112,6 +113,16 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
     };
   });
 
+  // Dragging a table moves the reservation that is on it now, or the next one due.
+  const movable: Record<string, string> = {};
+  for (const table of live) {
+    const booking = table.bookings.find(
+      (entry) =>
+        entry.kind === "RESERVATION" && entry.reservationId !== null && ["CONFIRMED", "LATE", "SEATED"].includes(entry.reservationStatus ?? ""),
+    );
+    if (booking?.reservationId) movable[table.tableId] = booking.reservationId;
+  }
+
   const rows = groupBookings(live);
   const euro = (cents: number) =>
     format.number(cents / 100, { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -137,12 +148,20 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
         <h1 id="floor-heading" className="mb-2 text-lg font-semibold">
           {t("liveFloor")}
         </h1>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
+          <p>{t("dragHint")}</p>
+          <NewReservationChime
+            latestId={notifications.find((notification) => notification.type === "CONFIRMED")?.id ?? ""}
+            labels={{ on: t("chime.on"), off: t("chime.off"), test: t("chime.hint") }}
+          />
+        </div>
         <div className="rounded-lg border border-line bg-white shadow-sm p-3">
           <LiveFloorPlan
             plan={plan}
             tables={tables}
             title={t("liveFloor")}
             selectedId={selectedTableId}
+            movable={movable}
             areaLabels={{
               toilets: tPlan("areas.toilets"),
               entrance: tPlan("areas.entrance"),

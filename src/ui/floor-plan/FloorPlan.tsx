@@ -1,3 +1,6 @@
+"use client";
+
+import { useRef, useState } from "react";
 import type { FloorPlanView, FloorTableView } from "./types";
 
 export interface FloorPlanTable extends FloorTableView {
@@ -13,6 +16,8 @@ const INK = "#1e1b17";
 const CHAIR_DEPTH = 13;
 const CHAIR_GAP = 5;
 const CHAIR_MAX_LENGTH = 44;
+/** Pixels the pointer must travel before a press becomes a drag rather than a click. */
+const DRAG_THRESHOLD = 8;
 
 interface Chair {
   x: number;
@@ -207,7 +212,8 @@ export function TableGlyph({
  * Data-driven SVG floor plan. Purely presentational: it draws the tables and
  * static shapes it is given and decides nothing about availability or price.
  * Coordinates are in the plan's own unit space, so the drawing scales to any
- * container through the viewBox. Works as a server or a client component.
+ * container through the viewBox. Tables listed in `draggableIds` can be dragged
+ * onto another table; what that means is up to `onDrop`.
  */
 export function FloorPlan({
   plan,
@@ -216,6 +222,8 @@ export function FloorPlan({
   areaLabels,
   selectedIds = [],
   onSelect,
+  draggableIds = [],
+  onDrop,
 }: {
   plan: Pick<FloorPlanView, "width" | "height" | "shapes">;
   tables: FloorPlanTable[];
@@ -223,14 +231,61 @@ export function FloorPlan({
   areaLabels: Record<string, string>;
   selectedIds?: readonly string[];
   onSelect?: (tableId: string) => void;
+  draggableIds?: readonly string[];
+  onDrop?: (fromTableId: string, toTableId: string) => void;
 }) {
+  const svg = useRef<SVGSVGElement>(null);
+  const press = useRef<{ id: string; x: number; y: number } | null>(null);
+  /** A drag has just ended: the click that follows it must not also select a table. */
+  const justDragged = useRef(false);
+  const [drag, setDrag] = useState<{ id: string; x: number; y: number; over: string | null } | null>(null);
+
+  const tableAt = (event: React.PointerEvent): string | null =>
+    document.elementFromPoint(event.clientX, event.clientY)?.closest<SVGGElement>("[data-table-id]")?.dataset.tableId ?? null;
+
+  const onPointerMove = (event: React.PointerEvent) => {
+    if (!press.current || !svg.current) return;
+    if (!drag && Math.hypot(event.clientX - press.current.x, event.clientY - press.current.y) < DRAG_THRESHOLD) return;
+    const box = svg.current.getBoundingClientRect();
+    setDrag({
+      id: press.current.id,
+      x: ((event.clientX - box.left) / box.width) * plan.width,
+      y: ((event.clientY - box.top) / box.height) * plan.height,
+      over: tableAt(event),
+    });
+  };
+  const endDrag = (event: React.PointerEvent) => {
+    const from = press.current?.id;
+    press.current = null;
+    if (!drag) return;
+    const to = tableAt(event);
+    setDrag(null);
+    justDragged.current = true;
+    setTimeout(() => (justDragged.current = false), 0);
+    if (from && to && to !== from) onDrop?.(from, to);
+  };
+  const dragged = drag ? tables.find((table) => table.id === drag.id) : undefined;
+
   return (
-    <svg viewBox={`0 0 ${plan.width} ${plan.height}`} role="group" aria-label={title} className="h-auto w-full">
+    <svg
+      ref={svg}
+      viewBox={`0 0 ${plan.width} ${plan.height}`}
+      role="group"
+      aria-label={title}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={() => {
+        press.current = null;
+        setDrag(null);
+      }}
+      className={`h-auto w-full ${drag ? "cursor-grabbing select-none" : ""}`}
+    >
       <FloorBackdrop shapes={plan.shapes} areaLabels={areaLabels} />
 
       {tables.map((table) => {
-        const selected = selectedIds.includes(table.id);
+        const selected = selectedIds.includes(table.id) || (drag !== null && drag.over === table.id && drag.id !== table.id);
         const interactive = Boolean(onSelect && table.selectable);
+        const draggable = Boolean(onDrop) && draggableIds.includes(table.id);
         return (
           <g
             key={table.id}
@@ -238,7 +293,21 @@ export function FloorPlan({
             aria-label={table.label}
             aria-pressed={interactive ? selected : undefined}
             tabIndex={interactive ? 0 : undefined}
-            onClick={interactive ? () => onSelect?.(table.id) : undefined}
+            data-table-id={table.id}
+            onPointerDown={
+              draggable
+                ? (event) => {
+                    if (event.button === 0) press.current = { id: table.id, x: event.clientX, y: event.clientY };
+                  }
+                : undefined
+            }
+            onClick={
+              interactive
+                ? () => {
+                    if (!justDragged.current) onSelect?.(table.id);
+                  }
+                : undefined
+            }
             onKeyDown={
               interactive
                 ? (event) => {
@@ -250,15 +319,29 @@ export function FloorPlan({
                 : undefined
             }
             transform={`translate(${table.x} ${table.y}) rotate(${table.rotation})`}
-            opacity={table.muted ? 0.35 : 1}
+            opacity={drag?.id === table.id ? 0.45 : table.muted ? 0.35 : 1}
             // Tables that can be picked stand slightly off the floor.
-            style={interactive ? { filter: "drop-shadow(0 4px 4px rgb(30 27 23 / 0.22))" } : undefined}
+            style={{
+              ...(interactive ? { filter: "drop-shadow(0 4px 4px rgb(30 27 23 / 0.22))" } : {}),
+              // A finger on a table that can be dragged moves the table, not the page.
+              ...(draggable ? { touchAction: "none" } : {}),
+            }}
             className={interactive ? "cursor-pointer outline-none focus-visible:[&>.tabletop]:stroke-[#1e1b17] focus-visible:[&>.tabletop]:[stroke-width:9]" : undefined}
           >
             <TableGlyph table={table} centre={{ x: plan.width / 2, y: plan.height / 2 }} selected={selected} numberColor={table.numberColor} />
           </g>
         );
       })}
+
+      {drag && dragged && (
+        // What is being carried, under the pointer.
+        <g transform={`translate(${drag.x} ${drag.y})`} pointerEvents="none" opacity={0.9}>
+          <circle r={46} fill={dragged.color} stroke={INK} strokeWidth={6} />
+          <text textAnchor="middle" dominantBaseline="central" fontSize={32} fontWeight={600} fill="#ffffff">
+            {dragged.number}
+          </text>
+        </g>
+      )}
     </svg>
   );
 }

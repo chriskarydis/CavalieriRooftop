@@ -335,6 +335,43 @@ const BAR: InitialSection[] = [
   },
 ];
 
+/** The bar list is printed in English only; these are its descriptions in Greek. */
+const BAR_EL: Record<string, string> = {
+  "Moscow Mule": "Βότκα, φρέσκος χυμός λάιμ, σιρόπι ζάχαρης, συμπλήρωμα με ginger beer",
+  "Espresso Martini": "Βότκα, λικέρ καφέ, ζεστός καφές espresso",
+  Paloma: "Zignum blanco, φρέσκος χυμός λάιμ, σόδα ροζ γκρέιπφρουτ, σιρόπι αγαύης",
+  "Mystic & Spice": "Ρούμι Marama spiced, φρέσκος χυμός λάιμ, mystic mango",
+  "Rhubarb Ginger in Pink": "Τζιν Grace, λικέρ τζίντζερ, σόδα ροζ γκρέιπφρουτ",
+  "Dark 'n' Stormy": "Havana 7, σιρόπι ζάχαρης, φρέσκος χυμός λάιμ, ginger beer",
+  "La Vie en Rose": "Chambéryzette, σιρόπι αγγουριού, φρέσκος χυμός λάιμ, σόδα ροζ γκρέιπφρουτ",
+  "Ramazzotti Spritz": "Aperitivo rosato, prosecco, σόδα",
+  "Cocktail Cavalieri": "Aperitivo rosato, φρέσκο λάιμ, Ursus, φράουλα",
+  Mojito: "Havana 3 ετών, φρέσκο λάιμ, δυόσμος, ζάχαρη",
+  Caipirinha: "Φρέσκο λάιμ, cachaça, ζάχαρη",
+  Americano: "Campari, Martini rosso, σόδα",
+  "Black Russian": "Βότκα, Kahlúa",
+  Manhattan: "Αμερικανικό ουίσκι, Martini bianco, Angostura",
+  Margarita: "Τεκίλα, Cointreau, χυμός λεμονιού, αλάτι",
+  "Dry Martini Cocktail": "Τζιν, dry Martini, ελιά",
+  "Bloody Mary": "Βότκα, χυμός λεμονιού, χυμός ντομάτας, αλάτι, πιπέρι, Tabasco",
+  "Gin Fizz": "Τζιν, χυμός λεμονιού, ζάχαρη, σόδα",
+  "Piña Colada": "Bacardi, κρέμα καρύδας, γάλα, χυμός ανανά",
+  "Brandy Alexander": "Μπράντυ, Baileys, γάλα, κανέλα",
+  "Miami Wami": "Bacardi, λικέρ μπανάνα, χυμός πορτοκάλι και ανανά, γρεναδίνη",
+  "Strawberry Margarita": "Τεκίλα, Cointreau, φρέσκες φράουλες, ζάχαρη",
+  Daiquiri: "Bacardi, Cointreau, χυμός λεμονιού",
+  "Daiquiri Strawberry": "Bacardi, Cointreau, φρέσκες φράουλες",
+  "Daiquiri Passion": "Bacardi, Cointreau, φρούτο του πάθους",
+  "Kir Royale": "Crème de cassis, prosecco",
+  Bellini: "Prosecco με χυμό ροδάκινο",
+  "Aperol Spritz": "Aperol, prosecco, σόδα",
+  "Beefeater 0%": "Χωρίς αλκοόλ",
+  "Coca-Cola": "Κανονική, zero ή light",
+};
+for (const section of BAR) {
+  for (const dish of section.dishes) dish.descriptionEl ??= BAR_EL[dish.name];
+}
+
 const PELOPONNESE = ["P.G.I. Peloponnese", "Π.Γ.Ε. Πελοπόννησος"] as const;
 const SERRES = ["P.G.I. Serres", "Π.Γ.Ε. Σέρρες"] as const;
 const KITHAIRON = ["P.G.I. Slopes of Kithairon", "Π.Γ.Ε. Πλαγιές Κιθαιρώνα"] as const;

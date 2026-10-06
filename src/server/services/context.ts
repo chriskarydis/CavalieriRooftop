@@ -105,6 +105,7 @@ export async function loadFloorConfig(tx: Tx | Db): Promise<FloorConfig> {
       status: table.status,
       onlineBookable: table.onlineBookable,
       autoAssignable: table.autoAssignable,
+      billBySeats: table.billBySeats,
       priority: table.priority,
       feeCents: category.active ? category.extraFeeCents : 0,
       categoryName: category.name.en ?? "",

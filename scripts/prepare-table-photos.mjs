@@ -14,6 +14,8 @@ const MAX_SIDE = 1400;
 /** "table_12", "12", "table_23_24", "table_1_a": table numbers, then perhaps a letter to tell photographs apart. */
 const NAME = /^\s*(table[\s_-]*)?\d+([\s_,-]+(\d+|[a-z]))*\s*$/i;
 const numbersIn = (base) => base.match(/\d+/g).map(Number);
+/** Photographs the owner does not want shown (file names without extension). The originals stay where they are. */
+const LEFT_OUT = new Set(["table_1_b", "table_5_b"]);
 
 const walk = (dir) =>
   readdirSync(dir).flatMap((name) => {
@@ -27,7 +29,7 @@ const found = walk(SOURCE)
     const dot = file.lastIndexOf(".");
     return { path, base: file.slice(0, dot), extension: file.slice(dot + 1).toLowerCase() };
   })
-  .filter(({ base, extension }) => NAME.test(base) && ["jpg", "jpeg", "png", "heic"].includes(extension))
+  .filter(({ base, extension }) => !LEFT_OUT.has(base.toLowerCase()) && NAME.test(base) && ["jpg", "jpeg", "png", "heic"].includes(extension))
   // A table's own photographs come before ones it shares with other tables.
   .sort((a, b) => numbersIn(a.base).length - numbersIn(b.base).length || a.base.localeCompare(b.base));
 

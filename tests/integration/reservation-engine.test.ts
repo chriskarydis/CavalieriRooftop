@@ -104,7 +104,7 @@ describe("reservation engine", () => {
       expect(table(19)).toMatchObject({ state: "AVAILABLE", price: { totalCents: 6000 } });
       expect(table(1)).toMatchObject({ state: "AVAILABLE", price: { depositCents: 12000, tableFeeCents: 5000 } });
       expect(table(70)).toMatchObject({ price: { totalCents: 7000 } });
-      expect(table(29)).toMatchObject({ state: "AVAILABLE", price: { totalCents: 9000 } });
+      expect(table(29)).toMatchObject({ state: "AVAILABLE", price: { totalCents: 6000 } });
       expect(availability.tables.some((entry) => entry.number === 99)).toBe(false);
       expect(availability.auto?.price.totalCents).toBe(6000);
     });

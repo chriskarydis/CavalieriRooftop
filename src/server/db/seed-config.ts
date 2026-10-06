@@ -58,6 +58,8 @@ export async function seedInitialConfiguration(db: PostgresJsDatabase<typeof sch
           isSpare: table.isSpare ?? false,
           onlineBookable: table.onlineBookable ?? true,
           autoAssignable: table.autoAssignable ?? true,
+          billBySeats: table.billBySeats ?? true,
+          viewDescription: table.view,
           notes: table.notes,
           floorPlanId: plan.id,
           x: table.x,

@@ -151,6 +151,8 @@ export const diningTable = pgTable(
     isSpare: boolean().notNull().default(false),
     onlineBookable: boolean().notNull().default(true),
     autoAssignable: boolean().notNull().default(true),
+    /** A smaller party choosing this table pays the minimum spend of its seats. */
+    billBySeats: boolean().notNull().default(true),
     priority: integer().notNull().default(0),
     viewDescription: jsonb().$type<LocalizedText>(),
     photoUrl: text(),

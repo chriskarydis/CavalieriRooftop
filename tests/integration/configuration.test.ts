@@ -45,6 +45,7 @@ describe("configuration and table operations", () => {
       statusReason: "",
       onlineBookable: table.onlineBookable,
       autoAssignable: table.autoAssignable,
+      billBySeats: table.billBySeats,
       priority: table.priority,
       viewDescription: { en: "", el: "" },
       notes: "",

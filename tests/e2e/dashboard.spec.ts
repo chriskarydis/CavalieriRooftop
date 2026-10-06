@@ -36,6 +36,12 @@ test("manager finds a reservation, moves it with a price warning, and cancels it
   await expect(row).toContainText("19");
   await expect(row).toContainText("Confirmed");
   await expect(page.getByText("1 reservation · 2 guests expected")).toBeVisible();
+  // The evening in numbers: one reservation for two, 60 deposit, no table fee.
+  const totals = page.getByRole("region", { name: "The evening in numbers" });
+  await expect(totals).toContainText("Deposits€60.00");
+  await expect(totals).toContainText("Table fees€0.00");
+  await expect(totals).toContainText("Paid online in total€60.00");
+  await expect(page.getByRole("button", { name: "Print this list" })).toBeVisible();
 
   // Move to premium table 1: the price difference is shown and nothing is charged.
   await row.getByRole("link", { name: "Move" }).click();

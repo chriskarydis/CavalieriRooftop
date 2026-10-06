@@ -17,6 +17,11 @@ export interface DomainTable {
   onlineBookable: boolean;
   /** May be picked by automatic assignment. */
   autoAssignable: boolean;
+  /**
+   * When a smaller party chooses this table, its minimum spend is that of the
+   * table's seats. Off for a table that is not a regular dinner table (table 29).
+   */
+  billBySeats: boolean;
   /** Manager-set preference; higher is assigned first. */
   priority: number;
   /** Extra fee of the table's category, in cents. */

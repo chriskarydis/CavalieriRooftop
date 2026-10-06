@@ -72,8 +72,8 @@ describe("price: guest chooses a single table", () => {
     expect(priceTable(3, 29)).toMatchObject({ billableSeats: 3, totalCents: 9000 });
   });
 
-  it("2 guests choosing table 29 pay for 3 seats", () => {
-    expect(priceTable(2, 29)).toMatchObject({ billableSeats: 3, billableBasis: "TABLE_CAPACITY", totalCents: 9000 });
+  it("2 guests choosing table 29 pay for 2: it is not billed on its seats (owner's rule)", () => {
+    expect(priceTable(2, 29)).toMatchObject({ billableSeats: 2, billableBasis: "PARTY_SIZE", totalCents: 6000 });
   });
 
   it("5 guests at table 18 with the extra chair pay 150", () => {

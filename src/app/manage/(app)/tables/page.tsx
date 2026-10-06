@@ -128,6 +128,10 @@ export default async function TablesPage({ searchParams }: PageProps<"/manage/ta
                   <input name="autoAssignable" type="checkbox" defaultChecked={table.autoAssignable} />
                   {t("tables.autoAssignable")}
                 </label>
+                <label className="flex items-center gap-2 sm:col-span-2">
+                  <input name="billBySeats" type="checkbox" defaultChecked={table.billBySeats} />
+                  {t("tables.billBySeats")}
+                </label>
                 <label className="sm:col-span-2">
                   {t("tables.viewEn")}
                   <input name="viewEn" maxLength={300} defaultValue={table.viewDescription?.en ?? ""} className={inputClass} />

@@ -158,3 +158,8 @@ recorded with its outcome. Without an email provider key nothing is sent; messag
 
 Extending a walk-in, a timeline view, the floor-plan editor, analytics, and scheduling of the
 automatic jobs at deployment.
+
+## Tables not billed on their seats
+
+A table with `bill_by_seats` off is always billed on the party (never fewer than the minimum of two).
+Only table 29 is set this way: two guests there pay 60, three pay 90.

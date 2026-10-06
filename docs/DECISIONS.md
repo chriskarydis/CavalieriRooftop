@@ -186,3 +186,17 @@ Owner's rules, implemented in `src/server/services/reschedule.ts`:
 - View from a table: photographs named `table_12.jpg`, `table_23_24.jpg`, `table_1_a.jpg` anywhere
   under `photos/` become web images with `node scripts/prepare-table-photos.mjs` and show in the
   booking page when that table is selected. A trial for now.
+
+## 2026-10-07
+
+- Table 29: two guests who choose it pay for two (60), not for its three seats. Implemented as a
+  per-table switch, `bill_by_seats`, editable at /manage/tables; off for table 29 only.
+- View descriptions for the paid tables were written by the developer from the floor plan and the
+  owner's photographs; Greek descriptions for the bar list were translated by the developer. Both
+  are for the owner to read through.
+- Car parks on the contact page are the three nearest public ones in OpenStreetMap, unverified.
+- Live floor: dragging a table with a reservation onto another table opens the usual move preview;
+  nothing changes until it is confirmed. A sound plays when a new reservation arrives (can be
+  switched off per browser).
+- The reservations list shows the evening's totals and prints without the navigation and buttons.
+- `scripts/prepare-table-photos.mjs` has a list of photographs the owner does not want shown.

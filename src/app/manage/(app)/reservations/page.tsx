@@ -5,11 +5,13 @@ import { addMinutes, zonedDate, zonedTime, zonedToInstant } from "@/domain/time"
 import { requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import { manageTokenFor } from "@/server/services/booking";
+import { formatCalendarDate } from "@/i18n/intl-locale";
 import { loadSettings } from "@/server/services/context";
 import { listReservations } from "@/server/services/reservation-list";
 import { listBlocks } from "@/server/services/table-ops";
 import { hasPermission } from "@/domain/permissions";
 import { refundAction, unblockAction } from "../../actions";
+import { PrintButton } from "../PrintButton";
 import { ReservationActions } from "../ReservationActions";
 import { cardClass, inputClass, primaryButton, secondaryButton } from "../ui";
 
@@ -46,11 +48,35 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
     .filter((reservation) => !["CANCELLED", "NO_SHOW"].includes(reservation.status))
     .reduce((sum, reservation) => sum + reservation.partySize, 0);
 
+  // Money and guests for the evening. Cancelled and no-show reservations are counted apart.
+  const lost = (reservation: (typeof reservations)[number]) => ["CANCELLED", "NO_SHOW"].includes(reservation.status);
+  const kept = reservations.filter((reservation) => !lost(reservation));
+  const sum = (rows: typeof reservations, pick: (row: (typeof reservations)[number]) => number) => rows.reduce((total, row) => total + pick(row), 0);
+  const money = (cents: number) => format.number(cents / 100, { style: "currency", currency: "EUR" });
+  const totals = [
+    { label: t("totals.reservations"), value: String(kept.length) },
+    { label: t("totals.guests"), value: String(covers) },
+    { label: t("totals.deposits"), value: money(sum(kept, (row) => row.depositCents)) },
+    { label: t("totals.tableFees"), value: money(sum(kept, (row) => row.tableFeeCents)) },
+    { label: t("totals.total"), value: money(sum(kept, (row) => row.totalCents)), strong: true },
+    { label: t("totals.chosen"), value: String(kept.filter((row) => row.tableFeeCents > 0).length) },
+    { label: t("totals.cancelled"), value: String(reservations.filter((row) => row.status === "CANCELLED").length) },
+    { label: t("totals.noShows"), value: String(reservations.filter((row) => row.status === "NO_SHOW").length) },
+    { label: t("totals.refunded"), value: money(sum(reservations, (row) => row.refundedCents)) },
+    { label: t("totals.keptFromLost"), value: money(sum(reservations.filter(lost), (row) => row.paidCents - row.refundedCents)) },
+  ];
+
   return (
     <main className="mx-auto max-w-6xl space-y-4">
-      <h1 className="text-lg font-semibold">{t("reservations.title")}</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="mb-0 flex-1 text-lg font-semibold">
+          {t("reservations.title")}
+          <span className="ml-3 hidden text-base print:inline">{formatCalendarDate(date)}</span>
+        </h1>
+        <PrintButton label={t("reservations.print")} className={`${primaryButton} print:hidden`} />
+      </div>
 
-      <form method="get" className={`${cardClass} flex flex-wrap items-end gap-3 text-sm font-medium`}>
+      <form method="get" className={`${cardClass} flex flex-wrap items-end gap-3 text-sm font-medium print:hidden`}>
         <label>
           {t("reservations.date")}
           <DateField name="date" defaultValue={date} required className={inputClass} />
@@ -87,7 +113,20 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
         </p>
       )}
 
-      <p className="text-sm text-slate-600">{t("reservations.summary", { count: reservations.length, covers })}</p>
+      <p className="text-sm text-slate-600 print:hidden">{t("reservations.summary", { count: reservations.length, covers })}</p>
+
+      <section aria-labelledby="totals-heading" className={cardClass}>
+        <h2 id="totals-heading">{t("totals.title")}</h2>
+        <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-5 print:grid-cols-5">
+          {totals.map((entry) => (
+            <div key={entry.label}>
+              <dt className="text-xs text-slate-600">{entry.label}</dt>
+              <dd className={`tabular-nums ${entry.strong ? "text-xl font-semibold" : "text-lg"}`}>{entry.value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-3 text-xs text-slate-500">{t("totals.note")}</p>
+      </section>
 
       {reservations.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-line bg-white shadow-sm">
@@ -100,7 +139,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                 <th className="px-3 py-2 font-medium">{t("columns.party")}</th>
                 <th className="px-3 py-2 font-medium">{t("columns.status")}</th>
                 <th className="px-3 py-2 font-medium">{t("columns.paid")}</th>
-                <th className="px-3 py-2 font-medium">{t("columns.actions")}</th>
+                <th className="px-3 py-2 font-medium print:hidden">{t("columns.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -130,7 +169,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-2 print:hidden">
                     <ReservationActions reservationId={reservation.id} status={reservation.status} returnTo={returnTo} />
                     {(reservation.status === "CONFIRMED" || reservation.status === "LATE") && (
                       // The guest's own page, opened by staff for a guest on the phone. The same rules apply.

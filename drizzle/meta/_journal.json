@@ -57,6 +57,13 @@
       "when": 1791316816325,
       "tag": "0007_menu_lists",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791320156941,
+      "tag": "0008_bill_by_seats",
+      "breakpoints": true
     }
   ]
 }

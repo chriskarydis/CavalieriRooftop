@@ -20,6 +20,7 @@ export function initialFixture(): {
       status: table.status ?? "ACTIVE",
       onlineBookable: table.onlineBookable ?? true,
       autoAssignable: table.autoAssignable ?? true,
+      billBySeats: table.billBySeats ?? true,
       priority: 0,
       feeCents: category.feeCents,
       categoryName: category.name.en,

@@ -6,8 +6,12 @@ phases and documented here as they land.
 ## Staff authentication
 
 - Better Auth, email and password, hashes only (scrypt). Minimum password length 12.
-- No public sign-up. Accounts are created with `npm run staff:create`; the sign-up endpoint is
-  disabled and returns an error.
+- No public sign-up; the sign-up endpoint is disabled and returns an error. The first developer
+  account is created with `npm run staff:create`. After that a developer manages accounts at
+  `/manage/staff`: create, change role, reset password, remove. The last developer cannot be demoted
+  or removed, and nobody can remove themselves.
+- A password reset, a role change and a removal sign the person out everywhere.
+- Any staff member can change their own password; other devices are then signed out.
 - Sessions are stored in the database and expire after 12 hours. The cookie is `HttpOnly`,
   `SameSite=Lax`, and `Secure` in production.
 - Sign-in is rate-limited to 5 attempts per minute per client, counted in the database so it holds
@@ -42,6 +46,14 @@ phases and documented here as they land.
   only their hash, so a copy of the database alone opens no reservation.
 - One unpaid hold per visitor, and a cap per network address, so tables cannot be kept out of sale.
 - The visitor's IP address is never stored, only a keyed hash used for that cap.
+
+## Errors
+
+- Guests and staff never see technical details: an error page shows a short code only.
+- Every server error is logged as one line, and emailed to `ALERT_EMAIL` at most once per 15 minutes
+  per error. Secret links and the values of failed database queries are removed first.
+- In production the site refuses to start if a required setting is missing, and names the setting
+  without printing its value.
 
 ## Secrets
 

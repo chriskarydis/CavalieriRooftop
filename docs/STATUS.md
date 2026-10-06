@@ -20,35 +20,33 @@ Last updated: 2026-10-06. Update this file at the end of every working session.
 | Menu | Seeded from the current site with the 14 EU allergens; management screens; public menu page, prices hidden by default; no dish photos (owner's decision) |
 | Public pages | Home, gallery, contact, reservation policy, privacy and cookies, header and footer, sitemap, robots, structured data. Uses the owner's photographs (16 chosen from the first batch), logo and knight favicon |
 | Emails | Guest confirmation, reminder, cancellation; restaurant new, cancelled, no-show; EN/EL; sent once each and recorded. Sample emails were sent through Resend on 2026-10-06 (`npm run email:check`). Until a sender domain is verified, Resend delivers only to its account owner's address |
-| Stripe | Payment form, webhook, automatic refund on in-policy cancellation, automatic refund of late payments, manager refund with reason. Cards only. Run against Stripe test mode with the owner's test keys (2026-10-06): pay, webhook confirmation, guest cancellation with refund, declined card then retry, 3-D Secure card, staff cancellation with refund all pass |
+| Stripe | Payment form, webhook, automatic refund on in-policy cancellation, automatic refund of late payments, manager refund with reason. Cards only. Run against Stripe test mode with the owner's test keys (2026-10-06): pay, webhook confirmation, guest cancellation with refund, declined card then retry, 3-D Secure card, staff cancellation with refund, automatic refund of a late payment and manager refund all pass |
 | Hardening | Security headers and CSP, no-store and no-referrer on secret links, production configuration check, error and not-found pages, optional guest-data retention, automated accessibility checks on every page |
 | Timeline | Every table's evening for any date: reservations, walk-ins, blocks, holds |
 | Analytics | Reservations, guests, cancellations, no-shows, deposits, table fees, kept and refunded amounts, chosen tables, walk-ins, by time and weekday |
 | Floor tools | Close or reopen several tables at once; floor-plan editor (drag or arrow keys, size, rotation, shape); add a table |
-| Tests | 197 unit/integration; 60 browser tests (desktop and mobile); 4 opt-in real-Stripe tests (`npm run test:stripe`), all passing |
-| Docs | PROJECT_ANALYSIS, DECISIONS, BOOKING_LOGIC, TABLE_ALLOCATION, DATABASE, SECURITY |
+| Tests | 209 unit/integration; 66 browser tests (desktop and mobile); real-Stripe checks: 4 browser scenarios, 2 refund scenarios and the key check, all passing in test mode |
+| Staff accounts | Developers create accounts, change roles, reset passwords and remove accounts at /manage/staff; anyone can change their own password |
+| Error reporting | One log line per server error and an optional email alert, with secret links and query values removed |
+| Deployment preparation | vercel.json, database client for Neon's pooler, migrations before each build, DEPLOYMENT.md |
+| Docs | STATUS, ARCHITECTURE, DEPLOYMENT, TESTING, DECISIONS, BOOKING_LOGIC, TABLE_ALLOCATION, DATABASE, SECURITY, PROJECT_ANALYSIS |
 
 ## To do, in order
 
-1. **Owner to read the four sample emails** and say what wording to change.
-2. **Manager refund and late-payment refund against Stripe:** covered by logic tests, not yet by a
-   real-Stripe run.
-3. **Sender domain for email:** verify cavalieriroofgarden.com at Resend (needs DNS access) so emails
+1. **Put the site online for a trial** (owner is creating Vercel and Neon accounts): follow
+   DEPLOYMENT.md steps 1 to 3 with Stripe test keys.
+2. **Sender domain for email:** verify cavalieriroofgarden.com at Resend (needs DNS access) so emails
    reach guests, not only the account owner.
-4. **Stripe CLI:** it was only downloaded temporarily for testing. Install it to run
-   `npm run test:stripe` again (`stripe listen --forward-to localhost:3200/api/stripe/webhook`).
-   In those tests the pay and "Complete" buttons are pressed with the keyboard, because pointer
-   clicks were lost in automation while Stripe's frames were still moving; the owner confirmed by
-   hand that a normal click works the first time.
-5. **Public site, remaining:** photography (the hero is a colour gradient stand-in), gallery and
-   experience pages once photos exist, page caching.
-6. **Error monitoring** (for example Sentry).
-7. **Small dashboard item:** drag a reservation to another table on the live floor (moving already
-   works from the Move button).
-8. **Deployment:** Vercel + Neon (EU), scheduler for `/api/cron/tick` every minute, production
-   configuration script, DEPLOYMENT.md, TESTING.md, ARCHITECTURE.md, domain cut-over.
+3. **Content from the owner:** Greek dish names, view descriptions for paid tables, corrections to
+   the home and contact page text, more photographs.
+4. **Before going live:** scheduled job every minute (DEPLOYMENT.md step 6), the restaurant's own
+   Stripe keys and a live webhook, legal review of the privacy page, staff accounts for the
+   managers, domain cut-over (DEPLOYMENT.md step 7).
+5. **Nice to have:** drag a reservation to another table on the live floor (moving already works
+   from the Move button), page caching, a nonce-based content security policy.
 
-Later, if wanted: photos of the view from each paid table (the data model has the field).
+Notes for whoever runs the Stripe browser tests again: the Stripe CLI was only downloaded
+temporarily; install it properly. See TESTING.md.
 
 ## Needed from the owner
 

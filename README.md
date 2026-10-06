@@ -4,18 +4,16 @@ Website, reservation system and management dashboard for Cavalieri Roof Garden, 
 
 ## Status
 
-Built so far:
+Feature-complete and tested locally; not yet deployed. In English and Greek throughout:
 
-- Database schema and seeded floor configuration.
-- Pricing, allocation and reservation engines (availability, holds, confirmation, late/no-show,
-  cancellation, walk-ins).
-- Guest booking in English and Greek: search, interactive floor plan, 10-minute hold with countdown,
-  details, confirmation page, self-service cancellation (`/en/reserve`, `/el/reserve`).
-- Staff sign-in with roles and a live floor at `/manage`, in English and Greek: seat, no-show,
-  table free, cancel, walk-ins.
+- **Guests:** home, menu, gallery, contact and policy pages; booking with an interactive floor plan,
+  a 10-minute hold, card payment through Stripe, confirmation and reminder emails, self-service
+  cancellation with automatic refund.
+- **Staff** (`/manage`): live floor, reservations, timeline, walk-ins, blocks, moving reservations,
+  analytics; settings for tables, categories and fees, joined tables, the floor plan, the menu,
+  opening rules and staff accounts.
 
-Not built yet: Stripe payments (a development stand-in confirms the booking), emails, public content
-pages and design, table/category/menu editors, moving a reservation, manual blocks, analytics.
+What is done, what is next and what is still needed from the owner: [docs/STATUS.md](docs/STATUS.md).
 
 ## Run locally
 
@@ -82,7 +80,10 @@ npm run lint
 
 ## Documentation
 
-- [docs/PROJECT_ANALYSIS.md](docs/PROJECT_ANALYSIS.md): discovery and architecture plan
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the code is organised and why
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): putting the site online, step by step
+- [docs/TESTING.md](docs/TESTING.md): what each test command checks
+- [docs/PROJECT_ANALYSIS.md](docs/PROJECT_ANALYSIS.md): the original discovery and plan
 - [docs/DECISIONS.md](docs/DECISIONS.md): business and technical decisions, open questions
 - [docs/BOOKING_LOGIC.md](docs/BOOKING_LOGIC.md): pricing rules
 - [docs/TABLE_ALLOCATION.md](docs/TABLE_ALLOCATION.md): allocation algorithm and combinations

@@ -27,4 +27,14 @@ describe("message catalogues", () => {
       expect(placeholders(lookup(el, key)), key).toEqual(placeholders(lookup(en, key)));
     }
   });
+
+  // Owner's style rule for Greek: no ano teleia, and ";" only as a question mark.
+  it("Greek text uses no ano teleia and only uses ';' to end a question", () => {
+    for (const key of keys(el)) {
+      const text = lookup(el, key);
+      // A dot with a space on both sides is a visual separator between items, not punctuation.
+      expect(/\S[··]/.test(text), `ano teleia in ${key}`).toBe(false);
+      expect(/;(?!\s*$)/.test(text), `';' inside ${key}`).toBe(false);
+    }
+  });
 });

@@ -10,7 +10,7 @@ import { audit, type Actor, type Db } from "./context";
  * the actor for the "configuration" permission.
  */
 
-export type ConfigErrorCode = "INVALID" | "NOT_FOUND" | "IN_USE" | "DUPLICATE";
+export type ConfigErrorCode = "INVALID" | "NOT_FOUND" | "IN_USE" | "DUPLICATE" | "LAST_DEVELOPER" | "SELF";
 
 export class ConfigError extends Error {
   constructor(public readonly code: ConfigErrorCode) {

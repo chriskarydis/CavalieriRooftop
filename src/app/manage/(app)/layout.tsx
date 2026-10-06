@@ -27,6 +27,7 @@ export default async function ManageAppLayout({ children }: { children: React.Re
     ...OPERATIONS,
     ...(hasPermission(staff.role, "analytics") ? [{ href: "/manage/analytics", key: "analytics" } as const] : []),
     ...(hasPermission(staff.role, "configuration") ? CONFIGURATION : []),
+    ...(hasPermission(staff.role, "system") ? [{ href: "/manage/staff", key: "staff" } as const] : []),
   ];
 
   return (
@@ -36,9 +37,9 @@ export default async function ManageAppLayout({ children }: { children: React.Re
           <span className="font-semibold">Cavalieri Roof Garden</span>
           <div className="flex items-center gap-4 text-sm">
             <StaffLocaleSwitcher />
-            <span className="text-slate-600">
+            <Link href="/manage/account" className="text-slate-600 hover:underline">
               {staff.name} · {t(`role.${staff.role}`)}
-            </span>
+            </Link>
             <SignOutButton label={t("signOut")} />
           </div>
         </div>

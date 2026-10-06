@@ -28,6 +28,8 @@ export default defineConfig({
       DATABASE_URL: E2E_DATABASE_URL,
       BETTER_AUTH_URL: BASE_URL,
       ALLOW_SIMULATED_PAYMENTS: "true",
+      // The suite signs in more often than a person would; the limit itself is checked by hand.
+      SIGN_IN_ATTEMPTS_PER_MINUTE: "100",
       // The browser suite never talks to Stripe or the email provider, whatever is in .env.
       STRIPE_SECRET_KEY: "",
       STRIPE_WEBHOOK_SECRET: "",

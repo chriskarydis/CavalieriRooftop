@@ -248,7 +248,8 @@
       "menu": "Menu",
       "timeline": "Timeline",
       "floor_editor": "Floor plan",
-      "analytics": "Analytics"
+      "analytics": "Analytics",
+      "staff": "Staff"
     },
     "move": {
       "title": "Move reservation {guest}",
@@ -307,7 +308,9 @@
       "IN_USE": "Tables still use this category. Move them to another category first.",
       "DUPLICATE": "That already exists.",
       "FORBIDDEN": "You do not have permission to do that.",
-      "GENERIC": "Something went wrong. Nothing was saved."
+      "GENERIC": "Something went wrong. Nothing was saved.",
+      "LAST_DEVELOPER": "This is the only developer account. Create another developer first.",
+      "SELF": "You cannot remove your own account."
     },
     "tables": {
       "title": "Tables",
@@ -713,5 +716,32 @@
   "gallery": {
     "title": "Gallery",
     "intro": "The view from the roof garden at different hours: the Old Fortress, the rooftops of the Old Town and the sunset."
+  },
+  "staff": {
+    "title": "Staff accounts",
+    "intro": "Who can sign in to the management pages. Managers run the restaurant; developers can also manage accounts.",
+    "you": "you",
+    "role": "Role",
+    "changeRole": "Change role",
+    "newPassword": "New password (at least {min} characters)",
+    "resetPassword": "Set password",
+    "remove": "Remove",
+    "confirmRemove": "Remove {name}",
+    "new": "New account",
+    "newNote": "Give the person their password in person or by phone. They can change it under their name at the top of the page.",
+    "name": "Name",
+    "email": "Email",
+    "initialPassword": "First password (at least {min} characters)",
+    "create": "Create account",
+    "accountTitle": "My account",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "repeatPassword": "New password again",
+    "passwordChanged": "Password changed. Other devices have been signed out.",
+    "passwordError": {
+      "wrong": "The current password is not correct.",
+      "mismatch": "The two new passwords are not the same.",
+      "failed": "The password could not be changed. Please try again."
+    }
   }
 }

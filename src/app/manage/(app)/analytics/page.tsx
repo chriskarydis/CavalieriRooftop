@@ -1,3 +1,4 @@
+import { DateField } from "../DateField";
 import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 import { zonedDate } from "@/domain/time";
 import { intlLocale } from "@/i18n/intl-locale";
@@ -90,11 +91,11 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/manage
       <form method="get" className={`${cardClass} flex flex-wrap items-end gap-3 text-sm font-medium`}>
         <label>
           {t("from")}
-          <input type="date" name="from" defaultValue={from} required className={inputClass} />
+          <DateField name="from" defaultValue={from} required className={inputClass} />
         </label>
         <label>
           {t("to")}
-          <input type="date" name="to" defaultValue={to} required className={inputClass} />
+          <DateField name="to" defaultValue={to} required className={inputClass} />
         </label>
         <button type="submit" className={primaryButton}>
           {t("show")}

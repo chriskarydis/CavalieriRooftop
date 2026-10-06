@@ -1,3 +1,4 @@
+import { DateField } from "../DateField";
 import { asc } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { requirePermission } from "@/server/auth/session";
@@ -137,7 +138,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/manage/
         <form action={addClosedDate} className="flex flex-wrap items-end gap-3 text-sm font-medium">
           <label>
             {t("closures.date")}
-            <input name="date" type="date" required className={inputClass} />
+            <DateField name="date" required className={inputClass} />
           </label>
           <label className="min-w-48 flex-1">
             {t("closures.reason")}

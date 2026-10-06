@@ -167,7 +167,8 @@ Owner's rules, implemented in `src/server/services/reschedule.ts`:
 
 - Dates are written dd/mm/yyyy everywhere, in both languages, with the weekday in words where it
   helps (`formatDate`, `formatLongDate` in `src/i18n/intl-locale.ts`). Native date pickers in the
-  management pages follow the browser's own language setting and cannot be forced.
+  management pages are a text field that reads and shows dd/mm/yyyy (`DateField`), with the
+  browser calendar behind a button.
 
 ## Map and parking
 

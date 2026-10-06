@@ -1,3 +1,4 @@
+import { DateField } from "../DateField";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { addMinutes, zonedDate, zonedTime } from "@/domain/time";
@@ -67,7 +68,7 @@ export default async function TimelinePage({ searchParams }: PageProps<"/manage/
       <form method="get" className={`${cardClass} flex flex-wrap items-end gap-3 text-sm font-medium`}>
         <label>
           {t("date")}
-          <input type="date" name="date" defaultValue={date} required className={inputClass} />
+          <DateField key={date} name="date" defaultValue={date} required className={inputClass} />
         </label>
         <button type="submit" className={primaryButton}>
           {t("show")}

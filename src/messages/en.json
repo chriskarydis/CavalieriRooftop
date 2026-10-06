@@ -462,7 +462,8 @@
       "reason": "Reason (optional)",
       "add": "Close this date",
       "remove": "Reopen"
-    }
+    },
+    "pickDate": "Pick from a calendar"
   },
   "menu": {
     "title": "Our menus",

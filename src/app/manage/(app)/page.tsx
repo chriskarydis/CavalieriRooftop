@@ -1,3 +1,4 @@
+import { DateField } from "./DateField";
 import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 import type { LiveTableState } from "@/domain/table-state";
@@ -450,7 +451,7 @@ async function TableDetails({
         <form action={blockAction.bind(null, table.tableId, returnTo)} className="mt-4 flex flex-wrap items-end gap-3 text-sm font-medium">
           <label>
             {t("details.blockDate")}
-            <input name="date" type="date" className={inputClass} />
+            <DateField name="date" className={inputClass} />
           </label>
           <label>
             {t("details.blockStart")}

@@ -153,7 +153,7 @@ body {
   }
 }
 
-/* While a menu is open in its window, the page behind it does not scroll. */
+/* While a menu or a photograph is open in its window, the page behind it does not scroll. */
 html:has(dialog[open]) {
   overflow: hidden;
 }
@@ -163,12 +163,7 @@ html:has(dialog[open]) {
   outline-offset: 2px;
 }
 /* Tables on a floor plan show focus with a dark edge on the table itself. */
-svg g/* While a menu is open in its window, the page behind it does not scroll. */
-html:has(dialog[open]) {
-  overflow: hidden;
-}
-
-:focus-visible {
+svg g:focus-visible {
   outline: none;
 }
 

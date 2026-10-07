@@ -9,8 +9,9 @@ const MAX_SIDE = 1600;
 
 /** Output name -> start of the original's file name. */
 const PHOTOS = {
-  "sunset-rooftops-wide": "0-02-05-30b277b8b4b4f665",
-  "sunset-rooftops-tall": "0-02-05-f7892d4943918fc9",
+  // The opening photograph: the owner's full-size original (October 2026), wide and cut upright for phones.
+  "sunset-rooftops-wide": "hero.jpeg",
+  "sunset-rooftops-tall": "hero.jpeg",
   "terrace-sunset": "0-02-05-ce4f9ec6f29a8ae6",
   "fortress-day": "0-02-05-7506565d2bff70ab",
   "fortress-night": "0-02-05-cd1ddf4158b62946",
@@ -46,7 +47,10 @@ const PHOTOS = {
 };
 
 /** Wider than the rest: shown as a strip across the page. */
-const WIDE = { "terrace-panorama": 3200 };
+const WIDE = { "terrace-panorama": 3200, "sunset-rooftops-wide": 2400, "sunset-rooftops-tall": 1800 };
+
+/** Part of the original to keep, as fractions of its width (the rest of the height stays). */
+const CROP = { "sunset-rooftops-tall": { left: 0.265, width: 0.5625 } };
 
 /** The logo with a transparent background, as supplied by the owner. */
 const LOGO = "roofgardenlogo-removebg-preview.png";
@@ -57,7 +61,16 @@ const originals = [...readdirSync(SOURCE), ...readdirSync(`${SOURCE}/converted`)
 for (const [name, prefix] of Object.entries(PHOTOS)) {
   const original = originals.find((file) => file.startsWith(prefix));
   if (!original) throw new Error(`No original starting with "${prefix}" in ${SOURCE}/`);
-  const image = sharp(`${SOURCE}/${original}`).rotate();
+  let image = sharp(`${SOURCE}/${original}`).rotate();
+  if (CROP[name]) {
+    const { width, height } = await sharp(`${SOURCE}/${original}`).rotate().metadata();
+    image = sharp(await image.toBuffer()).extract({
+      left: Math.round(width * CROP[name].left),
+      top: 0,
+      width: Math.round(width * CROP[name].width),
+      height,
+    });
+  }
   await image
     .resize({ width: WIDE[name] ?? MAX_SIDE, height: WIDE[name] ?? MAX_SIDE, fit: "inside", withoutEnlargement: true })
     .jpeg({ quality: 82, mozjpeg: true })

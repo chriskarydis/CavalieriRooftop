@@ -121,7 +121,7 @@ export const tableCategory = pgTable("table_category", {
 export type FloorShape =
   | { type: "rect"; x: number; y: number; width: number; height: number; style: string }
   | { type: "polyline"; points: number[][]; style: string }
-  /** rotation in degrees; style "view" marks what guests look at from that side of the terrace. */
+  /** rotation in degrees; style "view" marks what guests look at from that side of the terrace, "narrow" a label set smaller. */
   | { type: "label"; x: number; y: number; key: string; rotation?: number; style?: string };
 
 export const floorPlan = pgTable("floor_plan", {

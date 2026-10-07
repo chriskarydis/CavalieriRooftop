@@ -169,3 +169,23 @@ test("guest moves a paid reservation to another evening without paying again", a
   await search(page, "en", from, 2);
   await expect(page.getByRole("button", { name: /^Table 70, 2 seats, Best for Two, available/ })).toBeVisible();
 });
+
+test("a guest gives up a held table and it is free for others at once", async ({ page, browser }, testInfo) => {
+  const date = testInfo.project.name === "desktop" ? "2027-09-07" : "2027-09-08";
+  await search(page, "en", date, 2);
+  await page.getByRole("button", { name: /^Table 28, 2 seats, Standard, available/ }).click();
+  await page.getByRole("button", { name: "Reserve this table" }).click();
+  await expect(page.getByRole("timer")).toBeVisible();
+
+  const other = await browser.newPage();
+  await search(other, "en", date, 2);
+  await expect(other.getByRole("img", { name: /^Table 28, 2 seats, Standard, being reserved/ })).toBeVisible();
+
+  // Back to the search with the same date, time and guests, and the table released.
+  await page.getByRole("button", { name: "Cancel and change my choice" }).click();
+  await expect(page).toHaveURL(new RegExp(`/en/reserve\\?date=${date}&time=20%3A00&guests=2`));
+  await expect(page.getByRole("button", { name: /^Table 28, 2 seats, Standard, available/ })).toBeVisible();
+  await other.reload();
+  await expect(other.getByRole("button", { name: /^Table 28, 2 seats, Standard, available/ })).toBeVisible();
+  await other.close();
+});

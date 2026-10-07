@@ -128,13 +128,15 @@ export function FloorBackdrop({ shapes, areaLabels }: { shapes: FloorPlanView["s
           );
         }
         const view = shape.style === "view";
+        // A label in a narrow room is set smaller so it stays between the walls.
+        const narrow = shape.style === "narrow";
         return (
           <text
             key={index}
             textAnchor="middle"
-            fontSize={view ? 23 : 21}
+            fontSize={view ? 23 : narrow ? 17 : 21}
             fontWeight={view ? 500 : 400}
-            letterSpacing={view ? 5 : 4}
+            letterSpacing={view ? 5 : narrow ? 2 : 4}
             fill={view ? "#76581c" : "#8a7f6d"}
             transform={`translate(${shape.x} ${shape.y}) rotate(${shape.rotation ?? 0})`}
             style={{ textTransform: "uppercase" }}

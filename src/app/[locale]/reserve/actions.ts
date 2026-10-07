@@ -11,15 +11,17 @@ import {
   attachGuestDetails,
   confirmReservation,
   createHold,
+  releaseHold,
   type Holder,
   type Selection,
 } from "@/server/services/booking";
+import { zonedDate, zonedTime } from "@/domain/time";
 import { BookingError, GUEST } from "@/server/services/context";
 import { cancelReservation } from "@/server/services/floor-service";
 import { getReservationByToken } from "@/server/services/guest-reservation";
 import { notifyReservationEvent } from "@/server/services/notifications";
 import { findReservation } from "@/server/services/find-reservation";
-import { refundPayment } from "@/server/services/payments";
+import { cancelAbandonedPayments, refundPayment } from "@/server/services/payments";
 import { rescheduleReservation } from "@/server/services/reschedule";
 
 const holdSchema = z.object({
@@ -102,6 +104,31 @@ export async function startHold(formData: FormData): Promise<void> {
     return redirect({ href: { pathname: "/reserve", query: { ...query, error: error.code } }, locale: input.locale });
   }
   return redirect({ href: `/reserve/${token}`, locale: input.locale });
+}
+
+/**
+ * The guest leaves the checkout to change something: the table they were
+ * holding is released at once and they go back to the search they came from.
+ * If the payment has in fact gone through, they are shown the reservation instead.
+ */
+export async function abandonHold(token: string, locale: string): Promise<void> {
+  const found = await getReservationByToken(db, token);
+  if (!found) return redirect({ href: "/reserve", locale });
+  const { reservation, settings } = found;
+  if (reservation.status !== "PENDING_PAYMENT" && reservation.status !== "EXPIRED") {
+    return redirect({ href: `/reservation/${token}`, locale });
+  }
+  if (await releaseHold(db, reservation.id)) {
+    // An unpaid card payment that was started is stopped, so it cannot be completed later.
+    const gateway = stripeGateway();
+    if (gateway) await cancelAbandonedPayments(db, gateway, [reservation.id]);
+  }
+  const query = new URLSearchParams({
+    date: zonedDate(reservation.startsAt, settings.timezone),
+    time: zonedTime(reservation.startsAt, settings.timezone),
+    guests: String(reservation.partySize),
+  });
+  return redirect({ href: `/reserve?${query}`, locale });
 }
 
 const detailsSchema = z.object({

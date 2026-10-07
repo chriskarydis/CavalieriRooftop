@@ -12,7 +12,7 @@ import { BookingError } from "@/server/services/context";
 import { getReservationByToken } from "@/server/services/guest-reservation";
 import { notifyReservationEvent } from "@/server/services/notifications";
 import { getPaymentSummary, preparePayment, reconcilePayment } from "@/server/services/payments";
-import { simulatePayment } from "../actions";
+import { abandonHold, simulatePayment } from "../actions";
 import { PriceSummary } from "../PriceSummary";
 import { AwaitConfirmation } from "./AwaitConfirmation";
 import { DetailsForm } from "./DetailsForm";
@@ -117,6 +117,12 @@ export default async function CheckoutPage({ params, searchParams }: PageProps<"
     <main className="mx-auto w-full max-w-xl space-y-6 px-4 py-12">
       <h1 className="text-3xl sm:text-4xl">{t("title")}</h1>
       <HoldCountdown expiresAt={reservation.holdExpiresAt!.toISOString()} restartHref={restart} />
+      <form action={abandonHold.bind(null, token, locale)} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+        <p className="text-muted">{t("abandonHint")}</p>
+        <button type="submit" className="btn btn-outline px-4 py-2.5 text-[0.7rem]">
+          {t("abandon")}
+        </button>
+      </form>
 
       <section className="panel">
         <h2 className="mb-3 text-2xl">{t("summaryTitle")}</h2>

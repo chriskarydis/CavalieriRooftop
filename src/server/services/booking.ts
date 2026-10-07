@@ -441,6 +441,34 @@ export async function confirmReservation(
   });
 }
 
+/**
+ * The guest gives up a table they are holding, before paying: the table is
+ * free for everyone else from this moment. Returns false when there was no
+ * hold to give up (already paid, already expired), in which case nothing changes.
+ */
+export async function releaseHold(db: Db, reservationId: string, actor: Actor = GUEST, now = new Date()): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    const released = await tx
+      .update(schema.reservation)
+      .set({ status: "EXPIRED", updatedAt: now })
+      .where(and(eq(schema.reservation.id, reservationId), eq(schema.reservation.status, "PENDING_PAYMENT")))
+      .returning({ id: schema.reservation.id });
+    if (released.length === 0) return false;
+    await tx
+      .update(schema.tableAllocation)
+      .set({ releasedAt: now })
+      .where(and(eq(schema.tableAllocation.reservationId, reservationId), isNull(schema.tableAllocation.releasedAt)));
+    await tx.insert(schema.reservationEvent).values({
+      reservationId,
+      fromStatus: "PENDING_PAYMENT",
+      toStatus: "EXPIRED",
+      actor,
+      reason: "Given up by the guest before paying",
+    });
+    return true;
+  });
+}
+
 /** Scheduled job: expire lapsed holds so their tables show as free again. */
 export async function expireHolds(db: Db, now = new Date()): Promise<string[]> {
   return db.transaction((tx) => releaseExpiredHolds(tx, now));

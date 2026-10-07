@@ -57,7 +57,8 @@ export const FLOOR_PLAN = {
     { type: "polyline", points: [[45, 698], [690, 698], [690, 1545], [402, 1545], [402, 1777], [218, 1777], [218, 698]], style: "wall" },
     { type: "polyline", points: [[218, 813], [690, 813]], style: "wall" },
     { type: "polyline", points: [[540, 813], [540, 1545]], style: "wall" },
-    { type: "label", x: 148, y: 810, key: "toilets" },
+    // In the middle of its room and set smaller, so the longer Greek word stays clear of the walls.
+    { type: "label", x: 131, y: 810, key: "toilets", style: "narrow" },
     { type: "label", x: 445, y: 753, key: "entrance" },
     { type: "label", x: 330, y: 1206, key: "kitchen" },
     { type: "label", x: 615, y: 1157, key: "bar" },

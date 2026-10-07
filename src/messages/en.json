@@ -142,7 +142,9 @@
     "paymentSecure": "Payment is handled by Stripe. We never see or store your card details.",
     "confirming": "Payment received. We are confirming your reservation. This takes a few seconds.",
     "refundedTitle": "Your payment was refunded",
-    "refundedText": "The payment arrived after the 10 minutes had run out and the table had been released, so we refunded it in full. It can take a few working days to appear on your card. You are welcome to choose a table again."
+    "refundedText": "The payment arrived after the 10 minutes had run out and the table had been released, so we refunded it in full. It can take a few working days to appear on your card. You are welcome to choose a table again.",
+    "abandon": "Cancel and change my choice",
+    "abandonHint": "Want a different table, date or time? The table is released straight away."
   },
   "reservation": {
     "status": {

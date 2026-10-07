@@ -36,23 +36,32 @@ Last updated: 2026-10-07. Update this file at the end of every working session.
 | Deployment preparation | vercel.json, database client for Neon's pooler, migrations before each build, DEPLOYMENT.md |
 | Docs | STATUS, ARCHITECTURE, DEPLOYMENT, TESTING, DECISIONS, BOOKING_LOGIC, TABLE_ALLOCATION, DATABASE, SECURITY, PROJECT_ANALYSIS |
 
+## Where we stopped (2026-10-07, evening)
+
+Everything the owner asked for is built, tested (260 unit/integration, 82 browser) and pushed. The
+four long texts were reviewed with the owner one by one and are agreed: home page, reservation
+policy, privacy and cookies, emails. The local database is migrated (to 0011) and has the review
+links and the five-year retention. Nothing is half done.
+
+The next step is the owner's: the trial deployment.
+
 ## To do, in order
 
-1. **Owner looks at the latest changes** (see "To check by hand" below) and says what to adjust.
-2. **Put the site online for a trial.** The Vercel and Neon accounts exist (Neon runs PostgreSQL 18,
+1. **Put the site online for a trial.** The Vercel and Neon accounts exist (Neon runs PostgreSQL 18,
    which the test suite passes on). Follow DEPLOYMENT.md steps 1 to 3 with Stripe test keys. The Neon
    connection strings go straight into Vercel's settings, never into chat or the repository. Then
    create the first staff account against the Neon database.
-3. **Sender domain for email:** verify cavalieriroofgarden.com at Resend (needs DNS access) so emails
+2. **Sender domain for email:** verify cavalieriroofgarden.com at Resend (needs DNS access) so emails
    reach guests, not only the account owner.
-4. **Content from the owner:** Greek dish names, view descriptions for paid tables, corrections to
-   the home and contact page text, more photographs, the car parks to recommend.
-5. **Before going live:** the Google and Tripadvisor review links at /manage/settings (no review
-   email is sent without them), scheduled job every minute (DEPLOYMENT.md step 6), the restaurant's own
-   Stripe keys and a live webhook, legal review of the privacy page, staff accounts for the
-   managers, domain cut-over (DEPLOYMENT.md step 7).
-6. **Nice to have:** drag a reservation to another table on the live floor (moving already works
-   from the Move button), page caching, a nonce-based content security policy.
+3. **Before going live:** scheduled job every minute (DEPLOYMENT.md step 6), the restaurant's own
+   Stripe keys and a live webhook, staff accounts for the managers, domain cut-over (DEPLOYMENT.md
+   step 7), and the lawyer's review of the privacy page (the three points to check are listed in
+   DECISIONS.md: transfers outside the EEA, the five-year period, the thank-you email).
+4. **For the owner to try once:** a real download from Reservations or Analytics opened in Excel,
+   the Google review link on a phone, closing tables for certain days.
+5. **Left for later by the owner:** a third language, more view photographs per table, switching on
+   automatic cancellation when closing for days (off, at /manage/settings).
+6. **Nice to have:** page caching, a nonce-based content security policy.
 
 Notes for whoever runs the Stripe browser tests again: the Stripe CLI was only downloaded
 temporarily; install it properly. See TESTING.md.

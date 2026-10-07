@@ -10,6 +10,7 @@ import { SITE, siteUrl } from "@/config/site";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { LocaleSwitcher } from "@/ui/LocaleSwitcher";
+import { SiteNav } from "@/ui/SiteNav";
 import "../globals.css";
 
 // GFS Didot is the classic face of Greek book printing and Commissioner was drawn with Greek from
@@ -48,7 +49,6 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
   const t = await getTranslations("site");
-  const navLink = "border-b border-transparent pb-1 hover:border-gold";
   const footerLink = "hover:text-white hover:underline hover:decoration-gold hover:underline-offset-4";
   const footerTitle = "mb-4 text-xs font-medium tracking-[0.28em] text-gold uppercase";
 
@@ -64,23 +64,15 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
               <Link href="/" className="shrink-0">
                 <Image src={logo} alt={t("name")} priority sizes="170px" className="h-12 w-auto sm:h-14" />
               </Link>
-              <nav
-                aria-label={t("mainNav")}
-                className="order-3 flex w-full flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs sm:gap-x-7 font-medium tracking-[0.2em] uppercase md:order-2 md:w-auto md:flex-1 md:justify-end"
-              >
-                <Link href="/menu" className={navLink}>
-                  {t("menu")}
-                </Link>
-                <Link href="/gallery" className={navLink}>
-                  {t("gallery")}
-                </Link>
-                <Link href="/contact" className={navLink}>
-                  {t("contact")}
-                </Link>
-                <Link href="/my-reservation" className={navLink}>
-                  {t("myReservation")}
-                </Link>
-              </nav>
+              <SiteNav
+                label={t("mainNav")}
+                links={[
+                  { href: "/menu", label: t("menu") },
+                  { href: "/gallery", label: t("gallery") },
+                  { href: "/contact", label: t("contact") },
+                  { href: "/my-reservation", label: t("myReservation") },
+                ]}
+              />
               <div className="order-2 flex items-center gap-2 sm:gap-4 md:order-3">
                 <LocaleSwitcher label={t("language")} />
                 <Link href="/reserve" className="btn btn-primary px-3 py-2.5 text-[0.65rem] tracking-[0.1em] whitespace-nowrap sm:px-5 sm:text-[0.7rem] sm:tracking-[0.16em]">

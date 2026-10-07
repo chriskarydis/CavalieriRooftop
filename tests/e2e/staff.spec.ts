@@ -15,7 +15,8 @@ test.describe("as a manager", () => {
 
   test("the staff page is neither linked nor reachable", async ({ page }) => {
     await page.goto("/manage");
-    await expect(page.getByRole("link", { name: "Staff", exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Setup" }).click();
+    await expect(page.getByRole("link", { name: /^Staff/ })).toHaveCount(0);
     await page.goto("/manage/staff");
     await expect(page.getByRole("heading", { name: "Staff accounts" })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Something went wrong" })).toBeVisible();
@@ -27,7 +28,8 @@ test.describe("as a developer", () => {
 
   test("creates a manager, who signs in, changes their own password, and is later removed", async ({ page, browser }) => {
     await page.goto("/manage");
-    await page.getByRole("link", { name: "Staff", exact: true }).click();
+    await page.getByRole("button", { name: "Setup" }).click();
+    await page.getByRole("link", { name: /^Staff/ }).click();
     await expect(page.getByRole("heading", { name: "Staff accounts" })).toBeVisible();
 
     await page.getByLabel("Name", { exact: true }).fill(NEW_MANAGER.name);

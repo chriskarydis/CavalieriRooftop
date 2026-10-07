@@ -287,7 +287,8 @@
       "timeline": "Timeline",
       "floor_editor": "Floor plan",
       "analytics": "Analytics",
-      "staff": "Staff"
+      "staff": "Staff",
+      "setup": "Setup"
     },
     "move": {
       "title": "Move reservation {guest}",
@@ -387,6 +388,15 @@
       "dateNote": "Nothing is charged or refunded. The guest gets an email with the new details.",
       "dateConfirm": "Save changes",
       "guests": "Guests"
+    },
+    "navHint": {
+      "tables": "Seats, category and availability of each table",
+      "floor_editor": "Where the tables stand on the plan",
+      "categories": "Table categories and their fees",
+      "combinations": "Tables that can be joined",
+      "menu": "Dishes, drinks and wines",
+      "settings": "Deposit, times, season and closed dates",
+      "staff": "Who can sign in"
     }
   },
   "config": {
@@ -764,7 +774,6 @@
   "timeline": {
     "title": "Timeline",
     "date": "Date",
-    "show": "Show",
     "previous": "Previous day",
     "next": "Next day",
     "today": "Today",

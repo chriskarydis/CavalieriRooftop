@@ -50,7 +50,7 @@ test("a reservation is dragged to another table on the live floor and moves once
   await page.mouse.move(start.x + start.width / 2 + 5, start.y + start.height / 2 + 20, { steps: 4 });
   await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 10 });
   // While it is carried, the table follows the pointer.
-  await expect(page.locator("svg circle")).toHaveCount(1);
+  await expect(page.getByRole("group", { name: "Live floor" }).locator("circle")).toHaveCount(1);
   await page.mouse.up();
 
   // The drop opens the usual preview; nothing has moved yet.

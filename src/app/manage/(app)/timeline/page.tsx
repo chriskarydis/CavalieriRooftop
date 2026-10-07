@@ -1,4 +1,4 @@
-import { DateField } from "../DateField";
+import { TimelineDate } from "./TimelineDate";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { addMinutes, zonedDate, zonedTime } from "@/domain/time";
@@ -7,7 +7,7 @@ import { db } from "@/server/db/client";
 import { loadSettings } from "@/server/services/context";
 import { getTimeline, type TimelineEntry } from "@/server/services/timeline";
 import { AutoRefresh } from "../AutoRefresh";
-import { cardClass, inputClass, primaryButton, secondaryButton } from "../ui";
+import { cardClass, secondaryButton } from "../ui";
 
 const HOUR_MINUTES = 60;
 const DAY_MINUTES = 24 * 60;
@@ -65,14 +65,8 @@ export default async function TimelinePage({ searchParams }: PageProps<"/manage/
       {date === today && <AutoRefresh />}
       <h1 className="text-lg font-semibold">{t("title")}</h1>
 
-      <form method="get" className={`${cardClass} flex flex-wrap items-end gap-3 text-sm font-medium`}>
-        <label>
-          {t("date")}
-          <DateField key={date} name="date" defaultValue={date} required className={inputClass} />
-        </label>
-        <button type="submit" className={primaryButton}>
-          {t("show")}
-        </button>
+      <div className={`${cardClass} flex flex-wrap items-end gap-3 text-sm font-medium`}>
+        <TimelineDate date={date} label={t("date")} />
         <Link href={`/manage/timeline?date=${shift(-1)}`} className={secondaryButton}>
           {t("previous")}
         </Link>
@@ -82,7 +76,7 @@ export default async function TimelinePage({ searchParams }: PageProps<"/manage/
         <Link href="/manage/timeline" className={secondaryButton}>
           {t("today")}
         </Link>
-      </form>
+      </div>
 
       {opened && (
         <section aria-labelledby="entry-heading" className={`${cardClass} ${opened.kind === "HOLD" ? "border-fuchsia-300 bg-fuchsia-50" : ""}`}>

@@ -27,12 +27,18 @@ const CONFIGURATION = [
 export default async function ManageAppLayout({ children }: { children: React.ReactNode }) {
   const staff = await requireStaff();
   const t = await getTranslations("manage");
-  const links = [
-    ...OPERATIONS,
-    ...(hasPermission(staff.role, "analytics") ? [{ href: "/manage/analytics", key: "analytics" } as const] : []),
+  const item = ({ href, key }: { href: string; key: string }, hint = false) => ({
+    href,
+    label: t(`nav.${key}`),
+    ...(hint ? { hint: t(`navHint.${key}`) } : {}),
+  });
+  // Every evening; at the end of a day or week; now and then, to change something.
+  const daily = OPERATIONS.map((link) => item(link));
+  const reports = hasPermission(staff.role, "analytics") ? [item({ href: "/manage/analytics", key: "analytics" })] : [];
+  const setup = [
     ...(hasPermission(staff.role, "configuration") ? CONFIGURATION : []),
     ...(hasPermission(staff.role, "system") ? [{ href: "/manage/staff", key: "staff" } as const] : []),
-  ];
+  ].map((link) => item(link, true));
 
   return (
     <>
@@ -52,7 +58,7 @@ export default async function ManageAppLayout({ children }: { children: React.Re
             <SignOutButton label={t("signOut")} />
           </div>
         </div>
-        <NavLinks label={t("nav.label")} links={links.map((link) => ({ href: link.href, label: t(`nav.${link.key}`) }))} />
+        <NavLinks label={t("nav.label")} daily={daily} reports={reports} setup={setup} setupLabel={t("nav.setup")} />
       </header>
       <div className="flex-1 px-4 py-6 sm:px-6">{children}</div>
       <footer className="bg-night px-4 py-5 text-xs text-stone-400 sm:px-6 print:hidden">

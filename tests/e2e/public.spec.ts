@@ -101,3 +101,12 @@ test("a photograph opens larger and the gallery steps through the rest", async (
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
 });
+
+test("the header marks the page the visitor is on", async ({ page }) => {
+  await page.goto("/el/gallery");
+  const nav = page.getByRole("navigation", { name: "Κύριο μενού" });
+  await expect(nav.getByRole("link", { name: "Φωτογραφίες" })).toHaveAttribute("aria-current", "page");
+  await expect(nav.getByRole("link", { name: "Μενού" })).not.toHaveAttribute("aria-current", "page");
+  await page.goto("/en/menu");
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Menu" })).toHaveAttribute("aria-current", "page");
+});

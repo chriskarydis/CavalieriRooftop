@@ -118,13 +118,15 @@ test("manager blocks a table from its details and removes the block", async ({ p
 test("manager changes a category fee and disables a table; guests see both at once", async ({ page }) => {
   await openDashboard(page);
 
-  await page.getByRole("link", { name: "Categories" }).click();
+  await page.getByRole("button", { name: "Setup" }).click();
+  await page.getByRole("link", { name: /^Categories/ }).click();
   const preferred = page.locator("section", { has: page.getByRole("heading", { name: /^Preferred/ }) });
   await preferred.getByLabel("Extra fee (€)").fill("25");
   await preferred.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("status")).toContainText("Saved.");
 
-  await page.getByRole("link", { name: "Tables", exact: true }).click();
+  await page.getByRole("button", { name: "Setup" }).click();
+  await page.getByRole("link", { name: /^Tables/ }).click();
   const table21 = page.locator("details", { has: page.getByText("Table 21", { exact: true }) });
   await table21.locator("summary").click();
   await table21.getByLabel("Status").selectOption("OUT_OF_SERVICE");
@@ -147,7 +149,8 @@ test("manager changes a category fee and disables a table; guests see both at on
 
 test("settings: a closed date stops online booking, in Greek too", async ({ page }) => {
   await openDashboard(page);
-  await page.getByRole("link", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Setup" }).click();
+  await page.getByRole("link", { name: /^Settings/ }).click();
   await expect(page.getByLabel("Deposit per person (€)")).toHaveValue("30");
   await page.getByLabel("Date", { exact: true }).fill("2027-08-20");
   await page.getByLabel("Reason (optional)").fill("Private event");

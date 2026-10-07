@@ -95,7 +95,7 @@ test.describe("accessibility: management", () => {
     const before = (await row.getByRole("cell").first().textContent()) ?? "";
     await row.getByRole("button", { name: "+30 min" }).click();
     await expect(row.getByRole("cell").first()).not.toHaveText(before);
-    await row.getByRole("button", { name: "Table free" }).click();
+    await row.getByRole("button", { name: "Release table" }).click();
     await expect(page.getByText("Staying longer")).toHaveCount(0);
   });
 });

@@ -19,7 +19,7 @@ test.describe("as a manager", () => {
     await expect(page.getByRole("link", { name: /^Staff/ })).toHaveCount(0);
     await page.goto("/manage/staff");
     await expect(page.getByRole("heading", { name: "Staff accounts" })).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: "Something went wrong" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "An error occurred" })).toBeVisible();
   });
 });
 
@@ -36,7 +36,7 @@ test.describe("as a developer", () => {
     await page.getByLabel("Email", { exact: true }).fill(NEW_MANAGER.email);
     await page.getByLabel("First password (at least 12 characters)").fill(NEW_MANAGER.first);
     await page.getByRole("button", { name: "Create account" }).click();
-    await expect(page.getByRole("status")).toContainText("Saved.");
+    await expect(page.getByRole("status")).toContainText("Changes saved.");
     const entry = page.getByRole("listitem").filter({ hasText: NEW_MANAGER.email });
     await expect(entry).toContainText("Manager");
 

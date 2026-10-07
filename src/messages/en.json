@@ -212,7 +212,7 @@
       "INACTIVE": "Inactive"
     },
     "tonight": "Now and next 12 hours",
-    "nothingBooked": "Nothing booked.",
+    "nothingBooked": "No reservations.",
     "columns": {
       "time": "Time",
       "table": "Table",
@@ -235,9 +235,9 @@
       "HOLD": "Being reserved now"
     },
     "actions": {
-      "seat": "Seat guests",
+      "seat": "Mark as arrived",
       "noShow": "No-show",
-      "complete": "Table free",
+      "complete": "Release table",
       "cancel": "Cancel",
       "confirmCancel": "Confirm cancellation",
       "move": "Move",
@@ -263,11 +263,11 @@
     "errors": {
       "TABLE_UNAVAILABLE": "That table is not free right now.",
       "UPCOMING_RESERVATION": "That table has a reservation at {time}. Tick the box to seat the walk-in until then.",
-      "INVALID_SELECTION": "That table cannot seat this party.",
+      "INVALID_SELECTION": "That table cannot seat this number of guests.",
       "INVALID_TRANSITION": "That action is not possible in the reservation's current status.",
       "NOT_FOUND": "Not found. The page may be out of date.",
       "FORBIDDEN": "You do not have permission to do that.",
-      "GENERIC": "Something went wrong. Please try again.",
+      "GENERIC": "An error occurred. Please try again.",
       "REFUND_FAILED": "The refund could not be made. Check the amount and that the reservation was paid by card.",
       "CLOSED": "The restaurant is closed on that date.",
       "INVALID_SLOT": "Choose one of the listed times.",
@@ -325,7 +325,7 @@
       "refundConfirm": "Refund to the guest's card",
       "refundDone": "Refund of {amount} sent to the guest's card.",
       "print": "Print this list",
-      "done": "The reservation was changed.",
+      "done": "The reservation was updated.",
       "chosenByStaff": "set by staff",
       "searching": "Searching every date. Clear the search to see one day."
     },
@@ -342,7 +342,7 @@
     },
     "footer": {
       "publicSite": "Open the public site",
-      "staffOnly": "For staff only"
+      "staffOnly": "Staff only"
     },
     "dragHint": "Drag a reserved or occupied table onto another table to move the party.",
     "chime": {
@@ -351,7 +351,7 @@
       "hint": "Plays a sound when a new reservation comes in"
     },
     "totals": {
-      "title": "The evening in numbers",
+      "title": "Summary of the evening",
       "reservations": "Reservations",
       "guests": "Guests",
       "deposits": "Deposits",
@@ -433,7 +433,7 @@
   },
   "config": {
     "save": "Save",
-    "saved": "Saved.",
+    "saved": "Changes saved.",
     "errors": {
       "INVALID": "Some values are not valid. Nothing was saved.",
       "NOT_FOUND": "Not found. The page may be out of date.",
@@ -892,7 +892,7 @@
     "addTable": "Add table"
   },
   "errorPage": {
-    "title": "Something went wrong",
+    "title": "An error occurred",
     "text": "The page could not be shown. Nothing was charged. Please try again. If it keeps happening, call us on +30 26610 39041.",
     "staffText": "The page could not be shown. Try again. If it keeps happening, note the code below for the developer.",
     "retry": "Try again",

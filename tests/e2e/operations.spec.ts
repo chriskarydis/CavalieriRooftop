@@ -89,14 +89,14 @@ test("floor plan editor: move a table with the keyboard, save, and guests see th
   await page.screenshot({ fullPage: true, path: shot("floor-editor") });
 
   await page.getByRole("button", { name: "Save layout" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Saved." })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Changes saved." })).toBeVisible();
   await page.getByRole("button", { name: "Table 28", exact: true }).focus();
   await expect(page.getByLabel("Position across")).toHaveValue(String(before - 20));
 
   // Put it back so the suite can be re-run.
   for (let step = 0; step < 4; step++) await page.keyboard.press("ArrowRight");
   await page.getByRole("button", { name: "Save layout" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Saved." })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Changes saved." })).toBeVisible();
 
   // Adding a table: it exists, inactive, and can then be placed.
   await page.getByLabel("Table number").fill("34");

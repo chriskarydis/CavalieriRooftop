@@ -46,16 +46,16 @@ test("manager seats a walk-in, frees the table, and can work in Greek", async ({
   await page.getByLabel("Guests").fill("9");
   await page.locator('select[name="tableIds"]').selectOption({ label: "19 (2)" });
   await page.getByRole("button", { name: "Seat walk-in" }).click();
-  await expect(page.getByRole("alert").first()).toContainText("That table cannot seat this party.");
+  await expect(page.getByRole("alert").first()).toContainText("That table cannot seat this number of guests.");
 
   // Guests leave.
-  await page.getByRole("button", { name: "Table free" }).click();
+  await page.getByRole("button", { name: "Release table" }).click();
   await expect(page.getByRole("button", { name: "Table 29, 3 seats, Available" })).toBeVisible();
 
   // Greek.
   await page.getByRole("button", { name: "Ελληνικά" }).click();
-  await expect(page.getByRole("heading", { name: "Σάλα τώρα" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Νέο walk-in" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Σάλα σε πραγματικό χρόνο" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Άφιξη χωρίς κράτηση" })).toBeVisible();
   await page.getByRole("button", { name: "English" }).click();
 
   await page.getByRole("button", { name: "Sign out" }).click();

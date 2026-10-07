@@ -104,7 +104,7 @@ test("a photograph opens larger and the gallery steps through the rest", async (
 
 test("the header marks the page the visitor is on", async ({ page }) => {
   await page.goto("/el/gallery");
-  const nav = page.getByRole("navigation", { name: "Κύριο μενού" });
+  const nav = page.getByRole("navigation", { name: "Κύρια πλοήγηση" });
   await expect(nav.getByRole("link", { name: "Φωτογραφίες" })).toHaveAttribute("aria-current", "page");
   await expect(nav.getByRole("link", { name: "Μενού" })).not.toHaveAttribute("aria-current", "page");
   await page.goto("/en/menu");

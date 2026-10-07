@@ -48,7 +48,7 @@ test("manager finds a reservation, moves it with a price warning, and cancels it
   await expect(row).toContainText("Confirmed");
   await expect(page.getByText("1 reservation · 2 guests expected")).toBeVisible();
   // The evening in numbers: one reservation for two, 60 deposit, no table fee.
-  const totals = page.getByRole("region", { name: "The evening in numbers" });
+  const totals = page.getByRole("region", { name: "Summary of the evening" });
   await expect(totals).toContainText("Deposits€60.00");
   await expect(totals).toContainText("Table fees€0.00");
   await expect(totals).toContainText("Paid online in total€60.00");
@@ -61,7 +61,7 @@ test("manager finds a reservation, moves it with a price warning, and cancels it
   await expect(tableWindow).toContainText("The reservation is now at table 19. Where do you want to move it?");
   await tableWindow.getByLabel("Move to table").selectOption({ label: "1 (5)" });
   await tableWindow.getByRole("button", { name: "Move", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("The reservation was changed.");
+  await expect(page.getByRole("status")).toContainText("The reservation was updated.");
   await expect(page).toHaveURL(/\/manage\/reservations/);
 
   await page.goto(`/manage/reservations?date=${DATE}`);
@@ -79,7 +79,7 @@ test("manager finds a reservation, moves it with a price warning, and cancels it
   await dateWindow.getByLabel("Time").selectOption("21:00");
   await dateWindow.getByLabel("Guests").fill("4");
   await dateWindow.getByRole("button", { name: "Save changes" }).click();
-  await expect(page.getByRole("status")).toContainText("The reservation was changed.");
+  await expect(page.getByRole("status")).toContainText("The reservation was updated.");
   const changed = page.getByRole("row", { name: /Maria Mover/ });
   await expect(changed).toContainText("21:00");
   await expect(changed.getByRole("cell").nth(3)).toHaveText("4");
@@ -88,7 +88,7 @@ test("manager finds a reservation, moves it with a price warning, and cancels it
   await changed.getByRole("button", { name: "Change date or time" }).click();
   await page.getByRole("dialog").getByLabel("Time").selectOption("20:00");
   await page.getByRole("dialog").getByRole("button", { name: "Save changes" }).click();
-  await expect(page.getByRole("status")).toContainText("The reservation was changed.");
+  await expect(page.getByRole("status")).toContainText("The reservation was updated.");
 
   // The guest's old table is free again, the new one is taken.
   const guest = await page.context().browser()!.newPage();
@@ -125,7 +125,7 @@ test("manager changes a category fee and disables a table; guests see both at on
   const preferred = page.locator("section", { has: page.getByRole("heading", { name: /^Preferred/ }) });
   await preferred.getByLabel("Extra fee (€)").fill("25");
   await preferred.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByRole("status")).toContainText("Saved.");
+  await expect(page.getByRole("status")).toContainText("Changes saved.");
 
   await page.getByRole("button", { name: "Setup" }).click();
   await page.getByRole("link", { name: /^Tables/ }).click();
@@ -134,7 +134,7 @@ test("manager changes a category fee and disables a table; guests see both at on
   await table21.getByLabel("Status").selectOption("OUT_OF_SERVICE");
   await table21.getByLabel("Reason (when not active)").fill("Repair");
   await table21.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByRole("status")).toContainText("Saved.");
+  await expect(page.getByRole("status")).toContainText("Changes saved.");
 
   await page.goto(`/en/reserve?date=${DATE}&time=21:00&guests=4`);
   await page.getByRole("button", { name: /^Table 6, 4 seats, Preferred, available/ }).click();
@@ -146,7 +146,7 @@ test("manager changes a category fee and disables a table; guests see both at on
   await page.goto("/manage/categories");
   await preferred.getByLabel("Extra fee (€)").fill("20");
   await preferred.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByRole("status")).toContainText("Saved.");
+  await expect(page.getByRole("status")).toContainText("Changes saved.");
 });
 
 test("settings: a closed date stops online booking, in Greek too", async ({ page }) => {

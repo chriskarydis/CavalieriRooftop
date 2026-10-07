@@ -93,6 +93,6 @@ test("a walk-in party is dragged to another table", async ({ page }, testInfo) =
   await expect(page.getByRole("button", { name: /^Table 30, 2 seats, Occupied/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /^Table 25, 2 seats, Available/ })).toBeVisible();
   await expect(page.getByRole("row", { name: /Wanda Walkin/ })).toContainText("30");
-  await page.getByRole("row", { name: /Wanda Walkin/ }).getByRole("button", { name: "Table free" }).click();
+  await page.getByRole("row", { name: /Wanda Walkin/ }).getByRole("button", { name: "Release table" }).click();
   await expect(page.getByRole("button", { name: /^Table 30, 2 seats, Available/ })).toBeVisible();
 });

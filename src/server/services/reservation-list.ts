@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, ilike, inArray, isNull, lt, or } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, inArray, isNull, lt, or } from "drizzle-orm";
 import { addMinutes, zonedToInstant } from "@/domain/time";
 import type { ReservationStatus } from "@/domain/reservation-state";
 import * as schema from "@/server/db/schema";
@@ -34,11 +34,15 @@ export interface ReservationFilter {
   /** Service date, YYYY-MM-DD in the restaurant's timezone. */
   date: string;
   status?: ReservationStatus;
-  /** Matches guest name, email, phone or reference. */
+  /** Matches guest name, email, phone or reference, on any date: the date is then ignored. */
   search?: string;
 }
 
-/** Reservations for one service date, earliest first. Unpaid holds and expired holds are left out. */
+/**
+ * Reservations for one service date, earliest first; or, with a search, the
+ * matching reservations on any date, latest first. Unpaid and expired holds are
+ * left out.
+ */
 export async function listReservations(db: Db, filter: ReservationFilter): Promise<ReservationListItem[]> {
   const settings = await loadSettings(db);
   const dayStart = zonedToInstant(filter.date, "00:00", settings.timezone);
@@ -51,8 +55,8 @@ export async function listReservations(db: Db, filter: ReservationFilter): Promi
     .leftJoin(schema.customer, eq(schema.reservation.customerId, schema.customer.id))
     .where(
       and(
-        gte(schema.reservation.startsAt, dayStart),
-        lt(schema.reservation.startsAt, addMinutes(dayStart, DAY_MINUTES)),
+        pattern ? undefined : gte(schema.reservation.startsAt, dayStart),
+        pattern ? undefined : lt(schema.reservation.startsAt, addMinutes(dayStart, DAY_MINUTES)),
         filter.status
           ? eq(schema.reservation.status, filter.status)
           : inArray(schema.reservation.status, ["CONFIRMED", "LATE", "SEATED", "COMPLETED", "CANCELLED", "NO_SHOW"]),
@@ -66,7 +70,7 @@ export async function listReservations(db: Db, filter: ReservationFilter): Promi
           : undefined,
       ),
     )
-    .orderBy(asc(schema.reservation.startsAt), asc(schema.reservation.reference))
+    .orderBy(pattern ? desc(schema.reservation.startsAt) : asc(schema.reservation.startsAt), asc(schema.reservation.reference))
     .limit(MAX_ROWS);
   if (rows.length === 0) return [];
 

@@ -29,9 +29,20 @@ test("manager finds a reservation, moves it with a price warning, and cancels it
   await openDashboard(page);
 
   await page.getByRole("link", { name: "Reservations" }).click();
-  await page.getByLabel("Date").fill(DATE);
+  // The date changes the list at once, without a button.
+  // Retried in case the page is still starting up when the date is typed.
+  await expect(async () => {
+    await page.getByLabel("Date").fill(DATE);
+    await expect(page).toHaveURL(new RegExp(`date=${DATE}`), { timeout: 2000 });
+  }).toPass();
+  await expect(page.getByText("1 reservation · 2 guests expected")).toBeVisible();
+  // A search looks through every date.
   await page.getByLabel("Search name, phone, email or reference").fill("mover");
-  await page.getByRole("button", { name: "Show" }).click();
+  await expect(page.getByText("Searching every date.")).toBeVisible();
+  await expect(page).toHaveURL(/q=mover/);
+  await expect(page.getByRole("row", { name: /Maria Mover/ })).toContainText(DATE.split("-").reverse().join("/"));
+  await page.getByLabel("Search name, phone, email or reference").fill("");
+  await expect(page).not.toHaveURL(/q=/);
   const row = page.getByRole("row", { name: /Maria Mover/ });
   await expect(row).toContainText("19");
   await expect(row).toContainText("Confirmed");

@@ -1,4 +1,3 @@
-import { DateField } from "../DateField";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { RESERVATION_STATUSES, type ReservationStatus } from "@/domain/reservation-state";
 import { addMinutes, zonedDate, zonedTime, zonedToInstant } from "@/domain/time";
@@ -12,6 +11,7 @@ import { hasPermission } from "@/domain/permissions";
 import { changeReservationAction, moveFromListAction, refundAction, unblockAction } from "../../actions";
 import { PrintButton } from "../PrintButton";
 import { ChangeReservationDialog, MoveTableDialog, type SeatingChoice } from "./ReservationDialogs";
+import { ReservationFilters } from "./ReservationFilters";
 import { ReservationActions } from "../ReservationActions";
 import { cardClass, inputClass, primaryButton, secondaryButton } from "../ui";
 
@@ -35,6 +35,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
   const error = first(query.error);
   const justRefunded = Number(first(query.refunded) ?? 0);
   const done = first(query.done) === "1";
+  const searching = search.trim() !== "";
 
   const dayStart = zonedToInstant(date, "00:00", settings.timezone);
   const [reservations, blocks] = await Promise.all([
@@ -89,35 +90,26 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="mb-0 flex-1 text-lg font-semibold">
           {t("reservations.title")}
-          <span className="ml-3 hidden text-base print:inline">{formatCalendarDate(date)}</span>
+          {!searching && <span className="ml-3 hidden text-base print:inline">{formatCalendarDate(date)}</span>}
         </h1>
         <PrintButton label={t("reservations.print")} className={`${primaryButton} print:hidden`} />
       </div>
 
-      <form method="get" className={`${cardClass} flex flex-wrap items-end gap-3 text-sm font-medium print:hidden`}>
-        <label>
-          {t("reservations.date")}
-          <DateField name="date" defaultValue={date} required className={inputClass} />
-        </label>
-        <label>
-          {t("columns.status")}
-          <select name="status" defaultValue={status ?? ""} className={inputClass}>
-            <option value="">{t("reservations.allStatuses")}</option>
-            {LISTED_STATUSES.map((entry) => (
-              <option key={entry} value={entry}>
-                {t(`booking.${entry}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="min-w-48 flex-1">
-          {t("reservations.search")}
-          <input type="search" name="q" defaultValue={search} className={inputClass} />
-        </label>
-        <button type="submit" className={primaryButton}>
-          {t("reservations.show")}
-        </button>
-      </form>
+      <div className={`${cardClass} print:hidden`}>
+        <ReservationFilters
+          date={date}
+          status={status ?? ""}
+          search={search}
+          statuses={LISTED_STATUSES.map((entry) => ({ value: entry, label: t(`booking.${entry}`) }))}
+          labels={{
+            date: t("reservations.date"),
+            status: t("columns.status"),
+            all: t("reservations.allStatuses"),
+            search: t("reservations.search"),
+            searching: t("reservations.searching"),
+          }}
+        />
+      </div>
 
       {justRefunded > 0 && !error && (
         <p role="status" className="rounded border border-emerald-300 bg-emerald-50 p-3 font-medium text-emerald-900">
@@ -139,6 +131,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
 
       <p className="text-sm text-slate-600 print:hidden">{t("reservations.summary", { count: reservations.length, covers })}</p>
 
+      {!searching && (
       <section aria-labelledby="totals-heading" className={cardClass}>
         <h2 id="totals-heading">{t("totals.title")}</h2>
         <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-5 print:grid-cols-5">
@@ -151,6 +144,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
         </dl>
         <p className="mt-3 text-xs text-slate-500">{t("totals.note")}</p>
       </section>
+      )}
 
       {reservations.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-line bg-white shadow-sm">
@@ -169,7 +163,8 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
             <tbody>
               {reservations.map((reservation) => (
                 <tr key={reservation.id} className="border-b border-slate-100 align-top last:border-0">
-                  <td className="px-3 py-2 tabular-nums">{zonedTime(reservation.startsAt, settings.timezone)}</td>
+                  <td className="px-3 py-2 tabular-nums">
+                    {searching && <span className="block text-xs text-slate-600">{formatCalendarDate(zonedDate(reservation.startsAt, settings.timezone))}</span>}{zonedTime(reservation.startsAt, settings.timezone)}</td>
                   <td className="px-3 py-2">
                     {reservation.tableNumbers.join(" + ") || "—"}
                     {reservation.tableNumbers.length > 0 && (reservation.tableSetByStaff || reservation.selectionMode === "CHOSEN") && (

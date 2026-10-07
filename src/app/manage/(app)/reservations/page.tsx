@@ -1,17 +1,17 @@
 import { DateField } from "../DateField";
-import { getFormatter, getLocale, getTranslations } from "next-intl/server";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { RESERVATION_STATUSES, type ReservationStatus } from "@/domain/reservation-state";
 import { addMinutes, zonedDate, zonedTime, zonedToInstant } from "@/domain/time";
 import { requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
-import { manageTokenFor } from "@/server/services/booking";
 import { formatCalendarDate } from "@/i18n/intl-locale";
-import { loadSettings } from "@/server/services/context";
+import { loadFloorConfig, loadSettings } from "@/server/services/context";
 import { listReservations } from "@/server/services/reservation-list";
 import { listBlocks } from "@/server/services/table-ops";
 import { hasPermission } from "@/domain/permissions";
-import { refundAction, unblockAction } from "../../actions";
+import { changeReservationAction, moveFromListAction, refundAction, unblockAction } from "../../actions";
 import { PrintButton } from "../PrintButton";
+import { ChangeReservationDialog, MoveTableDialog, type SeatingChoice } from "./ReservationDialogs";
 import { ReservationActions } from "../ReservationActions";
 import { cardClass, inputClass, primaryButton, secondaryButton } from "../ui";
 
@@ -26,7 +26,6 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
   const format = await getFormatter();
   const query = await searchParams;
   const settings = await loadSettings(db);
-  const locale = await getLocale();
 
   const requestedDate = first(query.date);
   const date = requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? requestedDate : zonedDate(new Date(), settings.timezone);
@@ -35,12 +34,31 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
   const search = first(query.q) ?? "";
   const error = first(query.error);
   const justRefunded = Number(first(query.refunded) ?? 0);
+  const done = first(query.done) === "1";
 
   const dayStart = zonedToInstant(date, "00:00", settings.timezone);
   const [reservations, blocks] = await Promise.all([
     listReservations(db, { date, status, search }),
     listBlocks(db, dayStart, addMinutes(dayStart, DAY_MINUTES)),
   ]);
+  // What a reservation can be moved to: every active table, then the joined tables.
+  const config = await loadFloorConfig(db);
+  const numberOf = new Map(config.tables.map((table) => [table.id, table.number]));
+  const idOf = new Map(config.tables.map((table) => [table.number, table.id]));
+  const singleTables: SeatingChoice[] = config.tables
+    .filter((table) => table.status === "ACTIVE")
+    .sort((a, b) => a.number - b.number)
+    .map((table) => ({ value: table.id, label: `${table.number} (${table.maxCapacity})` }));
+  const seatings: SeatingChoice[] = [
+    ...singleTables,
+    ...config.combinations
+      .filter((combination) => combination.active)
+      .map((combination) => ({
+        value: combination.tableIds.join(","),
+        label: `${combination.tableIds.map((id) => numberOf.get(id)).join(" + ")} (${combination.capacity})`,
+      })),
+  ];
+
   const returnTo = `/manage/reservations?${new URLSearchParams({ date, ...(status ? { status } : {}), ...(search ? { q: search } : {}) })}`;
   const euro = (cents: number) =>
     format.number(cents / 100, { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -107,6 +125,12 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
         </p>
       )}
 
+      {done && !error && (
+        <p role="status" className="rounded border border-emerald-300 bg-emerald-50 p-3 font-medium text-emerald-900">
+          {t("reservations.done")}
+        </p>
+      )}
+
       {error && (
         <p role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-red-900">
           {t.has(`errors.${error}`) ? t(`errors.${error}`, { time: "" }) : t("errors.GENERIC")}
@@ -170,18 +194,58 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                     )}
                   </td>
                   <td className="px-3 py-2 print:hidden">
-                    <ReservationActions reservationId={reservation.id} status={reservation.status} returnTo={returnTo} />
-                    {(reservation.status === "CONFIRMED" || reservation.status === "LATE") && (
-                      // The guest's own page, opened by staff for a guest on the phone. The same rules apply.
-                      <a
-                        href={`/${locale}/reservation/${manageTokenFor(reservation.id)}/move`}
-                        target="_blank"
-                        rel="noopener"
-                        className={`${secondaryButton} mt-1.5 inline-block`}
-                      >
-                        {t("reservations.changeDate")}
-                      </a>
-                    )}
+                    <ReservationActions
+                      reservationId={reservation.id}
+                      status={reservation.status}
+                      returnTo={returnTo}
+                      moveControl={
+                        <MoveTableDialog
+                          action={moveFromListAction.bind(null, reservation.id, returnTo)}
+                          seatings={seatings}
+                          labels={{
+                            button: t("change.tableButton"),
+                            title: t("change.tableTitle", { guest: reservation.guestName ?? reservation.reference }),
+                            now: t("change.tableNow", { table: reservation.tableNumbers.join(" + ") || "—" }),
+                            to: t("change.tableTo"),
+                            note: t("change.noMoney"),
+                            confirm: t("change.tableConfirm"),
+                            close: t("move.close"),
+                          }}
+                        />
+                      }
+                      extra={
+                        <ChangeReservationDialog
+                          action={changeReservationAction.bind(null, reservation.id, returnTo)}
+                          current={{
+                            date: zonedDate(reservation.startsAt, settings.timezone),
+                            time: zonedTime(reservation.startsAt, settings.timezone),
+                            guests: reservation.partySize,
+                            tableId: reservation.tableNumbers.length === 1 ? (idOf.get(reservation.tableNumbers[0]) ?? "") : "",
+                          }}
+                          timeSlots={settings.timeSlots}
+                          maxParty={settings.maxOnlineParty}
+                          tables={singleTables}
+                          labels={{
+                            button: t("change.dateButton"),
+                            title: t("change.dateTitle", { guest: reservation.guestName ?? reservation.reference }),
+                            now: t("change.dateNow", {
+                              date: formatCalendarDate(zonedDate(reservation.startsAt, settings.timezone)),
+                              time: zonedTime(reservation.startsAt, settings.timezone),
+                              guests: reservation.partySize,
+                              table: reservation.tableNumbers.join(" + ") || "—",
+                            }),
+                            date: t("reservations.date"),
+                            time: t("columns.time"),
+                            guests: t("change.guests"),
+                            table: t("columns.table"),
+                            auto: t("change.auto"),
+                            note: t("change.dateNote"),
+                            confirm: t("change.dateConfirm"),
+                            close: t("move.close"),
+                          }}
+                        />
+                      }
+                    />
                     {mayRefund &&
                       (reservation.status === "CANCELLED" || reservation.status === "NO_SHOW") &&
                       reservation.paidCents > reservation.refundedCents && (

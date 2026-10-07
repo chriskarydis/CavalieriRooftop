@@ -67,3 +67,32 @@ test("a reservation is dragged to another table on the live floor and moves once
   await page.getByRole("button", { name: /^Table 32, 2 seats, Reserved later/ }).click();
   await expect(page.getByRole("heading", { name: "Table 32" })).toBeVisible();
 });
+
+test("a walk-in party is dragged to another table", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "dragging with a mouse");
+  await page.goto("/manage");
+  await page.getByLabel("Guests").fill("2");
+  await page.locator('select[name="tableIds"]').selectOption({ label: "25 (2)" });
+  await page.getByLabel("Name (optional)").fill("Wanda Walkin");
+  await page.getByRole("button", { name: "Seat walk-in" }).click();
+  await expect(page.getByRole("status")).toContainText("Walk-in seated until");
+
+  const from = page.getByRole("button", { name: /^Table 25, 2 seats, Occupied/ });
+  const to = page.getByRole("button", { name: /^Table 30, 2 seats, Available/ });
+  const start = (await from.boundingBox())!;
+  const end = (await to.boundingBox())!;
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(start.x + start.width / 2 - 20, start.y + start.height / 2 - 5, { steps: 4 });
+  await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 10 });
+  await page.mouse.up();
+
+  const move = page.getByRole("region", { name: "Move walk-in: Wanda Walkin" });
+  await expect(move).toContainText("From table 25 to table 30.");
+  await move.getByRole("button", { name: "Confirm move" }).click();
+  await expect(page.getByRole("button", { name: /^Table 30, 2 seats, Occupied/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Table 25, 2 seats, Available/ })).toBeVisible();
+  await expect(page.getByRole("row", { name: /Wanda Walkin/ })).toContainText("30");
+  await page.getByRole("row", { name: /Wanda Walkin/ }).getByRole("button", { name: "Table free" }).click();
+  await expect(page.getByRole("button", { name: /^Table 30, 2 seats, Available/ })).toBeVisible();
+});

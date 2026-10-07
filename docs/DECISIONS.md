@@ -200,3 +200,8 @@ Owner's rules, implemented in `src/server/services/reschedule.ts`:
   switched off per browser).
 - The reservations list shows the evening's totals and prints without the navigation and buttons.
 - `scripts/prepare-table-photos.mjs` has a list of photographs the owner does not want shown.
+- Walk-in parties can be moved to another table (drag on the live floor, then confirm). The old table
+  is free at once; the new one is theirs until the time they were expected to leave.
+- On the reservations list, "Change table" and "Change date or time" open a window on the page and
+  apply at once. Staff are not bound by the guest's limits; nothing is charged or refunded; the guest
+  is emailed the new details. The live floor keeps its own move preview for drags.

@@ -44,17 +44,37 @@ test("manager finds a reservation, moves it with a price warning, and cancels it
   await expect(page.getByRole("button", { name: "Print this list" })).toBeVisible();
 
   // Move to premium table 1: the price difference is shown and nothing is charged.
-  await row.getByRole("link", { name: "Move" }).click();
-  await page.locator('select[name="to"]').selectOption({ label: "1 (5)" });
-  await page.getByRole("button", { name: "Check" }).click();
-  await expect(page.getByText("From table 19 to table 1, for the same time.")).toBeVisible();
-  await expect(page.getByText(/Nothing is charged or refunded/)).toContainText("€50");
-  await page.getByRole("button", { name: "Confirm move" }).click();
+  // It happens in a window on this page, without going to the live floor.
+  await row.getByRole("button", { name: "Change table" }).click();
+  const tableWindow = page.getByRole("dialog");
+  await expect(tableWindow).toContainText("The reservation is now at table 19. Where do you want to move it?");
+  await tableWindow.getByLabel("Move to table").selectOption({ label: "1 (5)" });
+  await tableWindow.getByRole("button", { name: "Move", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("The reservation was changed.");
+  await expect(page).toHaveURL(/\/manage\/reservations/);
 
   await page.goto(`/manage/reservations?date=${DATE}`);
   const moved = page.getByRole("row", { name: /Maria Mover/ });
   await expect(moved.getByRole("cell").nth(1)).toContainText("1");
   await expect(moved).toContainText("€60 / €0");
+
+  // Change the time and the number of guests in the other window: straight away, still on this page.
+  await moved.getByRole("button", { name: "Change date or time" }).click();
+  const dateWindow = page.getByRole("dialog");
+  await expect(dateWindow).toContainText("20:00, 2 guests, table 1.");
+  await dateWindow.getByLabel("Time").selectOption("21:00");
+  await dateWindow.getByLabel("Guests").fill("4");
+  await dateWindow.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("status")).toContainText("The reservation was changed.");
+  const changed = page.getByRole("row", { name: /Maria Mover/ });
+  await expect(changed).toContainText("21:00");
+  await expect(changed.getByRole("cell").nth(3)).toHaveText("4");
+  await expect(changed).toContainText("€60 / €0");
+  // Back to 20:00 for the checks below.
+  await changed.getByRole("button", { name: "Change date or time" }).click();
+  await page.getByRole("dialog").getByLabel("Time").selectOption("20:00");
+  await page.getByRole("dialog").getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("status")).toContainText("The reservation was changed.");
 
   // The guest's old table is free again, the new one is taken.
   const guest = await page.context().browser()!.newPage();

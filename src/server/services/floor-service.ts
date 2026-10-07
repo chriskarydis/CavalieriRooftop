@@ -331,6 +331,84 @@ export async function extendWalkIn(db: Db, walkInId: string, minutes: number, ac
   }
 }
 
+/** A party that has stayed past its time still gets this long at the table it moves to. */
+const MOVED_WALK_IN_MINIMUM_MINUTES = 30;
+
+/**
+ * A walk-in party changes table. Their old table is free from now and the new
+ * one is theirs until the time they were expected to leave. Refused with
+ * TABLE_UNAVAILABLE when the new table is taken or reserved within that time,
+ * and with INVALID_SELECTION when the party does not fit it.
+ */
+export async function moveWalkIn(
+  db: Db,
+  walkInId: string,
+  tableIds: string[],
+  actor: Actor,
+  now = new Date(),
+): Promise<{ fromTableNumbers: number[]; toTableNumbers: number[]; until: Date }> {
+  try {
+    return await db.transaction(async (tx) => {
+      await lockAllocations(tx);
+      const [walkIn] = await tx
+        .select()
+        .from(schema.walkIn)
+        .where(and(eq(schema.walkIn.id, walkInId), eq(schema.walkIn.status, "SEATED")));
+      if (!walkIn) throw new BookingError("NOT_FOUND");
+
+      const current = await tx
+        .select({
+          id: schema.tableAllocation.id,
+          tableId: schema.tableAllocation.tableId,
+          endsAt: sql<string>`upper(${schema.tableAllocation.period})`,
+        })
+        .from(schema.tableAllocation)
+        .where(and(eq(schema.tableAllocation.walkInId, walkInId), isNull(schema.tableAllocation.releasedAt)));
+      if (current.length === 0) throw new BookingError("NOT_FOUND");
+
+      const config = await loadFloorConfig(tx);
+      assertConfiguredSeating(config, tableIds, walkIn.partySize);
+
+      const planned = new Date(current[0].endsAt);
+      const until = planned.getTime() > now.getTime() ? planned : addMinutes(now, MOVED_WALK_IN_MINIMUM_MINUTES);
+      await tx
+        .update(schema.tableAllocation)
+        .set({ releasedAt: now })
+        .where(
+          inArray(
+            schema.tableAllocation.id,
+            current.map((row) => row.id),
+          ),
+        );
+      const numberOf = (ids: string[]): number[] =>
+        ids.map((id) => config.tables.find((table) => table.id === id)?.number ?? 0).sort((a, b) => a - b);
+      const fromTableNumbers = numberOf(current.map((row) => row.tableId));
+      const toTableNumbers = numberOf(tableIds);
+      await tx.insert(schema.tableAllocation).values(
+        tableIds.map((tableId) => ({
+          tableId,
+          period: toRange(now, until),
+          kind: "WALK_IN" as const,
+          walkInId,
+          reason: `Moved from ${fromTableNumbers.join("+")}`,
+        })),
+      );
+      await audit(tx, {
+        actor,
+        action: "walk_in.moved",
+        entityType: "walk_in",
+        entityId: walkInId,
+        before: { tables: fromTableNumbers },
+        after: { tables: toTableNumbers, until },
+      });
+      return { fromTableNumbers, toTableNumbers, until };
+    });
+  } catch (error) {
+    if (isOverlapViolation(error)) throw new BookingError("TABLE_UNAVAILABLE");
+    throw error;
+  }
+}
+
 /** The walk-in party has left; the table is free from now. */
 export async function completeWalkIn(db: Db, walkInId: string, now = new Date()): Promise<void> {
   await db.transaction(async (tx) => {

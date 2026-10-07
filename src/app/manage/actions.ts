@@ -18,12 +18,14 @@ import {
   completeWalkIn,
   createWalkIn,
   extendWalkIn,
+  moveWalkIn,
   markNoShow,
   seatReservation,
 } from "@/server/services/floor-service";
 import { stripeGateway } from "@/server/payments/gateway";
 import { markNotificationsRead, notifyReservationEvent } from "@/server/services/notifications";
 import { discretionaryRefund, refundPayment } from "@/server/services/payments";
+import { rescheduleReservation } from "@/server/services/reschedule";
 import { blockTables, moveReservation, releaseBlock } from "@/server/services/table-ops";
 
 const YEAR_SECONDS = 60 * 60 * 24 * 365;
@@ -95,6 +97,11 @@ export async function completeWalkInAction(walkInId: string, returnTo: string): 
 
 const WALK_IN_EXTENSION_MINUTES = 30;
 
+/** Moves a walk-in party after staff confirmed it. `tableIds` is comma-separated. */
+export async function moveWalkInAction(walkInId: string, tableIds: string, returnTo: string): Promise<void> {
+  await floorAction(returnTo, (staffId) => moveWalkIn(db, walkInId, tableIds.split(","), staffId));
+}
+
 export async function extendWalkInAction(walkInId: string, returnTo: string): Promise<void> {
   await floorAction(returnTo, (staffId) => extendWalkIn(db, walkInId, WALK_IN_EXTENSION_MINUTES, staffId));
 }
@@ -130,6 +137,63 @@ export async function unblockAction(allocationId: string, returnTo: string): Pro
 /** Moves a reservation after staff confirmed the preview. `tableIds` is comma-separated. */
 export async function moveAction(reservationId: string, tableIds: string, returnTo: string): Promise<void> {
   await floorAction(returnTo, (staffId) => moveReservation(db, reservationId, tableIds.split(","), staffId));
+}
+
+/** Runs a change made from a window on the reservations list and says on the page that it was done. */
+async function listAction(returnTo: string, run: (staffId: string) => Promise<unknown>): Promise<void> {
+  const target = new URL(returnTo.startsWith("/manage") ? returnTo : "/manage/reservations", "http://local");
+  let failure: string | null = null;
+  try {
+    const staff = await requirePermission("operations");
+    await run(staff.id);
+  } catch (error) {
+    failure = errorCode(error);
+  }
+  target.searchParams.delete("refunded");
+  target.searchParams.delete("error");
+  target.searchParams.delete("done");
+  if (failure) target.searchParams.set("error", failure);
+  else target.searchParams.set("done", "1");
+  revalidatePath("/manage", "layout");
+  redirect(target.pathname + target.search);
+}
+
+/** Changes a reservation's table from the reservations list. The price paid stays as it is. */
+export async function moveFromListAction(reservationId: string, returnTo: string, form: FormData): Promise<void> {
+  await listAction(returnTo, async (staffId) => {
+    const to = String(form.get("to") ?? "");
+    if (!/^[0-9a-f-]{36}(,[0-9a-f-]{36})*$/.test(to)) throw new BookingError("INVALID_SELECTION");
+    await moveReservation(db, reservationId, to.split(","), staffId);
+  });
+}
+
+const changeSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().regex(/^\d{2}:\d{2}$/),
+  guests: z.coerce.number().int().min(1).max(100),
+  tableId: z.union([z.literal(""), z.string().uuid()]),
+});
+
+/**
+ * Staff change a reservation's date, time, number of guests or table for the
+ * guest. Not bound by the guest's limits, and nothing is charged or refunded.
+ * The guest gets the email with the new details.
+ */
+export async function changeReservationAction(reservationId: string, returnTo: string, form: FormData): Promise<void> {
+  await listAction(returnTo, async (staffId) => {
+    const parsed = changeSchema.safeParse(Object.fromEntries(form));
+    if (!parsed.success) throw new BookingError("INVALID_SELECTION");
+    const { date, time, guests, tableId } = parsed.data;
+    await rescheduleReservation(
+      db,
+      reservationId,
+      { date, time, selection: tableId ? { mode: "TABLE", tableId } : { mode: "AUTO" } },
+      staffId,
+      new Date(),
+      { partySize: guests },
+    );
+    await notifyReservationEvent(db, reservationId, "RESCHEDULED");
+  });
 }
 
 const refundSchema = z.object({ amount: z.coerce.number().positive().max(100_000), reason: z.string().trim().min(3).max(300) });

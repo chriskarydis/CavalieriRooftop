@@ -267,7 +267,13 @@
       "NOT_FOUND": "Not found. The page may be out of date.",
       "FORBIDDEN": "You do not have permission to do that.",
       "GENERIC": "Something went wrong. Please try again.",
-      "REFUND_FAILED": "The refund could not be made. Check the amount and that the reservation was paid by card."
+      "REFUND_FAILED": "The refund could not be made. Check the amount and that the reservation was paid by card.",
+      "CLOSED": "The restaurant is closed on that date.",
+      "INVALID_SLOT": "Choose one of the listed times.",
+      "IN_THE_PAST": "That time has already passed.",
+      "PARTY_SIZE": "That number of guests cannot be booked.",
+      "NO_AVAILABILITY": "No table is free for that party at that time.",
+      "TOO_LATE_TO_MOVE": "This reservation can no longer be changed."
     },
     "nav": {
       "label": "Management",
@@ -324,8 +330,8 @@
       "refundReason": "Reason (kept on record)",
       "refundConfirm": "Refund to the guest's card",
       "refundDone": "Refund of {amount} sent to the guest's card.",
-      "changeDate": "Change date or time",
-      "print": "Print this list"
+      "print": "Print this list",
+      "done": "The reservation was changed."
     },
     "notifications": {
       "title": "New ({count})",
@@ -341,7 +347,7 @@
       "publicSite": "Open the public site",
       "staffOnly": "For staff only"
     },
-    "dragHint": "Drag a reserved table onto another table to move the reservation.",
+    "dragHint": "Drag a reserved or occupied table onto another table to move the party.",
     "chime": {
       "on": "Sound on",
       "off": "Sound off",
@@ -360,6 +366,25 @@
       "refunded": "Refunded",
       "keptFromLost": "Kept from cancellations and no-shows",
       "note": "Reservations, guests, deposits and fees count the reservations that stand. Cancelled and no-show reservations are counted separately. The numbers follow the filters above."
+    },
+    "moveWalkIn": {
+      "title": "Move walk-in: {guest}",
+      "summary": "From table {from} to table {to}. They keep the table until {until}."
+    },
+    "change": {
+      "tableButton": "Change table",
+      "tableTitle": "Change table: {guest}",
+      "tableNow": "The reservation is now at table {table}. Where do you want to move it?",
+      "tableTo": "Move to table",
+      "tableConfirm": "Move",
+      "noMoney": "Nothing is charged or refunded. Any difference in price is recorded.",
+      "dateButton": "Change date or time",
+      "dateTitle": "Change reservation: {guest}",
+      "dateNow": "Now: {date} at {time}, {guests, plural, one {# guest} other {# guests}}, table {table}.",
+      "auto": "Best free table",
+      "dateNote": "Nothing is charged or refunded. The guest gets an email with the new details.",
+      "dateConfirm": "Save changes",
+      "guests": "Guests"
     }
   },
   "config": {

@@ -21,6 +21,7 @@ import {
   extendWalkInAction,
   markNotificationsReadAction,
   moveAction,
+  moveWalkInAction,
   unblockAction,
 } from "../actions";
 import { AutoRefresh } from "./AutoRefresh";
@@ -91,6 +92,7 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
   const selectedTableId = first(query.table) ?? null;
   const moveId = first(query.move);
   const moveTo = first(query.to);
+  const moveWalkInId = first(query.moveWalkIn);
 
   const [plan, live, noShows, config, settings, notifications] = await Promise.all([
     getFloorPlanView(),
@@ -115,13 +117,16 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
   });
 
   // Dragging a table moves the reservation that is on it now, or the next one due.
-  const movable: Record<string, string> = {};
+  const movable: Record<string, { kind: "reservation" | "walkIn"; id: string }> = {};
   for (const table of live) {
     const booking = table.bookings.find(
       (entry) =>
         entry.kind === "RESERVATION" && entry.reservationId !== null && ["CONFIRMED", "LATE", "SEATED"].includes(entry.reservationStatus ?? ""),
     );
-    if (booking?.reservationId) movable[table.tableId] = booking.reservationId;
+    const seated = table.bookings.find((entry) => entry.kind === "WALK_IN" && entry.walkInId !== null);
+    // A walk-in party always starts now, so it is who staff see sitting at the table.
+    if (seated?.walkInId) movable[table.tableId] = { kind: "walkIn", id: seated.walkInId };
+    else if (booking?.reservationId) movable[table.tableId] = { kind: "reservation", id: booking.reservationId };
   }
 
   const rows = groupBookings(live);
@@ -141,6 +146,8 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
     }
   }
   const moving = moveId ? rows.find((row) => row.reservationId === moveId) : undefined;
+  const movingWalkIn = moveWalkInId ? rows.find((row) => row.walkInId === moveWalkInId) : undefined;
+  const walkInTarget = moveTo ? live.find((table) => table.tableId === moveTo) : undefined;
 
   return (
     <main className="grid gap-6 lg:grid-cols-[minmax(0,34rem)_1fr] 2xl:grid-cols-[minmax(0,44rem)_1fr]">
@@ -214,6 +221,33 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
               ))}
             </ul>
           </section>
+        )}
+
+        {movingWalkIn && walkInTarget && moveWalkInId && moveTo && (
+          <ScrollTarget watch={`${moveWalkInId}-${moveTo}`} className="scroll-mt-4">
+            <section aria-labelledby="move-walk-in-heading" className={`${cardClass} border-slate-900`}>
+              <h2 id="move-walk-in-heading" className="mb-2 text-lg font-semibold">
+                {t("moveWalkIn.title", { guest: movingWalkIn.guestName ?? t("walkIn") })}
+              </h2>
+              <p className="text-sm">
+                {t("moveWalkIn.summary", {
+                  from: [...movingWalkIn.tables].sort((a, b) => a - b).join(" + "),
+                  to: walkInTarget.number,
+                  until: time(movingWalkIn.endsAt),
+                })}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <form action={moveWalkInAction.bind(null, moveWalkInId, moveTo, "/manage")}>
+                  <button type="submit" className={primaryButton}>
+                    {t("move.confirm")}
+                  </button>
+                </form>
+                <Link href="/manage" className={secondaryButton}>
+                  {t("move.close")}
+                </Link>
+              </div>
+            </section>
+          </ScrollTarget>
         )}
 
         {moveId && (

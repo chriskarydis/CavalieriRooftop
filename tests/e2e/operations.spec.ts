@@ -3,6 +3,8 @@ import { MANAGER_SESSION } from "./global-setup";
 
 // An evening no other spec uses.
 const DATE = "2027-09-02";
+// The same evening as staff type it, and the evening after.
+const DAYS = { shown: "02/09/2027", after: "2027-09-03" };
 const shot = (name: string): string | undefined => (process.env.SHOTS ? `${process.env.SHOTS}/${name}.png` : undefined);
 
 test.use({ storageState: MANAGER_SESSION });
@@ -57,9 +59,17 @@ test("timeline and analytics reflect the evening's reservations", async ({ page 
 
 test("closing several tables for weather hides them from guests; reopening restores them", async ({ page, browser }) => {
   await page.goto("/manage/tables");
+  // Everything can be ticked and cleared in one go.
+  await expect(page.getByRole("button", { name: "Close the ticked tables" })).toBeDisabled();
+  await page.getByRole("button", { name: "Select all" }).click();
+  await expect(page.getByRole("checkbox", { name: "31", exact: true })).toBeChecked();
+  await expect(page.getByText(/^Ticked: [1-9]\d$/)).toBeVisible();
+  await page.getByRole("button", { name: "Clear selection" }).click();
+  await expect(page.getByText("Ticked: 0")).toBeVisible();
+
   for (const number of ["31", "32"]) await page.getByRole("checkbox", { name: number, exact: true }).check();
-  await page.getByLabel("Reason (when not active)").first().fill("Rain");
-  await page.getByRole("button", { name: "Take out of service" }).click();
+  await page.getByLabel("Reason (optional)").fill("Rain");
+  await page.getByRole("button", { name: "Close the ticked tables" }).click();
   await expect(page.getByRole("status")).toContainText("2 tables changed.");
 
   const guest = await (await browser.newContext()).newPage();
@@ -69,9 +79,31 @@ test("closing several tables for weather hides them from guests; reopening resto
   await expect(guest.getByRole("button", { name: /^Table 32,/ })).toHaveCount(0);
 
   for (const number of ["31", "32"]) await page.getByRole("checkbox", { name: number, exact: true }).check();
-  await page.getByRole("button", { name: "Put back in service" }).click();
+  await page.getByRole("button", { name: "Open the ticked tables" }).click();
   await expect(page.getByRole("status")).toContainText("2 tables changed.");
   await guest.reload();
+  await expect(guest.getByRole("button", { name: /^Table 31,/ })).toBeVisible();
+
+  // For certain days only: closed on that evening, open again the evening after, with nothing to undo.
+  for (const number of ["31", "32"]) await page.getByRole("checkbox", { name: number, exact: true }).check();
+  await page.getByLabel("For certain days only").check();
+  await page.getByLabel("From (first day)").fill(DAYS.shown);
+  await page.getByLabel("To (last day)").fill(DAYS.shown);
+  await page.getByRole("button", { name: "Close the ticked tables" }).click();
+  await expect(page.getByRole("status")).toContainText(`2 tables closed from ${DAYS.shown} to ${DAYS.shown}.`);
+  await guest.reload();
+  await expect(guest.getByRole("button", { name: /^Table 30,/ })).toBeVisible();
+  await expect(guest.getByRole("button", { name: /^Table 31,/ })).toHaveCount(0);
+  await guest.goto(`/en/reserve?date=${DAYS.after}&time=23:00&guests=2`);
+  await expect(guest.getByRole("button", { name: /^Table 31,/ })).toBeVisible();
+
+  for (const number of ["31", "32"]) await page.getByRole("checkbox", { name: number, exact: true }).check();
+  await page.getByLabel("For certain days only").check();
+  await page.getByLabel("From (first day)").fill(DAYS.shown);
+  await page.getByLabel("To (last day)").fill(DAYS.shown);
+  await page.getByRole("button", { name: "Open the ticked tables" }).click();
+  await expect(page.getByRole("status")).toContainText("2 tables opened again");
+  await guest.goto(`/en/reserve?date=${DATE}&time=23:00&guests=2`);
   await expect(guest.getByRole("button", { name: /^Table 31,/ })).toBeVisible();
   await guest.close();
 });

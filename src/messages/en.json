@@ -367,7 +367,8 @@
       "done": "The reservation was updated.",
       "chosenByStaff": "set by staff",
       "searching": "Searching every date. Clear the search to see one day.",
-      "export": "Download (Excel)"
+      "export": "Download (Excel)",
+      "blocksCount": "{count, plural, one {# table is closed} other {# tables are closed}} on this date. Show them"
     },
     "notifications": {
       "title": "New ({count})",
@@ -557,12 +558,25 @@
       "notes": "Staff notes",
       "upcomingWarning": "Table {table} still has {count, plural, one {# upcoming reservation} other {# upcoming reservations}}. They were not changed: move them or contact the guests.",
       "bulkTitle": "Close or reopen several tables",
-      "bulkIntro": "For bad weather or an event: tick the tables, then take them out of service or put them back. Tables shown in red are not active now.",
-      "bulkClose": "Take out of service",
-      "bulkOpen": "Put back in service",
+      "bulkIntro": "For bad weather or an event: tick the tables, choose for how long, then close them or open them again. Tables shown in red are not active now.",
+      "bulkClose": "Close the ticked tables",
+      "bulkOpen": "Open the ticked tables",
       "bulkChanged": "{count, plural, =0 {No table needed changing.} one {# table changed.} other {# tables changed.}}",
       "bulkUpcomingWarning": "{count, plural, one {# upcoming reservation is} other {# upcoming reservations are}} on these tables. They were not changed: move them or contact the guests.",
-      "billBySeats": "A smaller party pays the minimum spend of all its seats"
+      "billBySeats": "A smaller party pays the minimum spend of all its seats",
+      "bulkReason": "Reason (optional)",
+      "selectAll": "Select all",
+      "selectNone": "Clear selection",
+      "selected": "Ticked: {count}",
+      "howLong": "For how long",
+      "always": "Until I open them again",
+      "days": "For certain days only",
+      "daysFrom": "From (first day)",
+      "daysTo": "To (last day)",
+      "daysHint": "Both days are included. The day after the last one the tables are open again by themselves. Reservations already made for these days are not cancelled.",
+      "daysClosed": "{count, plural, =0 {These tables were already closed} one {# table closed} other {# tables closed}} from {from} to {to}.",
+      "daysOpened": "{count, plural, =0 {No table was closed on those days.} one {# table opened again} other {# tables opened again}} ({from} to {to}).",
+      "daysKept": "{count, plural, one {# reservation already exists} other {# reservations already exist}} on these tables for those days. Nothing was cancelled: see the reservations list and contact the guests."
     },
     "categories": {
       "title": "Table categories",
@@ -1121,6 +1135,8 @@
     "noShowRate": "No-show rate",
     "autoAssigned": "Table chosen by the restaurant",
     "walkInCovers": "Walk-in guests",
-    "reservationsCount": "Reservations"
+    "reservationsCount": "Reservations",
+    "sheetReservations": "Reservations",
+    "sheetSummary": "Figures"
   }
 }

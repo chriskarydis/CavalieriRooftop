@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { ForbiddenError, requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import { ConfigError } from "@/server/services/configuration";
+import { BookingError } from "@/server/services/context";
 import { createTable, saveFloorLayout, setTablesStatus, type TableLayout } from "@/server/services/floor-admin";
+import { closeTablesForDays, reopenTablesForDays } from "@/server/services/table-ops";
 
 async function run(path: string, action: (staffId: string) => Promise<Record<string, string> | void>): Promise<void> {
   const query = new URLSearchParams();
@@ -23,12 +25,30 @@ async function run(path: string, action: (staffId: string) => Promise<Record<str
   redirect(`${path}?${query}`);
 }
 
-/** Takes the ticked tables out of service, or puts them back. */
+/**
+ * Takes the ticked tables out of service, or puts them back: until someone
+ * changes it again, or for the given days only.
+ */
 export async function setTablesStatusAction(status: "ACTIVE" | "OUT_OF_SERVICE", form: FormData): Promise<void> {
-  await run("/manage/tables", async (staffId) => {
+  await run("/manage/tables", async (staffId): Promise<Record<string, string>> => {
+    const tableIds = form.getAll("tableIds").map(String);
+    if (form.get("mode") === "days") {
+      const days = { tableIds, from: String(form.get("from") ?? ""), to: String(form.get("to") ?? "") };
+      try {
+        if (status === "ACTIVE") {
+          const opened = await reopenTablesForDays(db, days, staffId);
+          return { daysOpened: String(opened.tables), from: days.from, to: days.to };
+        }
+        const closed = await closeTablesForDays(db, { ...days, reason: String(form.get("reason") ?? "") }, staffId);
+        return { daysClosed: String(closed.tables), from: days.from, to: days.to, ...(closed.reservations > 0 ? { daysKept: String(closed.reservations) } : {}) };
+      } catch (error) {
+        if (error instanceof BookingError) throw new ConfigError("INVALID");
+        throw error;
+      }
+    }
     const result = await setTablesStatus(
       db,
-      { tableIds: form.getAll("tableIds").map(String), status, reason: String(form.get("reason") ?? "") },
+      { tableIds, status, reason: String(form.get("reason") ?? "") },
       staffId,
     );
     return { changed: String(result.changed), ...(result.upcoming > 0 ? { upcomingMany: String(result.upcoming) } : {}) };

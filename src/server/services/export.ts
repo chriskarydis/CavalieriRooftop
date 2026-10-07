@@ -4,41 +4,13 @@ import { addMinutes, zonedDate, zonedTime, zonedToInstant } from "@/domain/time"
 import * as schema from "@/server/db/schema";
 import { loadSettings, type Db } from "./context";
 
-/**
- * Files for the restaurant's own spreadsheets. They are written the way
- * Excel opens them on a computer set up for Greece: columns separated by a
- * semicolon, amounts with a decimal comma, dates as dd/mm/yyyy, and a mark at
- * the start that tells Excel the text is UTF-8 so Greek names read correctly.
- */
+/** What the manager's downloads contain. The Excel file itself is written by xlsx.ts. */
 
 const DAY_MINUTES = 24 * 60;
 /** Longest period in one file. */
 export const MAX_EXPORT_DAYS = 366;
-const SEPARATOR = ";";
-const BYTE_ORDER_MARK = "﻿";
-
-export type Cell = string | number | null;
-
-/**
- * A cell that starts like a formula is written as plain text, so a name typed
- * by a guest can never run as a formula when the file is opened.
- */
-function cell(value: Cell): string {
-  if (value === null) return "";
-  if (typeof value === "number") return String(value);
-  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
-  return /[";\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-}
-
-export function toCsv(rows: Cell[][]): string {
-  return BYTE_ORDER_MARK + rows.map((row) => row.map(cell).join(SEPARATOR)).join("\r\n") + "\r\n";
-}
-
-/** 6000 cents as "60,00". */
-export const csvMoney = (cents: number): string => (cents / 100).toFixed(2).replace(".", ",");
-
 /** "12/08/2027" */
-export const csvDate = (date: string): string => date.split("-").reverse().join("/");
+export const sheetDate = (date: string): string => date.split("-").reverse().join("/");
 
 /** from..to as given if both are dates in order and no longer than the limit; otherwise null. */
 export function exportRange(from: string | null, to: string | null): { from: string; to: string } | null {

@@ -245,11 +245,27 @@ owner to confirm.
   and 20:00 on the days after the visit (at least 10 hours after the reservation time, dropped
   after 3 days). At most once a year per address. Nothing is sent until the manager enters a
   Google or Tripadvisor link at /manage/settings.
-- **Downloads:** reservations of a period and the period's figures as CSV for Excel as set up in
-  Greece (semicolons, decimal comma, dd/mm/yyyy, UTF-8 mark). Needs the analytics permission; a
-  period is at most 366 days; each reservations download is recorded in the audit log. Text that
-  starts like a formula is written as plain text.
+- **Downloads:** reservations of a period and the period's figures as a real Excel workbook
+  (.xlsx, written by `xlsx.ts` with no library). A CSV was tried first and opened wrongly on the
+  owner's Excel, whose column separator is a comma. Amounts are numbers, text is always text. Needs the analytics permission; a
+  period is at most 366 days; each reservations download is recorded in the audit log.
 - **Privacy page:** three sentences added for the waiting list, staff notes and the review email.
   The page still needs legal review before launch.
 - **Scheduled job on the free plan:** now 08:00 UTC (11:00 in Corfu in summer), so the daily run
   falls at a good hour for reminders and the review email.
+
+## Later the same day (2026-10-07)
+
+- **Closing tables for certain days:** the tool at /manage/tables now has "Select all" and "Clear
+  selection", and a choice of how long. "Until I open them again" is the old behaviour (the table
+  is out of service until someone changes it). "For certain days only" closes the ticked tables
+  from a first to a last day, both included, at most 31 days; the day after they are open again
+  with nothing to undo. A day runs from 06:00 to 06:00, so an evening that ends after midnight
+  stays whole. Reservations already made for those days are never cancelled: the table is closed
+  around them and the page says how many there are, so staff can contact the guests and cancel or
+  refund as they decide.
+- **Review links:** the owner's Tripadvisor address is the default. The Google one opens the
+  restaurant on Google Maps for now; the proper "write a review" link comes from the restaurant's
+  Google Business Profile ("Ask for reviews") and goes in /manage/settings.
+- **Times:** every time on the site is written by our own 24-hour formatter and chosen from lists,
+  never typed into a browser time field, so no am/pm appears anywhere. Checked on 2026-10-07.

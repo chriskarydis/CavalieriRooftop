@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { price, smallestSuitableCapacity } from "@/domain/pricing";
-import { toRange } from "@/domain/time";
+import { toRange, zonedToInstant } from "@/domain/time";
 import * as schema from "@/server/db/schema";
 import {
   audit,
@@ -236,4 +236,134 @@ export async function moveReservation(
     if (isOverlapViolation(error)) throw new BookingError("TABLE_UNAVAILABLE");
     throw error;
   }
+}
+
+// ── Closing tables for certain days (weather, a private event) ──────────────
+
+/** A service day runs from this hour to the same hour the next morning, so an evening that ends after midnight stays whole. */
+const SERVICE_DAY_STARTS = "06:00";
+/** Longest stretch that can be closed in one go. */
+export const MAX_CLOSED_DAYS = 31;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const dayAfter = (date: string): string => new Date(Date.parse(`${date}T12:00:00Z`) + DAY_MS).toISOString().slice(0, 10);
+
+/** The instants covering service days from..to inclusive (YYYY-MM-DD in the restaurant's timezone). */
+function servicePeriod(from: string, to: string, timezone: string): { start: Date; end: Date } {
+  const isDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T12:00:00Z`));
+  if (!isDate(from) || !isDate(to) || from > to) throw new BookingError("INVALID_SELECTION");
+  const days = (Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / DAY_MS + 1;
+  if (days > MAX_CLOSED_DAYS) throw new BookingError("INVALID_SELECTION");
+  return { start: zonedToInstant(from, SERVICE_DAY_STARTS, timezone), end: zonedToInstant(dayAfter(to), SERVICE_DAY_STARTS, timezone) };
+}
+
+/**
+ * Closes tables for whole days and nothing longer: from the first day to the
+ * last, inclusive, after which they are open again by themselves. Reservations
+ * already made for those days are left exactly as they are (the tables are
+ * closed around them) and are counted in the answer, so staff can contact the
+ * guests. Nothing is cancelled or refunded here.
+ */
+export async function closeTablesForDays(
+  db: Db,
+  input: { tableIds: string[]; from: string; to: string; reason?: string },
+  actor: Actor,
+): Promise<{ tables: number; reservations: number }> {
+  if (input.tableIds.length === 0) throw new BookingError("INVALID_SELECTION");
+  const settings = await loadSettings(db);
+  const { start, end } = servicePeriod(input.from, input.to, settings.timezone);
+  try {
+    return await db.transaction(async (tx) => {
+      await lockAllocations(tx);
+      const taken = await tx
+        .select({
+          tableId: schema.tableAllocation.tableId,
+          kind: schema.tableAllocation.kind,
+          reservationId: schema.tableAllocation.reservationId,
+          startsAt: sql<string>`lower(${schema.tableAllocation.period})`,
+          endsAt: sql<string>`upper(${schema.tableAllocation.period})`,
+        })
+        .from(schema.tableAllocation)
+        .where(
+          and(
+            inArray(schema.tableAllocation.tableId, input.tableIds),
+            isNull(schema.tableAllocation.releasedAt),
+            sql`${schema.tableAllocation.period} && ${toRange(start, end)}::tstzrange`,
+          ),
+        );
+
+      // Each table is closed for the stretches of the period in which nothing holds it yet.
+      const blocks: Array<{ tableId: string; from: Date; until: Date }> = [];
+      for (const tableId of new Set(input.tableIds)) {
+        const busy = taken
+          .filter((row) => row.tableId === tableId)
+          .map((row) => ({ from: new Date(row.startsAt), until: new Date(row.endsAt) }))
+          .sort((a, b) => a.from.getTime() - b.from.getTime());
+        let cursor = start;
+        for (const stretch of busy) {
+          if (stretch.from.getTime() > cursor.getTime()) blocks.push({ tableId, from: cursor, until: stretch.from });
+          if (stretch.until.getTime() > cursor.getTime()) cursor = stretch.until;
+        }
+        if (cursor.getTime() < end.getTime()) blocks.push({ tableId, from: cursor, until: end });
+      }
+      if (blocks.length > 0) {
+        await tx.insert(schema.tableAllocation).values(
+          blocks.map((block) => ({
+            tableId: block.tableId,
+            period: toRange(block.from, block.until),
+            kind: "BLOCK" as const,
+            reason: input.reason?.trim() || null,
+          })),
+        );
+      }
+      const reservations = new Set(taken.filter((row) => row.kind === "RESERVATION" && row.reservationId).map((row) => row.reservationId)).size;
+      await audit(tx, {
+        actor,
+        action: "table.closed_for_days",
+        entityType: "dining_table",
+        entityId: input.tableIds[0],
+        after: { tableIds: input.tableIds, from: input.from, to: input.to, reason: input.reason, reservations },
+      });
+      return { tables: new Set(blocks.map((block) => block.tableId)).size, reservations };
+    });
+  } catch (error) {
+    if (isOverlapViolation(error)) throw new BookingError("TABLE_UNAVAILABLE");
+    throw error;
+  }
+}
+
+/** Opens tables again for days they were closed for: every block of theirs that touches those days is lifted. */
+export async function reopenTablesForDays(
+  db: Db,
+  input: { tableIds: string[]; from: string; to: string },
+  actor: Actor,
+  now = new Date(),
+): Promise<{ tables: number }> {
+  if (input.tableIds.length === 0) throw new BookingError("INVALID_SELECTION");
+  const settings = await loadSettings(db);
+  const { start, end } = servicePeriod(input.from, input.to, settings.timezone);
+  return db.transaction(async (tx) => {
+    const released = await tx
+      .update(schema.tableAllocation)
+      .set({ releasedAt: now })
+      .where(
+        and(
+          inArray(schema.tableAllocation.tableId, input.tableIds),
+          eq(schema.tableAllocation.kind, "BLOCK"),
+          isNull(schema.tableAllocation.releasedAt),
+          sql`${schema.tableAllocation.period} && ${toRange(start, end)}::tstzrange`,
+        ),
+      )
+      .returning({ tableId: schema.tableAllocation.tableId });
+    if (released.length > 0) {
+      await audit(tx, {
+        actor,
+        action: "table.reopened_for_days",
+        entityType: "dining_table",
+        entityId: input.tableIds[0],
+        after: { tableIds: input.tableIds, from: input.from, to: input.to },
+      });
+    }
+    return { tables: new Set(released.map((row) => row.tableId)).size };
+  });
 }

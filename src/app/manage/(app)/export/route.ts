@@ -3,7 +3,11 @@ import { ForbiddenError, requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import { getAnalytics } from "@/server/services/analytics";
 import { audit } from "@/server/services/context";
-import { csvDate, csvMoney, exportRange, exportReservations, toCsv, type Cell } from "@/server/services/export";
+import { exportRange, exportReservations, sheetDate } from "@/server/services/export";
+import { writeXlsx, XLSX_CONTENT_TYPE, type SheetCell } from "@/server/services/xlsx";
+
+type Cell = SheetCell;
+const money = (cents: number): Cell => ({ euros: cents / 100 });
 
 /**
  * Downloads for the manager: every reservation of a period, or the period's
@@ -28,6 +32,8 @@ export async function GET(request: Request): Promise<Response> {
   const tAnalytics = await getTranslations("analytics");
   const tConfig = await getTranslations("config");
   let rows: Cell[][];
+  // The first row of each table is written in bold.
+  const boldRows = [0];
 
   if (kind === "reservations") {
     const reservations = await exportReservations(db, range);
@@ -38,7 +44,7 @@ export async function GET(request: Request): Promise<Response> {
       ],
       ...reservations.map((row): Cell[] => [
         row.reference,
-        csvDate(row.date),
+        sheetDate(row.date),
         row.time,
         row.partySize,
         row.tableNumbers.join(" + "),
@@ -49,13 +55,13 @@ export async function GET(request: Request): Promise<Response> {
         t(`sourceValue.${row.source}`),
         t(`choiceValue.${row.selectionMode}`),
         row.occasion ? tManage(`occasion.${row.occasion}`) : "",
-        csvMoney(row.depositCents),
-        csvMoney(row.tableFeeCents),
-        csvMoney(row.totalCents),
-        csvMoney(row.refundedCents),
+        money(row.depositCents),
+        money(row.tableFeeCents),
+        money(row.totalCents),
+        money(row.refundedCents),
         row.guestNotes,
         row.staffNotes,
-        csvDate(row.bookedOn),
+        sheetDate(row.bookedOn),
       ]),
     ];
     await audit(db, {
@@ -67,45 +73,53 @@ export async function GET(request: Request): Promise<Response> {
     });
   } else {
     const data = await getAnalytics(db, range);
-    const percent = (value: number) => `${(value * 100).toFixed(1).replace(".", ",")}%`;
+    const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
+    const heading = (row: Cell[]): Cell[] => {
+      boldRows.push(rows.length);
+      return row;
+    };
     rows = [
-      [t("period"), `${csvDate(range.from)} - ${csvDate(range.to)}`],
-      [],
+      [t("period"), `${sheetDate(range.from)} - ${sheetDate(range.to)}`],
       [tAnalytics("reservations"), data.reservations],
       [tAnalytics("covers"), data.covers],
-      [t("averageParty"), data.averagePartySize.toFixed(1).replace(".", ",")],
+      [t("averageParty"), Math.round(data.averagePartySize * 10) / 10],
       [tAnalytics("cancellations"), data.cancellations],
       [tAnalytics("noShows"), data.noShows],
       [t("noShowRate"), percent(data.noShowRate)],
-      [tAnalytics("deposits"), csvMoney(data.depositCents)],
-      [tAnalytics("tableFees"), csvMoney(data.tableFeeCents)],
-      [tAnalytics("retained"), csvMoney(data.retainedCents)],
-      [tAnalytics("refunded"), csvMoney(data.refundedCents)],
+      [tAnalytics("deposits"), money(data.depositCents)],
+      [tAnalytics("tableFees"), money(data.tableFeeCents)],
+      [tAnalytics("retained"), money(data.retainedCents)],
+      [tAnalytics("refunded"), money(data.refundedCents)],
       [tAnalytics("chosenTable"), data.chosenTable],
       [t("autoAssigned"), data.autoAssigned],
       [tAnalytics("tableUse"), percent(data.tableUse)],
       [tAnalytics("walkIns"), data.walkIns],
       [t("walkInCovers"), data.walkInCovers],
       [tAnalytics("walkInsDrinks"), data.walkInsForDrinks],
-      [],
-      [tAnalytics("byHour"), t("reservationsCount")],
-      ...data.byHour.map((row): Cell[] => [row.label, row.count]),
-      [],
-      [tAnalytics("byWeekday"), t("guests")],
-      ...data.coversByWeekday.map((row): Cell[] => [tConfig(`settings.weekday.${row.weekday}`), row.covers]),
-      [],
-      [tAnalytics("chosenTables"), t("reservationsCount"), t("tableFee")],
-      ...data.chosenTables.map((row): Cell[] => [row.tableNumber, row.count, csvMoney(row.feeCents)]),
-      [],
-      [tAnalytics("feeByCategory"), t("reservationsCount"), t("tableFee")],
-      ...data.feeByCategory.map((row): Cell[] => [row.category, row.count, csvMoney(row.feeCents)]),
     ];
+    rows.push([], heading([tAnalytics("byHour"), t("reservationsCount")]));
+    rows.push(
+      ...data.byHour.map((row): Cell[] => [row.label, row.count]),
+    );
+    rows.push([], heading([tAnalytics("byWeekday"), t("guests")]));
+    rows.push(
+      ...data.coversByWeekday.map((row): Cell[] => [tConfig(`settings.weekday.${row.weekday}`), row.covers]),
+    );
+    rows.push([], heading([tAnalytics("chosenTables"), t("reservationsCount"), t("tableFee")]));
+    rows.push(
+      ...data.chosenTables.map((row): Cell[] => [row.tableNumber, row.count, money(row.feeCents)]),
+    );
+    rows.push([], heading([tAnalytics("feeByCategory"), t("reservationsCount"), t("tableFee")]));
+    rows.push(
+      ...data.feeByCategory.map((row): Cell[] => [row.category, row.count, money(row.feeCents)]),
+    );
   }
 
-  return new Response(toCsv(rows), {
+  const file = writeXlsx({ name: kind === "summary" ? t("sheetSummary") : t("sheetReservations"), rows, boldRows });
+  return new Response(new Uint8Array(file), {
     headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="cavalieri-${kind}-${range.from}-${range.to}.csv"`,
+      "Content-Type": XLSX_CONTENT_TYPE,
+      "Content-Disposition": `attachment; filename="cavalieri-${kind}-${range.from}-${range.to}.xlsx"`,
       "Cache-Control": "no-store",
     },
   });

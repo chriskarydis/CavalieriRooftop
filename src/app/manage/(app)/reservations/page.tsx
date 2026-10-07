@@ -31,6 +31,8 @@ import { cardClass, inputClass, primaryButton, secondaryButton } from "../ui";
 
 const LISTED_STATUSES = RESERVATION_STATUSES.filter((status) => status !== "PENDING_PAYMENT" && status !== "EXPIRED");
 const DAY_MINUTES = 24 * 60;
+/** More closed tables than this are folded away until asked for. */
+const MANY_BLOCKS = 6;
 const first = (value: string | string[] | undefined): string | undefined => (Array.isArray(value) ? value[0] : value);
 
 export default async function ReservationsPage({ searchParams }: PageProps<"/manage/reservations">) {
@@ -417,6 +419,10 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
           <h2 id="blocks-heading" className="mb-2 font-semibold">
             {t("reservations.blocks")}
           </h2>
+          <details open={blocks.length <= MANY_BLOCKS}>
+          <summary className={`mb-2 cursor-pointer text-sm text-slate-700 ${blocks.length <= MANY_BLOCKS ? "hidden" : ""}`}>
+            {t("reservations.blocksCount", { count: new Set(blocks.map((block) => block.tableNumber)).size })}
+          </summary>
           <ul className="space-y-2 text-sm">
             {blocks.map((block) => (
               <li key={block.allocationId} className={`${cardClass} flex flex-wrap items-center justify-between gap-2 py-2`}>
@@ -433,6 +439,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
               </li>
             ))}
           </ul>
+          </details>
         </section>
       )}
     </main>

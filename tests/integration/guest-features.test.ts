@@ -5,7 +5,12 @@ import * as schema from "@/server/db/schema";
 import { seedInitialConfiguration } from "@/server/db/seed-config";
 import type { OutgoingEmail, SendResult } from "@/server/email/transport";
 import { attachGuestDetails, confirmReservation, createHold } from "@/server/services/booking";
-import { csvMoney, exportRange, exportReservations, toCsv } from "@/server/services/export";
+import { exportRange, exportReservations } from "@/server/services/export";
+import { closeTablesForDays, listBlocks, reopenTablesForDays } from "@/server/services/table-ops";
+import { writeXlsx } from "@/server/services/xlsx";
+import { readSheet, unzip } from "../read-xlsx";
+import { getAvailability } from "@/server/services/booking";
+import { BookingError } from "@/server/services/context";
 import { cancelReservation } from "@/server/services/floor-service";
 import { getGuestProfile, loadGuestStats, saveGuestNote, saveReservationNote } from "@/server/services/guest-history";
 import { listUnreadNotifications, notificationSummary, notifyReservationEvent, sendReviewRequests } from "@/server/services/notifications";
@@ -248,7 +253,8 @@ describe("notes, history, waiting list, reviews and exports", () => {
       await setStatus(came.reservationId, "COMPLETED");
       await setStatus(missed.reservationId, "NO_SHOW");
 
-      // No link entered yet: nothing is sent.
+      // With no link in the settings nothing is sent.
+      await ctx.db.update(schema.restaurantSettings).set({ reviewUrlGoogle: null, reviewUrlTripadvisor: null });
       expect(await sendReviewRequests(ctx.db, MORNING_AFTER, transport)).toBe(0);
       await withLinks();
       // Not in the middle of the night.
@@ -272,6 +278,67 @@ describe("notes, history, waiting list, reviews and exports", () => {
       await setStatus(again.reservationId, "COMPLETED");
       expect(await sendReviewRequests(ctx.db, new Date("2027-08-20T08:00:00Z"), transport)).toBe(0);
       expect(outbox).toHaveLength(1);
+    });
+  });
+
+  describe("closing tables for certain days", () => {
+    const stateOf = async (date: string, table: number, time = "20:00") =>
+      (await getAvailability(ctx.db, { date, time, partySize: 2 }, NOW)).tables.find((entry) => entry.number === table)?.state;
+
+    it("closes the tables for those days only and leaves the days around them open", async () => {
+      const ids = [tableId.get(28)!, tableId.get(30)!];
+      // A Thursday and a Friday. Wednesday and Saturday stay open.
+      const result = await closeTablesForDays(ctx.db, { tableIds: ids, from: "2027-08-12", to: "2027-08-13", reason: "Rain" }, MANAGER);
+      expect(result).toEqual({ tables: 2, reservations: 0 });
+
+      expect(await stateOf("2027-08-11", 28, "23:30")).toBe("AVAILABLE");
+      expect(await stateOf("2027-08-12", 28, "18:30")).toBe("TAKEN");
+      expect(await stateOf("2027-08-13", 28, "23:30")).toBe("TAKEN");
+      expect(await stateOf("2027-08-13", 30)).toBe("TAKEN");
+      expect(await stateOf("2027-08-14", 28, "18:30")).toBe("AVAILABLE");
+      // A table that was not ticked is untouched.
+      expect(await stateOf("2027-08-12", 31)).toBe("AVAILABLE");
+      // The table itself is still in service: nothing to remember to undo.
+      const [table] = await ctx.db.select().from(schema.diningTable).where(eq(schema.diningTable.number, 28));
+      expect(table.status).toBe("ACTIVE");
+
+      // Closing again changes nothing, and opening one of the days opens the whole stretch for that table.
+      expect(await closeTablesForDays(ctx.db, { tableIds: ids, from: "2027-08-12", to: "2027-08-13" }, MANAGER)).toEqual({ tables: 0, reservations: 0 });
+      expect(await reopenTablesForDays(ctx.db, { tableIds: [ids[0]], from: "2027-08-13", to: "2027-08-13" }, MANAGER)).toEqual({ tables: 1 });
+      expect(await stateOf("2027-08-12", 28)).toBe("AVAILABLE");
+      expect(await stateOf("2027-08-12", 30)).toBe("TAKEN");
+    });
+
+    it("keeps reservations already made, closes the table around them and says how many there are", async () => {
+      const held = await book({ email: "anna@example.com" }, { table: 28 });
+      const result = await closeTablesForDays(ctx.db, { tableIds: [tableId.get(28)!, tableId.get(30)!], from: DATE, to: DATE }, MANAGER);
+      expect(result).toEqual({ tables: 2, reservations: 1 });
+
+      const [row] = await ctx.db.select().from(schema.reservation).where(eq(schema.reservation.id, held.reservationId));
+      expect(row.status).toBe("CONFIRMED");
+      // Before and after the reservation the table cannot be booked.
+      expect(await stateOf(DATE, 28, "18:30")).toBe("TAKEN");
+      expect(await stateOf(DATE, 28, "23:30")).toBe("TAKEN");
+      const blocks = await listBlocks(ctx.db, new Date("2027-08-12T03:00:00Z"), new Date("2027-08-13T03:00:00Z"));
+      expect(blocks.filter((block) => block.tableNumber === 28)).toHaveLength(2);
+      expect(blocks.filter((block) => block.tableNumber === 30)).toHaveLength(1);
+    });
+
+    it("refuses dates the wrong way round, more than a month, or no tables", async () => {
+      const codeOf = async (attempt: Promise<unknown>) => {
+        try {
+          await attempt;
+        } catch (error) {
+          if (error instanceof BookingError) return error.code;
+          throw error;
+        }
+        return null;
+      };
+      const ids = [tableId.get(28)!];
+      expect(await codeOf(closeTablesForDays(ctx.db, { tableIds: ids, from: "2027-08-13", to: "2027-08-12" }, MANAGER))).toBe("INVALID_SELECTION");
+      expect(await codeOf(closeTablesForDays(ctx.db, { tableIds: ids, from: "2027-08-01", to: "2027-09-15" }, MANAGER))).toBe("INVALID_SELECTION");
+      expect(await codeOf(closeTablesForDays(ctx.db, { tableIds: [], from: DATE, to: DATE }, MANAGER))).toBe("INVALID_SELECTION");
+      expect(await codeOf(reopenTablesForDays(ctx.db, { tableIds: ids, from: "tomorrow", to: DATE }, MANAGER))).toBe("INVALID_SELECTION");
     });
   });
 
@@ -302,21 +369,43 @@ describe("notes, history, waiting list, reviews and exports", () => {
       });
     });
 
-    it("writes a file Excel reads: semicolons, quoted text, no formulas from guests", () => {
-      const csv = toCsv([
+    it("writes a real Excel workbook: text stays text, amounts are numbers, headings are bold", () => {
+      const file = writeXlsx({
+        name: "Κρατήσεις",
+        boldRows: [0],
+        rows: [
+          ["Name", "Total (€)", "Note"],
+          ["Άννα <Π> & Co", { euros: 170 }, 'Window; "quiet", please'],
+          ["=HYPERLINK(1)", 2, "+30 690 111 2222"],
+          [null, "", "two\nlines"],
+        ],
+      });
+      const files = unzip(file);
+      expect([...files.keys()]).toEqual([
+        "[Content_Types].xml",
+        "_rels/.rels",
+        "xl/workbook.xml",
+        "xl/_rels/workbook.xml.rels",
+        "xl/styles.xml",
+        "xl/worksheets/sheet1.xml",
+      ]);
+      expect(files.get("xl/workbook.xml")).toContain('<sheet name="Κρατήσεις"');
+
+      const rows = readSheet(file);
+      expect(rows.map((row) => row.map((cell) => cell.text))).toEqual([
         ["Name", "Total (€)", "Note"],
-        ["Άννα", csvMoney(17000), 'Window; "quiet"'],
-        ["=HYPERLINK(1)", 2, "+30 690 111 2222"],
-        [null, "", "two\nlines"],
+        ["Άννα <Π> & Co", "170.00", 'Window; "quiet", please'],
+        ["=HYPERLINK(1)", "2", "+30 690 111 2222"],
+        ["two\nlines"],
       ]);
-      expect(csv.startsWith("﻿")).toBe(true);
-      expect(csv.slice(1).split("\r\n")).toEqual([
-        "Name;Total (€);Note",
-        'Άννα;170,00;"Window; ""quiet"""',
-        "'=HYPERLINK(1);2;'+30 690 111 2222",
-        ';;"two\nlines"',
-        "",
-      ]);
+      // The heading row is bold, the amount is a number in the two-decimals style.
+      expect(rows[0].every((cell) => cell.style === 1 && cell.isText)).toBe(true);
+      expect(rows[1][1]).toMatchObject({ at: "B2", isText: false, style: 2 });
+      // What a guest typed is text, whatever it starts with: never a formula.
+      expect(rows[2][0]).toMatchObject({ at: "A3", isText: true });
+      expect(rows[2][2].isText).toBe(true);
+      expect(rows[3][0].at).toBe("C4");
+      expect(files.get("xl/worksheets/sheet1.xml")).not.toContain("<f>");
     });
 
     it("accepts only a sensible period", () => {

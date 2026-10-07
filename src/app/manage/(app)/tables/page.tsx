@@ -6,7 +6,10 @@ import { db } from "@/server/db/client";
 import * as schema from "@/server/db/schema";
 import { saveTable } from "../config-actions";
 import { setTablesStatusAction } from "../floor-actions";
-import { cardClass, inputClass, Notice, primaryButton, secondaryButton } from "../ui";
+import { zonedDate } from "@/domain/time";
+import { loadSettings } from "@/server/services/context";
+import { cardClass, inputClass, Notice, primaryButton } from "../ui";
+import { BulkTables } from "./BulkTables";
 
 const STATUSES = ["ACTIVE", "INACTIVE", "OUT_OF_SERVICE"] as const;
 
@@ -19,6 +22,7 @@ export default async function TablesPage({ searchParams }: PageProps<"/manage/ta
     db.select().from(schema.diningTable).orderBy(asc(schema.diningTable.number)),
     db.select().from(schema.tableCategory).orderBy(asc(schema.tableCategory.displayOrder)),
   ]);
+  const settings = await loadSettings(db);
   const categoryName = new Map(categories.map((category) => [category.id, localized(category.name, locale)]));
 
   return (
@@ -32,31 +36,32 @@ export default async function TablesPage({ searchParams }: PageProps<"/manage/ta
       <section className={cardClass}>
         <h2 className="font-semibold">{t("tables.bulkTitle")}</h2>
         <p className="mb-3 text-sm text-slate-600">{t("tables.bulkIntro")}</p>
-        <form className="space-y-3 text-sm">
-          <fieldset>
-            <legend className="sr-only">{t("tables.title")}</legend>
-            <div className="flex flex-wrap gap-x-3 gap-y-1">
-              {tables.map((table) => (
-                <label key={table.id} className={`flex items-center gap-1 ${table.status === "ACTIVE" ? "" : "text-red-700"}`}>
-                  <input type="checkbox" name="tableIds" value={table.id} />
-                  {table.isSpare ? t("tables.spare") : table.number}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <label className="block font-medium">
-            {t("tables.statusReason")}
-            <input name="reason" maxLength={200} className={inputClass} />
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <button formAction={setTablesStatusAction.bind(null, "OUT_OF_SERVICE")} className={primaryButton}>
-              {t("tables.bulkClose")}
-            </button>
-            <button formAction={setTablesStatusAction.bind(null, "ACTIVE")} className={secondaryButton}>
-              {t("tables.bulkOpen")}
-            </button>
-          </div>
-        </form>
+        <BulkTables
+          tables={tables.map((table) => ({
+            id: table.id,
+            label: table.isSpare ? t("tables.spare") : String(table.number),
+            active: table.status === "ACTIVE",
+          }))}
+          today={zonedDate(new Date(), settings.timezone)}
+          closeAction={setTablesStatusAction.bind(null, "OUT_OF_SERVICE")}
+          openAction={setTablesStatusAction.bind(null, "ACTIVE")}
+          labels={{
+            tables: t("tables.title"),
+            selectAll: t("tables.selectAll"),
+            selectNone: t("tables.selectNone"),
+            // The count is filled in as tables are ticked.
+            selected: t.raw("tables.selected") as string,
+            howLong: t("tables.howLong"),
+            always: t("tables.always"),
+            days: t("tables.days"),
+            from: t("tables.daysFrom"),
+            to: t("tables.daysTo"),
+            daysHint: t("tables.daysHint"),
+            reason: t("tables.bulkReason"),
+            close: t("tables.bulkClose"),
+            open: t("tables.bulkOpen"),
+          }}
+        />
       </section>
 
       <ul className="space-y-2">

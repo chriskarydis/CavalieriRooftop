@@ -30,6 +30,14 @@ export const DEFAULT_SETTINGS = {
   closedWeekdays: [1],
   seasonStart: "05-01",
   seasonEnd: "10-10",
+  /**
+   * Where the thank-you email sends guests to leave a review; editable at /manage/settings.
+   * The Tripadvisor address is the owner's. The Google one opens the restaurant on Google Maps,
+   * where reviews are written: replace it with the "ask for reviews" link of the Google Business
+   * Profile once the owner has it.
+   */
+  reviewUrlGoogle: "https://www.google.com/maps/search/?api=1&query=Cavalieri+Roof+Garden+Corfu",
+  reviewUrlTripadvisor: "https://www.tripadvisor.com.gr/UserReviewEdit-g189458-d4363305-Cavalieri_Roof_Garden-Corfu_Ionian_Islands.html",
 } as const;
 
 export type CategoryKey = "STANDARD" | "BEST_FOR_TWO" | "PREFERRED" | "PREMIUM";

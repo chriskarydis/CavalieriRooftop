@@ -1,6 +1,7 @@
 import { expect, test, type Browser } from "@playwright/test";
 import postgres from "postgres";
 import { E2E_DATABASE_URL } from "../../playwright.config";
+import { sheetText } from "../read-xlsx";
 import { MANAGER_SESSION } from "./global-setup";
 
 // Evenings no other spec uses: a Tuesday and a Wednesday in season.
@@ -105,13 +106,15 @@ test("occasion, calendar, notes, guest history, bell and downloads", async ({ pa
   // Downloads for Excel: the reservations of the day, and the figures.
   const reservations = await page.request.get(`/manage/export?kind=reservations&from=${DATE}&to=${DATE}`);
   expect(reservations.status()).toBe(200);
-  expect(reservations.headers()["content-disposition"]).toContain(`cavalieri-reservations-${DATE}-${DATE}.csv`);
-  const csv = await reservations.text();
-  expect(csv).toContain("Reservation;Date;Time;Guests;Table;Name");
-  expect(csv).toContain(`${reference};21/09/2027;20:00;2;30;Olga Occasion;'+30 690 555 0101;olga@example.com;Confirmed;Online;Guest;Birthday;60,00;0,00;60,00;0,00`);
-  expect(csv).toContain("Cake ordered from the pastry chef");
+  expect(reservations.headers()["content-disposition"]).toContain(`cavalieri-reservations-${DATE}-${DATE}.xlsx`);
+  expect(reservations.headers()["content-type"]).toContain("spreadsheetml.sheet");
+  const sheet = sheetText(await reservations.body());
+  expect(sheet[0]).toContain("Reservation | Date | Time | Guests | Table | Name");
+  expect(sheet[1]).toBe(
+    `${reference} | 21/09/2027 | 20:00 | 2 | 30 | Olga Occasion | +30 690 555 0101 | olga@example.com | Confirmed | Online | Guest | Birthday | 60.00 | 0.00 | 60.00 | 0.00 | A candle on the dessert, please | Cake ordered from the pastry chef | ${sheet[1].split(" | ").at(-1)}`,
+  );
   const summary = await page.request.get(`/manage/export?kind=summary&from=${DATE}&to=${DATE}`);
-  expect(await summary.text()).toContain("Period;21/09/2027 - 21/09/2027");
+  expect(sheetText(await summary.body())[0]).toBe("Period | 21/09/2027 - 21/09/2027");
   expect((await page.request.get("/manage/export?kind=reservations&from=2027-09-21&to=2020-01-01")).status()).toBe(400);
   await page.goto(`/manage/analytics?from=${DATE}&to=${DATE}`);
   await expect(page.getByRole("link", { name: "Download reservations (Excel)" })).toHaveAttribute("href", `/manage/export?kind=reservations&from=${DATE}&to=${DATE}`);

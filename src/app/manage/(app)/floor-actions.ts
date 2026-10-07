@@ -7,6 +7,9 @@ import { db } from "@/server/db/client";
 import { ConfigError } from "@/server/services/configuration";
 import { BookingError } from "@/server/services/context";
 import { createTable, saveFloorLayout, setTablesStatus, type TableLayout } from "@/server/services/floor-admin";
+import { stripeGateway } from "@/server/payments/gateway";
+import { cancelForClosedDays } from "@/server/services/closure-cancellations";
+import { loadSettings } from "@/server/services/context";
 import { closeTablesForDays, reopenTablesForDays } from "@/server/services/table-ops";
 
 async function run(path: string, action: (staffId: string) => Promise<Record<string, string> | void>): Promise<void> {
@@ -39,8 +42,20 @@ export async function setTablesStatusAction(status: "ACTIVE" | "OUT_OF_SERVICE",
           const opened = await reopenTablesForDays(db, days, staffId);
           return { daysOpened: String(opened.tables), from: days.from, to: days.to };
         }
+        // Only when the restaurant has switched it on: the reservations of those days are cancelled and refunded first.
+        const cancelled = (await loadSettings(db)).cancelOnClosure
+          ? await cancelForClosedDays(db, stripeGateway(), days, (await requirePermission("refunds")).id)
+          : null;
         const closed = await closeTablesForDays(db, { ...days, reason: String(form.get("reason") ?? "") }, staffId);
-        return { daysClosed: String(closed.tables), from: days.from, to: days.to, ...(closed.reservations > 0 ? { daysKept: String(closed.reservations) } : {}) };
+        return {
+          daysClosed: String(closed.tables),
+          from: days.from,
+          to: days.to,
+          ...(closed.reservations > 0 ? { daysKept: String(closed.reservations) } : {}),
+          ...(cancelled && cancelled.cancelled > 0
+            ? { daysCancelled: String(cancelled.cancelled), daysRefunded: String(cancelled.refundedCents), daysUnrefunded: String(cancelled.unrefunded) }
+            : {}),
+        };
       } catch (error) {
         if (error instanceof BookingError) throw new ConfigError("INVALID");
         throw error;

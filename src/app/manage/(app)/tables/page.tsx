@@ -45,6 +45,7 @@ export default async function TablesPage({ searchParams }: PageProps<"/manage/ta
           today={zonedDate(new Date(), settings.timezone)}
           closeAction={setTablesStatusAction.bind(null, "OUT_OF_SERVICE")}
           openAction={setTablesStatusAction.bind(null, "ACTIVE")}
+          cancelsReservations={settings.cancelOnClosure}
           labels={{
             tables: t("tables.title"),
             selectAll: t("tables.selectAll"),
@@ -57,6 +58,8 @@ export default async function TablesPage({ searchParams }: PageProps<"/manage/ta
             from: t("tables.daysFrom"),
             to: t("tables.daysTo"),
             daysHint: t("tables.daysHint"),
+            cancelWarning: t("tables.cancelWarning"),
+            cancelConfirm: t("tables.cancelConfirm"),
             reason: t("tables.bulkReason"),
             close: t("tables.bulkClose"),
             open: t("tables.bulkOpen"),

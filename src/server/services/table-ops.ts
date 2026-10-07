@@ -249,7 +249,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const dayAfter = (date: string): string => new Date(Date.parse(`${date}T12:00:00Z`) + DAY_MS).toISOString().slice(0, 10);
 
 /** The instants covering service days from..to inclusive (YYYY-MM-DD in the restaurant's timezone). */
-function servicePeriod(from: string, to: string, timezone: string): { start: Date; end: Date } {
+export function servicePeriod(from: string, to: string, timezone: string): { start: Date; end: Date } {
   const isDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T12:00:00Z`));
   if (!isDate(from) || !isDate(to) || from > to) throw new BookingError("INVALID_SELECTION");
   const days = (Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / DAY_MS + 1;

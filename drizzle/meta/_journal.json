@@ -78,6 +78,13 @@
       "when": 1791373206638,
       "tag": "0010_occasion_waiting_reviews",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791379946208,
+      "tag": "0011_cancel_on_closure",
+      "breakpoints": true
     }
   ]
 }

@@ -14,6 +14,8 @@ export async function Notice({ query }: { query: Record<string, string | string[
   const daysClosed = first(query.daysClosed);
   const daysOpened = first(query.daysOpened);
   const daysKept = first(query.daysKept);
+  const daysCancelled = first(query.daysCancelled);
+  const daysUnrefunded = Number(first(query.daysUnrefunded) ?? 0);
   const day = (value: string | undefined): string => (value ?? "").split("-").reverse().join("/");
   const period = { from: day(first(query.from)), to: day(first(query.to)) };
 
@@ -36,6 +38,19 @@ export async function Notice({ query }: { query: Record<string, string | string[
               ? t("tables.bulkChanged", { count: Number(changed) })
               : t("saved")}
       </p>
+      {daysCancelled && (
+        <p role="status" className="rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900">
+          {t("tables.daysCancelled", {
+            count: Number(daysCancelled),
+            amount: (Number(first(query.daysRefunded) ?? 0) / 100).toFixed(2),
+          })}
+        </p>
+      )}
+      {daysUnrefunded > 0 && (
+        <p role="alert" className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+          {t("tables.daysUnrefunded", { count: daysUnrefunded })}
+        </p>
+      )}
       {daysKept && (
         <p role="alert" className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
           {t("tables.daysKept", { count: Number(daysKept) })}

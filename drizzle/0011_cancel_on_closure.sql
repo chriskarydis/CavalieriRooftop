@@ -1,0 +1,1 @@
+ALTER TABLE "restaurant_settings" ADD COLUMN "cancel_on_closure" boolean DEFAULT false NOT NULL;

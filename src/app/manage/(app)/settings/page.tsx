@@ -112,6 +112,15 @@ export default async function SettingsPage({ searchParams }: PageProps<"/manage/
         </section>
 
         <section className={cardClass}>
+          <h2 className="mb-1 font-semibold">{t("settings.closure")}</h2>
+          <p className="mb-3 text-sm text-slate-600">{t("settings.closureNote")}</p>
+          <label className="flex items-start gap-2 text-sm font-medium">
+            <input name="cancelOnClosure" type="checkbox" defaultChecked={settings.cancelOnClosure} className="mt-1" />
+            {t("settings.cancelOnClosure")}
+          </label>
+        </section>
+
+        <section className={cardClass}>
           <h2 className="mb-1 font-semibold">{t("settings.reviews")}</h2>
           <p className="mb-3 text-sm text-slate-600">{t("settings.reviewsNote")}</p>
           <div className="grid gap-3 text-sm font-medium sm:grid-cols-2">

@@ -47,6 +47,8 @@ export interface EmailData {
   manageToken: string;
   /** For cancellations: what the policy refunds. */
   refundCents?: number;
+  /** The restaurant cancelled because it is closed that day; the guest did nothing wrong. */
+  closedByRestaurant?: boolean;
   /** What the party is celebrating, if they said. */
   occasion?: Occasion | null;
   guestNotes?: string | null;
@@ -248,7 +250,17 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
         subject,
         ...layout(
           heading,
-          [t((data.refundCents ?? 0) > 0 ? "guest_cancellation.refund" : "guest_cancellation.noRefund", values)],
+          data.closedByRestaurant
+            ? [
+                t("guest_cancellation.closed", values),
+                // Paid and refunded, nothing was paid, or paid and the refund is still to be made by hand.
+                (data.refundCents ?? 0) > 0
+                  ? t("guest_cancellation.closedRefund", values)
+                  : data.totalCents === 0
+                    ? t("guest_cancellation.closedNothingPaid")
+                    : t("guest_cancellation.closedRefundLater"),
+              ]
+            : [t((data.refundCents ?? 0) > 0 ? "guest_cancellation.refund" : "guest_cancellation.noRefund", values)],
           reservationRows,
         ),
       };

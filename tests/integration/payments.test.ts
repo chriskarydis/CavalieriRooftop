@@ -7,7 +7,11 @@ import { seedInitialConfiguration } from "@/server/db/seed-config";
 import { verifyWebhook, WebhookSignatureError, type PaymentGateway } from "@/server/payments/gateway";
 import { attachGuestDetails, createHold, expireHolds, getAvailability } from "@/server/services/booking";
 import { BookingError } from "@/server/services/context";
+import type { OutgoingEmail } from "@/server/email/transport";
+import { cancelForClosedDays } from "@/server/services/closure-cancellations";
 import { cancelReservation } from "@/server/services/floor-service";
+import { createStaffReservation } from "@/server/services/staff-booking";
+import { closeTablesForDays } from "@/server/services/table-ops";
 import {
   alreadyProcessed,
   cancelAbandonedPayments,
@@ -92,6 +96,71 @@ describe("payments", () => {
   });
   afterAll(async () => {
     await ctx.close();
+  });
+
+  describe("the restaurant closes for certain days and cancels the reservations itself", () => {
+    it("refunds in full however close the date is, emails each guest why, and leaves other tables and days alone", async () => {
+      process.env.SITE_URL = "https://example.test";
+      const outbox: OutgoingEmail[] = [];
+      const transport = async (email: OutgoingEmail) => {
+        outbox.push(email);
+        return { status: "SENT" as const, providerId: "test" };
+      };
+      const onClosedTable = await paid(1);
+      const elsewhere = await paid(2);
+      const byPhone = await createStaffReservation(
+        ctx.db,
+        { date: DATE, time: "21:00", partySize: 2, name: "Nikos Phone", email: "nikos@example.com", locale: "el", tableIds: [tableId.get(28)!] },
+        "staff-1",
+        NOW,
+      );
+
+      // Two hours before the reservation: far inside the 24 hours in which the guest would get nothing back.
+      const lateNotice = new Date("2027-08-12T15:00:00Z");
+      const closing = { tableIds: [tableId.get(1)!, tableId.get(28)!], from: DATE, to: DATE };
+      const result = await cancelForClosedDays(ctx.db, stripe.gateway, closing, "staff-1", lateNotice, transport);
+      expect(result).toEqual({ cancelled: 2, refundedCents: 17000, unrefunded: 0 });
+
+      expect(await statusOf(onClosedTable.reservationId)).toBe("CANCELLED");
+      expect(await statusOf(byPhone.reservationId)).toBe("CANCELLED");
+      expect(await statusOf(elsewhere.reservationId)).toBe("CONFIRMED");
+      expect(stripe.calls.refunds.map((refund) => refund.amountCents)).toEqual([17000]);
+      expect(await getPaymentSummary(ctx.db, onClosedTable.reservationId)).toMatchObject({ status: "REFUNDED", refundedCents: 17000 });
+
+      const toGuest = outbox.find((email) => email.to === "guest@example.com")!;
+      expect(toGuest.text).toContain("The restaurant will be closed on");
+      expect(toGuest.text).toContain("€170.00 is being refunded in full");
+      expect(toGuest.text).not.toContain("less than 24 hours");
+      const toPhoneGuest = outbox.find((email) => email.to === "nikos@example.com")!;
+      expect(toPhoneGuest.text).toContain("δεν υπάρχει επιστροφή");
+
+      // With the reservations gone the tables close for the whole day, and doing it again changes nothing.
+      expect(await closeTablesForDays(ctx.db, closing, "staff-1")).toEqual({ tables: 2, reservations: 0 });
+      expect(await cancelForClosedDays(ctx.db, stripe.gateway, closing, "staff-1", lateNotice, transport)).toEqual({
+        cancelled: 0,
+        refundedCents: 0,
+        unrefunded: 0,
+      });
+    });
+
+    it("says so when a refund could not be made, and does not promise the guest a date for it", async () => {
+      const outbox: OutgoingEmail[] = [];
+      const held = await paid(1);
+      const result = await cancelForClosedDays(
+        ctx.db,
+        null,
+        { tableIds: [tableId.get(1)!], from: DATE, to: DATE },
+        "staff-1",
+        NOW,
+        async (email) => {
+          outbox.push(email);
+          return { status: "SENT", providerId: "test" };
+        },
+      );
+      expect(result).toEqual({ cancelled: 1, refundedCents: 0, unrefunded: 1 });
+      expect(await getPaymentSummary(ctx.db, held.reservationId)).toMatchObject({ status: "SUCCEEDED", refundedCents: 0 });
+      expect(outbox[0].text).toContain("will be refunded in full. We will be in touch");
+    });
   });
 
   describe("taking payment", () => {

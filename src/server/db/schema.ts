@@ -92,6 +92,11 @@ export const restaurantSettings = pgTable(
     /** Where guests are asked to leave a review, in the email after their visit; with neither set, no such email is sent. */
     reviewUrlGoogle: text(),
     reviewUrlTripadvisor: text(),
+    /**
+     * When tables are closed for certain days: also cancel the reservations on them, refund them in
+     * full and email the guests. Off unless the restaurant switches it on.
+     */
+    cancelOnClosure: boolean().notNull().default(false),
     updatedAt: instant().notNull().defaultNow(),
   },
   (t) => [check("restaurant_settings_single_row", sql`${t.id} = 1`)],

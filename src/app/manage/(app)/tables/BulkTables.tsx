@@ -15,6 +15,9 @@ export interface BulkTablesLabels {
   from: string;
   to: string;
   daysHint: string;
+  /** Shown instead of the hint, and asked again before closing, when reservations will be cancelled. */
+  cancelWarning: string;
+  cancelConfirm: string;
   reason: string;
   close: string;
   open: string;
@@ -29,6 +32,7 @@ export function BulkTables({
   today,
   closeAction,
   openAction,
+  cancelsReservations,
   labels,
 }: {
   tables: Array<{ id: string; label: string; active: boolean }>;
@@ -36,6 +40,8 @@ export function BulkTables({
   today: string;
   closeAction: (form: FormData) => Promise<void>;
   openAction: (form: FormData) => Promise<void>;
+  /** The restaurant has switched on cancelling reservations when tables are closed for days. */
+  cancelsReservations: boolean;
   labels: BulkTablesLabels;
 }) {
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
@@ -94,7 +100,11 @@ export function BulkTables({
                 <DateField name="to" defaultValue={today} required className={inputClass} />
               </label>
             </div>
-            <p className="text-xs text-slate-600">{labels.daysHint}</p>
+            {cancelsReservations ? (
+              <p className="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">{labels.cancelWarning}</p>
+            ) : (
+              <p className="text-xs text-slate-600">{labels.daysHint}</p>
+            )}
           </div>
         )}
       </fieldset>
@@ -104,7 +114,14 @@ export function BulkTables({
         <input name="reason" maxLength={200} className={inputClass} />
       </label>
       <div className="flex flex-wrap gap-2">
-        <button formAction={closeAction} disabled={chosen.size === 0} className={`${primaryButton} disabled:opacity-50`}>
+        <button
+          formAction={closeAction}
+          disabled={chosen.size === 0}
+          onClick={(event) => {
+            if (forDays && cancelsReservations && !window.confirm(labels.cancelConfirm)) event.preventDefault();
+          }}
+          className={`${primaryButton} disabled:opacity-50`}
+        >
           {labels.close}
         </button>
         <button formAction={openAction} disabled={chosen.size === 0} className={`${secondaryButton} disabled:opacity-50`}>

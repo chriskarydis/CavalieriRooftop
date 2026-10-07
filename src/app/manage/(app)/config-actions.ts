@@ -163,6 +163,7 @@ export async function saveSettings(form: FormData): Promise<void> {
         retentionMonths: text(form, "retentionMonths").trim() === "" ? null : number(form, "retentionMonths"),
         reviewUrlGoogle: text(form, "reviewUrlGoogle"),
         reviewUrlTripadvisor: text(form, "reviewUrlTripadvisor"),
+        cancelOnClosure: form.get("cancelOnClosure") === "on",
       },
       staffId,
     );

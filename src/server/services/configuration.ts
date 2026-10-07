@@ -326,6 +326,7 @@ const settingsSchema = z
     retentionMonths: z.number().int().min(1).max(240).nullable(),
     reviewUrlGoogle: reviewUrl,
     reviewUrlTripadvisor: reviewUrl,
+    cancelOnClosure: z.boolean().default(false),
   })
   .refine(
     (settings) =>

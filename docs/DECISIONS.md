@@ -269,3 +269,10 @@ owner to confirm.
   /manage/settings.
 - **Times:** every time on the site is written by our own 24-hour formatter and chosen from lists,
   never typed into a browser time field, so no am/pm appears anywhere. Checked on 2026-10-07.
+- **Cancelling when closing for days (owner, 2026-10-07):** stays manual for now. A switch at
+  /manage/settings, off by default, lets the restaurant choose otherwise: with it on, closing
+  tables for certain days first cancels the reservations still to come on those tables, refunds
+  everything paid however close the date is (the restaurant is the one cancelling), and emails each
+  guest that the restaurant is closed. The Tables page then warns and asks once more before
+  closing. It needs the refunds permission. A refund that cannot be made is reported to staff and
+  the guest's email promises no date for it. Parties already seated are never touched.

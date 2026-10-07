@@ -13,7 +13,7 @@ import { loadSettings, type Db } from "./context";
  * committed. A failure here is recorded and never undoes the reservation.
  */
 
-export type ReservationEventKind = "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "REMINDER" | "RESCHEDULED" | "CHANGED_BY_STAFF" | "CREATED_BY_STAFF";
+export type ReservationEventKind = "CONFIRMED" | "CANCELLED" | "CANCELLED_BY_RESTAURANT" | "NO_SHOW" | "REMINDER" | "RESCHEDULED" | "CHANGED_BY_STAFF" | "CREATED_BY_STAFF";
 
 const PLAN: Record<
   ReservationEventKind,
@@ -22,6 +22,8 @@ const PLAN: Record<
 > = {
   CONFIRMED: { guest: "guest_confirmation", restaurant: "restaurant_new", dashboard: true },
   CANCELLED: { guest: "guest_cancellation", restaurant: "restaurant_cancelled", dashboard: true },
+  // The restaurant closed that day and cancelled it itself: only the guest needs an email.
+  CANCELLED_BY_RESTAURANT: { guest: "guest_cancellation", dashboard: true },
   NO_SHOW: { restaurant: "restaurant_no_show", dashboard: true },
   REMINDER: { guest: "guest_reminder", dashboard: false },
   RESCHEDULED: { guest: "guest_rescheduled", restaurant: "restaurant_rescheduled", dashboard: true, repeatable: true },
@@ -126,6 +128,7 @@ export async function notifyReservationEvent(
 ): Promise<void> {
   const data = await loadEmailData(db, reservationId, options.refundCents);
   if (!data) return;
+  if (kind === "CANCELLED_BY_RESTAURANT") data.closedByRestaurant = true;
   const plan = PLAN[kind];
   const transport = options.transport ?? sendEmail;
 

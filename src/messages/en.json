@@ -379,7 +379,8 @@
         "NO_SHOW": "No-show",
         "RESCHEDULED": "Moved by guest",
         "CHANGED_BY_STAFF": "Changed by staff",
-        "WAITING_JOINED": "Joined the waiting list"
+        "WAITING_JOINED": "Joined the waiting list",
+        "CANCELLED_BY_RESTAURANT": "Cancelled, restaurant closed"
       }
     },
     "footer": {
@@ -576,7 +577,11 @@
       "daysHint": "Both days are included. The day after the last one the tables are open again by themselves. Reservations already made for these days are not cancelled.",
       "daysClosed": "{count, plural, =0 {These tables were already closed} one {# table closed} other {# tables closed}} from {from} to {to}.",
       "daysOpened": "{count, plural, =0 {No table was closed on those days.} one {# table opened again} other {# tables opened again}} ({from} to {to}).",
-      "daysKept": "{count, plural, one {# reservation already exists} other {# reservations already exist}} on these tables for those days. Nothing was cancelled: see the reservations list and contact the guests."
+      "daysKept": "{count, plural, one {# reservation already exists} other {# reservations already exist}} on these tables for those days. Nothing was cancelled: see the reservations list and contact the guests.",
+      "cancelWarning": "Both days are included. Reservations already made on these tables for these days will be cancelled, refunded in full and the guests emailed. This cannot be undone. (Switched on in Settings.)",
+      "cancelConfirm": "Reservations on these tables for these days will be cancelled and refunded in full, and the guests will be emailed. Continue?",
+      "daysCancelled": "{count, plural, one {# reservation was cancelled} other {# reservations were cancelled}} and the guests were emailed. Refunded in total: €{amount}.",
+      "daysUnrefunded": "{count, plural, one {# cancelled reservation could not be refunded} other {# cancelled reservations could not be refunded}} automatically. Refund them from the reservations list."
     },
     "categories": {
       "title": "Table categories",
@@ -652,7 +657,10 @@
       "reviews": "Reviews",
       "reviewsNote": "The morning after their visit, guests who came are sent one email of thanks with these links. A guest is asked at most once a year. Leave both empty to send nothing.",
       "reviewUrlGoogle": "Google review link",
-      "reviewUrlTripadvisor": "Tripadvisor review link"
+      "reviewUrlTripadvisor": "Tripadvisor review link",
+      "closure": "Closing for certain days",
+      "closureNote": "What happens to reservations already made when tables are closed for certain days (Tables page). While this is off, they are left as they are and staff contact the guests.",
+      "cancelOnClosure": "Cancel those reservations automatically, refund them in full and email the guests"
     },
     "closures": {
       "title": "Closed dates",
@@ -881,7 +889,11 @@
       "subject": "Your reservation {reference} was cancelled",
       "heading": "Reservation cancelled",
       "refund": "Your reservation for {date} at {time} has been cancelled. {refund} will be refunded to the card you paid with. It can take a few working days to appear.",
-      "noRefund": "Your reservation for {date} at {time} has been cancelled. As it was cancelled less than {hours} hours before the visit, the amount paid is not refunded."
+      "noRefund": "Your reservation for {date} at {time} has been cancelled. As it was cancelled less than {hours} hours before the visit, the amount paid is not refunded.",
+      "closed": "We are very sorry, {name}. The restaurant will be closed on {date}, so we have had to cancel your reservation for {time}.",
+      "closedRefund": "{refund} is being refunded in full to the card you paid with. It can take a few working days to appear.",
+      "closedNothingPaid": "Nothing was paid for this reservation, so there is nothing to refund. We would be glad to welcome you on another evening.",
+      "closedRefundLater": "The amount you paid will be refunded in full. We will be in touch with you about it."
     },
     "restaurant_new": {
       "subject": "New reservation {reference}: {date} {time}, {guests} guests",

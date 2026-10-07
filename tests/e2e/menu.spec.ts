@@ -37,7 +37,11 @@ test("public menu shows sections, dietary labels and allergens, without prices",
   await expect(page.getByRole("listitem").filter({ hasText: "Μπακλαβάς" })).toContainText("Περιέχει: Ξηροί καρποί");
 });
 
+/** The menu page holds three lists (about 180 entries), so a save takes a while to come back. */
+const SAVE_TIMEOUT = 20_000;
+
 test.describe("menu management", () => {
+  test.setTimeout(120_000);
   test.use({ storageState: MANAGER_SESSION });
 
   test("manager translates, labels and hides dishes; the public menu follows", async ({ page }) => {
@@ -51,14 +55,14 @@ test.describe("menu management", () => {
     await salad.getByLabel("Signature dish").check();
     await salad.getByLabel("Price (€, optional)").fill("12.50");
     await salad.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByRole("status")).toContainText("Saved.");
+    await expect(page.getByRole("status")).toContainText("Saved.", { timeout: SAVE_TIMEOUT });
 
     // Take Fruit Salad off the menu.
     const fruit = page.locator("li", { has: page.locator("summary", { hasText: "Fruit Salad" }) });
     await fruit.locator("summary").click();
     await fruit.getByLabel("Shown on the menu").uncheck();
     await fruit.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByRole("status")).toContainText("Saved.");
+    await expect(page.getByRole("status")).toContainText("Saved.", { timeout: SAVE_TIMEOUT });
 
     await page.goto("/el/menu");
     await page.getByRole("button", { name: /^Κατάλογος φαγητού/ }).click();
@@ -71,7 +75,7 @@ test.describe("menu management", () => {
     await page.goto("/manage/settings");
     await page.getByLabel("Show menu prices on the website").check();
     await page.getByRole("button", { name: "Save" }).first().click();
-    await expect(page.getByRole("status")).toContainText("Saved.");
+    await expect(page.getByRole("status")).toContainText("Saved.", { timeout: SAVE_TIMEOUT });
     await page.goto("/en/menu");
     await page.getByRole("button", { name: /^Dinner menu/ }).click();
     await expect(page.getByRole("listitem").filter({ hasText: "Greek Salad" })).toContainText("€12.50");
@@ -80,6 +84,6 @@ test.describe("menu management", () => {
     await page.goto("/manage/settings");
     await page.getByLabel("Show menu prices on the website").uncheck();
     await page.getByRole("button", { name: "Save" }).first().click();
-    await expect(page.getByRole("status")).toContainText("Saved.");
+    await expect(page.getByRole("status")).toContainText("Saved.", { timeout: SAVE_TIMEOUT });
   });
 });

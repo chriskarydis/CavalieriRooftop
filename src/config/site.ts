@@ -22,8 +22,8 @@ export const SITE = {
   directionsUrl: "https://www.google.com/maps/dir/?api=1&destination=Cavalieri+Hotel+Kapodistriou+4+Corfu",
   parkingSearchUrl: "https://www.google.com/maps/search/parking+near+Cavalieri+Hotel+Kapodistriou+4+Corfu",
   /**
-   * The three public car parks nearest the hotel, nearest first. Positions and details are from
-   * OpenStreetMap (October 2026) and have not been checked on the spot.
+   * Car parks near the hotel. The first two are from OpenStreetMap (October 2026), unchecked on the
+   * spot; the third was chosen by the owner.
    */
   parking: [
     {
@@ -37,9 +37,10 @@ export const SITE = {
       directionsUrl: "https://www.google.com/maps/dir/?api=1&destination=39.6220769,19.9158872",
     },
     {
-      name: { en: "Underground car park, towards Garitsa", el: "Υπόγειο πάρκινγκ, προς Γαρίτσα" },
-      note: { en: "Underground. About 800 m.", el: "Υπόγειο. Περίπου 800 μ." },
-      directionsUrl: "https://www.google.com/maps/dir/?api=1&destination=39.61724,19.9158327",
+      // Chosen by the owner, by its Google Maps place.
+      name: { en: "Car park", el: "Πάρκινγκ" },
+      note: { en: "Opens in Google Maps.", el: "Ανοίγει στο Google Maps." },
+      directionsUrl: "https://www.google.com/maps?ftid=0x135b5d0051217adf:0xd2bb53b1cc27f7be",
     },
   ],
   social: {

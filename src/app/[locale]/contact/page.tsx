@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { connection } from "next/server";
 import { PHOTOS } from "@/config/photos";
@@ -7,6 +6,7 @@ import { SITE } from "@/config/site";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
 import { getOpeningSummary } from "@/server/services/opening";
+import { ZoomImage } from "@/ui/Lightbox";
 import { LocationMap } from "@/ui/LocationMap";
 import { OpeningHours } from "@/ui/OpeningHours";
 import { PageHeader } from "@/ui/PageHeader";
@@ -71,12 +71,12 @@ export default async function ContactPage({ params }: PageProps<"/[locale]/conta
         <div>
           <h2 className="text-3xl">{t("gettingHere")}</h2>
           <div aria-hidden className="mt-4 h-px w-16 bg-gold" />
-          <Image
-            src={PHOTOS.terraceEntrance.image}
+          <ZoomImage
+            image={PHOTOS.terraceEntrance.image}
             alt={PHOTOS.terraceEntrance.alt[locale === "el" ? "el" : "en"]}
-            placeholder="blur"
             sizes="(min-width: 768px) 40vw, 100vw"
-            className="mt-5 aspect-[4/3] w-full object-cover"
+            className="aspect-[4/3] w-full object-cover"
+            buttonClassName="mt-5"
           />
           <p className="mt-4 leading-relaxed text-muted">{t("gettingHereText")}</p>
           <a href={SITE.directionsUrl} target="_blank" rel="noopener" className="btn btn-primary mt-5">

@@ -1,10 +1,11 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
-import Image, { type StaticImageData } from "next/image";
+import type { StaticImageData } from "next/image";
 import { useRef, useState } from "react";
 import type { PriceBreakdown } from "@/domain/pricing";
 import { FloorPlan, type FloorPlanTable } from "@/ui/floor-plan/FloorPlan";
+import { ZoomImage } from "@/ui/Lightbox";
 import type { FloorPlanView } from "@/ui/floor-plan/types";
 import { startHold } from "./actions";
 import { PriceSummary } from "./PriceSummary";
@@ -176,11 +177,10 @@ export function TablePicker({
             <form action={move ? move.action : startHold} className="space-y-3">
               {selectedTable?.photos?.length && selectedPlanTable ? (
                 <figure>
-                  <Image
+                  <ZoomImage
                     key={`${selectedTable.tableId}-${photoIndex}`}
-                    src={selectedTable.photos[photoIndex] ?? selectedTable.photos[0]}
+                    image={selectedTable.photos[photoIndex] ?? selectedTable.photos[0]}
                     alt={t("viewAlt", { number: selectedPlanTable.number })}
-                    placeholder="blur"
                     sizes="(min-width: 1024px) 23rem, 100vw"
                     className="aspect-[4/3] w-full object-cover"
                   />
@@ -204,10 +204,10 @@ export function TablePicker({
                   : t("tableTitle", { number: selectedPlanTable?.number ?? 0 })}
               </h3>
               {selectedTable && selectedPlanTable && (
-                <p className="text-sm text-muted">
-                  {t("tableMeta", { capacity: selectedPlanTable.capacity, category: selectedTable.categoryName })}
-                  {selectedTable.viewDescription && ` · ${selectedTable.viewDescription}`}
-                </p>
+                <div className="text-sm">
+                  <p className="text-muted">{t("tableMeta", { capacity: selectedPlanTable.capacity, category: selectedTable.categoryName })}</p>
+                  {selectedTable.viewDescription && <p className="mt-1">{selectedTable.viewDescription}</p>}
+                </div>
               )}
               {move ? (
                 <>

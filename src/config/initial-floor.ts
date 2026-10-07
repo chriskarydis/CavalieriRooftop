@@ -102,30 +102,30 @@ const square = { shape: "RECT", width: 90, height: 90 } as const;
 /** A table for two whose guests sit left and right. */
 const sideways = { ...square, rotation: 90 } as const;
 
-// Written from the floor plan and the owner's photographs of October 2026.
+// Kept short and plain at the owner's request: which row, then what you see.
 const FRONT = {
-  en: "Front row at the parapet, facing the Old Fortress and the sea",
-  el: "Πρώτη σειρά στο στηθαίο, με θέα το Παλαιό Φρούριο και τη θάλασσα",
+  en: "Front-row table. View of the Old Fortress and the sea.",
+  el: "Τραπέζι 1ης σειράς. Θέα στο Παλαιό Φρούριο και τη θάλασσα.",
 };
 const FRONT_LEFT = {
-  en: "Front-row corner at the parapet: the Old Fortress and the sea ahead, the Old Town beside you",
-  el: "Γωνιακό στην πρώτη σειρά: μπροστά το Παλαιό Φρούριο και η θάλασσα, δίπλα σας η Παλιά Πόλη",
+  en: "Front-row corner table. View of the Old Fortress, the sea and the Old Town.",
+  el: "Τραπέζι 1ης σειράς, γωνιακό. Θέα στο Παλαιό Φρούριο, τη θάλασσα και την Παλιά Πόλη.",
 };
 const FRONT_RIGHT = {
-  en: "Front-row corner at the parapet: the Old Fortress and the channel ahead, Garitsa bay beside you",
-  el: "Γωνιακό στην πρώτη σειρά: μπροστά το Παλαιό Φρούριο και το κανάλι, δίπλα σας ο κόλπος της Γαρίτσας",
+  en: "Front-row corner table. View of the Old Fortress, the sea and Garitsa bay.",
+  el: "Τραπέζι 1ης σειράς, γωνιακό. Θέα στο Παλαιό Φρούριο, τη θάλασσα και τον κόλπο της Γαρίτσας.",
 };
 const SECOND = {
-  en: "Second row, just behind the front tables, facing the Old Fortress and the sea",
-  el: "Δεύτερη σειρά, ακριβώς πίσω από τα μπροστινά τραπέζια, με θέα το Παλαιό Φρούριο και τη θάλασσα",
+  en: "Second-row table. View of the Old Fortress and the sea.",
+  el: "Τραπέζι 2ης σειράς. Θέα στο Παλαιό Φρούριο και τη θάλασσα.",
 };
 const TOWN = {
-  en: "At the parapet on the Old Town side, above the rooftops with the mountains beyond",
-  el: "Στο στηθαίο προς την Παλιά Πόλη, πάνω από τις στέγες με φόντο τα βουνά",
+  en: "Table at the edge of the terrace. View of the Old Town.",
+  el: "Τραπέζι στην άκρη της ταράτσας. Θέα στην Παλιά Πόλη.",
 };
 const BAY = {
-  en: "At the parapet on the Garitsa side, looking over the bay to the mountains",
-  el: "Στο στηθαίο προς τη Γαρίτσα, με θέα τον κόλπο και τα βουνά απέναντι",
+  en: "Table at the edge of the terrace. View of Garitsa bay and the sea.",
+  el: "Τραπέζι στην άκρη της ταράτσας. Θέα στον κόλπο της Γαρίτσας και τη θάλασσα.",
 };
 
 // The grid the tables stand on, so that gaps are even. Columns A to E run across

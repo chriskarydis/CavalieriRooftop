@@ -8,6 +8,7 @@ import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { db } from "@/server/db/client";
 import { getOpeningSummary } from "@/server/services/opening";
+import { ZoomImage } from "@/ui/Lightbox";
 import { OpeningHours } from "@/ui/OpeningHours";
 import { Ornament } from "@/ui/PageHeader";
 
@@ -110,12 +111,12 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       <section className="mx-auto max-w-6xl space-y-16 px-4 py-20 sm:px-6 md:space-y-24 md:py-28">
         {FEATURES.map((feature, index) => (
           <article key={feature} className="grid items-center gap-8 md:grid-cols-2 md:gap-16">
-            <Image
-              src={FEATURE_PHOTO[feature].image}
+            <ZoomImage
+              image={FEATURE_PHOTO[feature].image}
               alt={FEATURE_PHOTO[feature].alt[language]}
-              placeholder="blur"
               sizes="(min-width: 768px) 50vw, 100vw"
-              className={`aspect-[4/3] w-full object-cover ${index % 2 === 1 ? "md:order-2" : ""}`}
+              className="aspect-[4/3] w-full object-cover"
+              buttonClassName={index % 2 === 1 ? "md:order-2" : ""}
             />
             <div className="md:px-6">
               <h2 className="text-4xl sm:text-5xl">{t(`${feature}.title`)}</h2>
@@ -188,10 +189,9 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           <ul className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
             {STRIP.map((photo) => (
               <li key={photo.image.src}>
-                <Image
-                  src={photo.image}
+                <ZoomImage
+                  image={photo.image}
                   alt={photo.alt[language]}
-                  placeholder="blur"
                   sizes="(min-width: 768px) 25vw, 50vw"
                   className="aspect-[3/4] w-full object-cover"
                 />

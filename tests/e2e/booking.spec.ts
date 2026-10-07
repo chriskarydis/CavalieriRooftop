@@ -43,8 +43,8 @@ test("guest chooses a premium table, pays and cancels with a full refund", async
   // Table 1 is a 4-seat Premium table: 2 guests pay for 4 seats plus the fee, explained up front.
   await page.getByRole("button", { name: /^Table 1, 4 seats, Premium, available/ }).click();
   const panel = page.locator("section[aria-live]");
-  await expect(panel).toContainText("Front-row corner at the parapet");
-  await expect(panel.getByRole("img", { name: "The view from table 1" })).toBeVisible();
+  await expect(panel).toContainText("Front-row corner table. View of the Old Fortress, the sea and the Old Town.");
+  await expect(panel.getByRole("button", { name: "Enlarge photo: The view from table 1" })).toBeVisible();
   await expect(panel.getByRole("heading", { name: "Table 1" })).toBeVisible();
   await expect(panel).toContainText("€120.00");
   await expect(panel).toContainText("€50.00");

@@ -18,7 +18,11 @@
     "closedOn": "Closed on {days}",
     "gallery": "Gallery",
     "follow": "Follow us",
-    "myReservation": "My reservation"
+    "myReservation": "My reservation",
+    "enlargePhoto": "Enlarge photo: {photo}",
+    "closePhoto": "Close photo",
+    "previousPhoto": "Previous photo",
+    "nextPhoto": "Next photo"
   },
   "floorPlan": {
     "title": "Floor plan",

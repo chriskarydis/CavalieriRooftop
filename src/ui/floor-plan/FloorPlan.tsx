@@ -16,6 +16,11 @@ const INK = "#1e1b17";
 const CHAIR_DEPTH = 13;
 const CHAIR_GAP = 5;
 const CHAIR_MAX_LENGTH = 44;
+/**
+ * Sines and cosines can differ in their last digit between the server and the
+ * browser; rounded to hundredths, both draw exactly the same chair.
+ */
+const round = (value: number): number => Math.round(value * 100) / 100;
 /** Pixels the pointer must travel before a press becomes a drag rather than a click. */
 const DRAG_THRESHOLD = 8;
 
@@ -46,11 +51,11 @@ function chairsFor(
     return Array.from({ length: seats }, (_, index) => {
       const angle = (index / seats) * 2 * Math.PI;
       return {
-        x: Math.sin(angle) * radius,
-        y: -Math.cos(angle) * radius,
+        x: round(Math.sin(angle) * radius),
+        y: round(-Math.cos(angle) * radius),
         width: 36,
         height: CHAIR_DEPTH,
-        rotation: (angle * 180) / Math.PI,
+        rotation: round((angle * 180) / Math.PI),
       };
     });
   }
@@ -297,7 +302,10 @@ export function FloorPlan({
             onPointerDown={
               draggable
                 ? (event) => {
-                    if (event.button === 0) press.current = { id: table.id, x: event.clientX, y: event.clientY };
+                    if (event.button !== 0) return;
+                    press.current = { id: table.id, x: event.clientX, y: event.clientY };
+                    // Otherwise the browser starts selecting the table numbers instead.
+                    event.preventDefault();
                   }
                 : undefined
             }
@@ -326,7 +334,7 @@ export function FloorPlan({
               // A finger on a table that can be dragged moves the table, not the page.
               ...(draggable ? { touchAction: "none" } : {}),
             }}
-            className={interactive ? "cursor-pointer outline-none focus-visible:[&>.tabletop]:stroke-[#1e1b17] focus-visible:[&>.tabletop]:[stroke-width:9]" : undefined}
+            className={interactive ? `${draggable ? "cursor-grab" : "cursor-pointer"} outline-none focus-visible:[&>.tabletop]:stroke-[#1e1b17] focus-visible:[&>.tabletop]:[stroke-width:9]` : undefined}
           >
             <TableGlyph table={table} centre={{ x: plan.width / 2, y: plan.height / 2 }} selected={selected} numberColor={table.numberColor} />
           </g>

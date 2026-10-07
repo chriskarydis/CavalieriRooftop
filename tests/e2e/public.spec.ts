@@ -80,3 +80,24 @@ test("every public page has one h1, a title and a description", async ({ page })
     await expect(page.locator('meta[name="description"]'), path).toHaveAttribute("content", /.{30,}/);
   }
 });
+
+test("a photograph opens larger and the gallery steps through the rest", async ({ page }) => {
+  await page.goto("/en/gallery");
+  const photos = page.getByRole("button", { name: /^Enlarge photo:/ });
+  await photos.first().click();
+  const viewer = page.getByRole("dialog");
+  await expect(viewer).toBeVisible();
+  await expect(viewer.getByText(/^1 \/ \d+$/)).toBeVisible();
+  await viewer.getByRole("button", { name: "Next photo" }).click();
+  await expect(viewer.getByText(/^2 \/ \d+$/)).toBeVisible();
+  await page.keyboard.press("ArrowLeft");
+  await expect(viewer.getByText(/^1 \/ \d+$/)).toBeVisible();
+  await viewer.getByRole("button", { name: "Close photo" }).click();
+  await expect(viewer).toBeHidden();
+
+  await page.goto("/en");
+  await page.getByRole("button", { name: /^Enlarge photo:/ }).first().click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toBeHidden();
+});

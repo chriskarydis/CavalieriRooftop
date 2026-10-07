@@ -13,6 +13,7 @@ import { getLiveFloor, getRecentNoShows, type LiveBooking, type LiveTable } from
 import { listUnreadNotifications } from "@/server/services/notifications";
 import { previewMove, type MovePreview } from "@/server/services/table-ops";
 import type { FloorPlanTable } from "@/ui/floor-plan/FloorPlan";
+import { ScrollTarget } from "@/ui/ScrollTarget";
 import type { FloorPlanView } from "@/ui/floor-plan/types";
 import {
   blockAction,
@@ -216,6 +217,7 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
         )}
 
         {moveId && (
+          <ScrollTarget watch={`${moveId}-${moveTo}`} className="scroll-mt-4">
           <section aria-labelledby="move-heading" className={`${cardClass} border-slate-900`}>
             <h2 id="move-heading" className="mb-2 text-lg font-semibold">
               {t("move.title", { guest: moving?.guestName ?? moving?.reference ?? "" })}
@@ -267,6 +269,7 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
               </div>
             )}
           </section>
+          </ScrollTarget>
         )}
 
         {selectedTableId && liveById.has(selectedTableId) && (

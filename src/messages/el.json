@@ -18,7 +18,11 @@
     "closedOn": "Κλειστά κάθε {days}",
     "gallery": "Φωτογραφίες",
     "follow": "Ακολουθήστε μας",
-    "myReservation": "Η κράτησή μου"
+    "myReservation": "Η κράτησή μου",
+    "enlargePhoto": "Μεγέθυνση φωτογραφίας: {photo}",
+    "closePhoto": "Κλείσιμο φωτογραφίας",
+    "previousPhoto": "Προηγούμενη φωτογραφία",
+    "nextPhoto": "Επόμενη φωτογραφία"
   },
   "floorPlan": {
     "title": "Κάτοψη",

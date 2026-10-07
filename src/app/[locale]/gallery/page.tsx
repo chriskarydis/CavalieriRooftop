@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { GALLERY } from "@/config/photos";
 import { Link } from "@/i18n/navigation";
+import { ZoomGallery } from "@/ui/Lightbox";
 import { PageHeader } from "@/ui/PageHeader";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/gallery">): Promise<Metadata> {
@@ -23,20 +23,11 @@ export default async function GalleryPage({ params }: PageProps<"/[locale]/galle
       <PageHeader eyebrow={tSite("name")} title={t("title")} intro={t("intro")} />
 
       {/* Columns keep each photo at its own shape, upright or wide. */}
-      <ul className="mt-12 gap-3 sm:columns-2 lg:columns-3">
-        {GALLERY.map((photo, index) => (
-          <li key={photo.image.src} className="mb-3 break-inside-avoid">
-            <Image
-              src={photo.image}
-              alt={photo.alt[language]}
-              placeholder="blur"
-              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-              priority={index < 2}
-              className="h-auto w-full"
-            />
-          </li>
-        ))}
-      </ul>
+      <ZoomGallery
+        photos={GALLERY.map((photo) => ({ image: photo.image, alt: photo.alt[language] }))}
+        className="mt-12 gap-3 sm:columns-2 lg:columns-3"
+        itemClassName="mb-3 break-inside-avoid"
+      />
 
       <div className="mt-12 text-center">
         <Link href="/reserve" className="btn btn-primary">

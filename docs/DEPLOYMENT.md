@@ -82,9 +82,10 @@ The seed contains no reservations and no customers. Further staff accounts are c
 ## 6. Scheduled jobs
 
 `/api/cron/tick` frees expired holds, marks late reservations, closes out no-shows, sends reminders
-and applies the data-retention period. It should run **every minute** during service.
+and the thank-you with the review links, tells waiting guests about freed tables, empties past
+waiting lists and applies the data-retention period. It should run **every minute** during service.
 
-`vercel.json` schedules it once a day, because Vercel's free Hobby plan rejects anything more
+`vercel.json` schedules it once a day (08:00 UTC, late morning in Corfu), because Vercel's free Hobby plan rejects anything more
 frequent and would refuse to deploy. Before going live choose one:
 
 - **Vercel Pro:** change the schedule in `vercel.json` to `* * * * *`. (Vercel's terms also require

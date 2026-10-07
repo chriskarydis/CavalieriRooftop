@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { googleCalendarUrl } from "@/domain/calendar";
 import { zonedTime } from "@/domain/time";
 import { SITE } from "@/config/site";
 import { formatDate, formatLongDate } from "@/i18n/intl-locale";
 import { Link, redirect } from "@/i18n/navigation";
 import { db } from "@/server/db/client";
-import { getReservationByToken } from "@/server/services/guest-reservation";
+import { calendarEntryFor, getReservationByToken } from "@/server/services/guest-reservation";
 import { getPaymentSummary } from "@/server/services/payments";
 import { canMove, moveDeadline } from "@/server/services/reschedule";
 import { Ornament } from "@/ui/PageHeader";
@@ -28,6 +29,7 @@ export default async function ManageReservationPage({ params, searchParams }: Pa
   }
 
   const t = await getTranslations("reservation");
+  const tCalendar = await getTranslations("email.calendar");
   const format = await getFormatter();
   const euro = (cents: number) => format.number(cents / 100, { style: "currency", currency: "EUR" });
   const canCancel = reservation.status === "CONFIRMED" || reservation.status === "LATE";
@@ -68,6 +70,12 @@ export default async function ManageReservationPage({ params, searchParams }: Pa
               <dd>{customer.name}</dd>
             </>
           )}
+          {reservation.occasion && (
+            <>
+              <dt className="text-muted">{t("occasion")}</dt>
+              <dd>{t(`occasions.${reservation.occasion}`)}</dd>
+            </>
+          )}
         </dl>
         {reservation.totalCents > 0 && (
         <PriceSummary
@@ -88,6 +96,21 @@ export default async function ManageReservationPage({ params, searchParams }: Pa
           </p>
         )}
       </section>
+
+      {canCancel && (
+        <section className="panel">
+          <h2 className="mb-3 text-2xl">{t("calendarTitle")}</h2>
+          <p className="mb-4 text-sm">{t("calendarText")}</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <a href={googleCalendarUrl(calendarEntryFor(found, locale, token, tCalendar))} target="_blank" rel="noopener" className="btn btn-outline">
+              {t("calendarGoogle")}
+            </a>
+            <a href={`/${locale}/reservation/${token}/calendar`} className="btn btn-outline">
+              {t("calendarFile")}
+            </a>
+          </div>
+        </section>
+      )}
 
       {cancelled && (
         <section className="panel">

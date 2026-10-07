@@ -26,7 +26,6 @@ import {
 } from "../actions";
 import { AutoRefresh } from "./AutoRefresh";
 import { LiveFloorPlan } from "./LiveFloorPlan";
-import { NewReservationChime } from "./NewReservationChime";
 import { BlockTableDialog, NewReservationDialog } from "./StaffDialogs";
 import { blockLabels, newReservationLabels } from "./staff-labels";
 import { ReservationActions } from "./ReservationActions";
@@ -165,10 +164,6 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
             labels={await newReservationLabels()}
             buttonClassName={primaryButton}
           />
-          <NewReservationChime
-            latestId={notifications.find((notification) => notification.type === "CONFIRMED")?.id ?? ""}
-            labels={{ on: t("chime.on"), off: t("chime.off"), test: t("chime.hint") }}
-          />
         </div>
         <div className="rounded-lg border border-line bg-white shadow-sm p-3">
           <LiveFloorPlan
@@ -223,7 +218,8 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
                   {" · "}
                   {notification.guestName} · {notification.partySize} ·{" "}
                   {formatDate(notification.startsAt, settings.timezone)}{" "}
-                  {time(notification.startsAt)} · {notification.tableNumbers.join(" + ") || "—"} · {notification.reference}
+                  {time(notification.startsAt)}
+                  {notification.reference && ` · ${notification.tableNumbers.join(" + ") || "—"} · ${notification.reference}`}
                 </li>
               ))}
             </ul>
@@ -373,6 +369,7 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
                         <td className="px-3 py-2">
                           {row.guestName ?? (row.kind === "WALK_IN" ? t("walkIn") : row.kind === "HOLD" ? t("details.holdNoDetails") : "—")}
                           {row.reference && <span className="block text-xs text-slate-500">{row.reference}</span>}
+                          {row.occasion && <span className="mt-0.5 block w-fit rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-950">{t(`occasion.${row.occasion}`)}</span>}
                           {row.notes && <span className="block text-xs text-slate-500">{row.notes}</span>}
                         </td>
                         <td className="px-3 py-2">{row.partySize ?? "—"}</td>
@@ -509,6 +506,7 @@ async function TableDetails({
             {booking.kind === "HOLD" && (booking.guestPhone || booking.guestEmail) && (
               <p className="text-xs text-slate-700">{[booking.guestPhone, booking.guestEmail].filter(Boolean).join(" · ")}</p>
             )}
+            {booking.occasion && <p className="mt-0.5 w-fit rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-950">{t(`occasion.${booking.occasion}`)}</p>}
             {booking.notes && <p className="text-xs text-slate-500">{booking.notes}</p>}
             <div className="mt-1.5">
               {booking.kind !== "HOLD" && booking.reservationId && booking.reservationStatus && (

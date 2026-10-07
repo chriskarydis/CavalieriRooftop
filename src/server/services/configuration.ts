@@ -298,6 +298,15 @@ export async function createPairing(db: Db, firstId: string, secondId: string, a
 const timeSlot = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const monthDay = z.string().regex(/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/);
 
+/** A web address guests are sent to; empty for none. */
+const reviewUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((value) => value === "" || /^https:\/\/[^\s]+$/.test(value))
+  .nullish()
+  .transform((value) => value || null);
+
 const settingsSchema = z
   .object({
     depositPerPersonCents: z.number().int().min(0).max(MAX_CENTS),
@@ -315,6 +324,8 @@ const settingsSchema = z
     seasonStart: monthDay,
     seasonEnd: monthDay,
     retentionMonths: z.number().int().min(1).max(240).nullable(),
+    reviewUrlGoogle: reviewUrl,
+    reviewUrlTripadvisor: reviewUrl,
   })
   .refine(
     (settings) =>

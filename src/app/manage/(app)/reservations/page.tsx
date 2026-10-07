@@ -1,18 +1,30 @@
 import { getFormatter, getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { RESERVATION_STATUSES, type ReservationStatus } from "@/domain/reservation-state";
 import { addMinutes, zonedDate, zonedTime, zonedToInstant } from "@/domain/time";
 import { requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import { formatCalendarDate } from "@/i18n/intl-locale";
 import { loadFloorConfig, loadSettings } from "@/server/services/context";
+import { loadGuestStats } from "@/server/services/guest-history";
 import { listReservations } from "@/server/services/reservation-list";
+import { listWaiting } from "@/server/services/waiting-list";
 import { listBlocks } from "@/server/services/table-ops";
 import { hasPermission } from "@/domain/permissions";
-import { changeReservationAction, moveFromListAction, newReservationAction, refundAction, unblockAction } from "../../actions";
+import {
+  changeReservationAction,
+  moveFromListAction,
+  newReservationAction,
+  notifyWaitingAction,
+  refundAction,
+  removeWaitingAction,
+  saveReservationNoteAction,
+  unblockAction,
+} from "../../actions";
 import { PrintButton } from "../PrintButton";
 import { NewReservationDialog } from "../StaffDialogs";
 import { newReservationLabels } from "../staff-labels";
-import { ChangeReservationDialog, MoveTableDialog, type SeatingChoice } from "./ReservationDialogs";
+import { ChangeReservationDialog, MoveTableDialog, NoteDialog, type SeatingChoice } from "./ReservationDialogs";
 import { ReservationFilters } from "./ReservationFilters";
 import { ReservationActions } from "../ReservationActions";
 import { cardClass, inputClass, primaryButton, secondaryButton } from "../ui";
@@ -24,6 +36,7 @@ const first = (value: string | string[] | undefined): string | undefined => (Arr
 export default async function ReservationsPage({ searchParams }: PageProps<"/manage/reservations">) {
   const staff = await requirePermission("operations");
   const mayRefund = hasPermission(staff.role, "refunds");
+  const mayExport = hasPermission(staff.role, "analytics");
   const t = await getTranslations("manage");
   const format = await getFormatter();
   const query = await searchParams;
@@ -41,10 +54,16 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
   const searching = search.trim() !== "";
 
   const dayStart = zonedToInstant(date, "00:00", settings.timezone);
-  const [reservations, blocks] = await Promise.all([
+  const [reservations, blocks, waiting] = await Promise.all([
     listReservations(db, { date, status, search }),
     listBlocks(db, dayStart, addMinutes(dayStart, DAY_MINUTES)),
+    searching ? [] : listWaiting(db, date),
   ]);
+  // What is known about each guest from their other reservations.
+  const historyOf = await loadGuestStats(
+    db,
+    reservations.map((reservation) => ({ email: reservation.guestEmail, phone: reservation.guestPhone })),
+  );
   // What a reservation can be moved to: every active table, then the joined tables.
   const config = await loadFloorConfig(db);
   const numberOf = new Map(config.tables.map((table) => [table.id, table.number]));
@@ -104,6 +123,11 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
             buttonClassName={primaryButton}
           />
           <PrintButton label={t("reservations.print")} className={secondaryButton} />
+          {mayExport && !searching && (
+            <a href={`/manage/export?kind=reservations&from=${date}&to=${date}`} className={`${secondaryButton} inline-flex items-center`}>
+              {t("reservations.export")}
+            </a>
+          )}
         </div>
       </div>
 
@@ -179,7 +203,9 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
               </tr>
             </thead>
             <tbody>
-              {reservations.map((reservation) => (
+              {reservations.map((reservation) => {
+                const history = historyOf({ email: reservation.guestEmail, phone: reservation.guestPhone }, reservation.id);
+                return (
                 <tr key={reservation.id} className="border-b border-slate-100 align-top last:border-0">
                   <td className="px-3 py-2 tabular-nums">
                     {searching && <span className="block text-xs text-slate-600">{formatCalendarDate(zonedDate(reservation.startsAt, settings.timezone))}</span>}{zonedTime(reservation.startsAt, settings.timezone)}</td>
@@ -192,14 +218,49 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                     )}
                   </td>
                   <td className="px-3 py-2">
-                    {reservation.guestName ?? "—"}
+                    {reservation.customerId && reservation.guestName ? (
+                      <Link
+                        href={`/manage/guests/${reservation.customerId}`}
+                        title={t("guest.open")}
+                        className="font-medium underline decoration-stone-300 underline-offset-2 hover:decoration-ink print:no-underline"
+                      >
+                        {reservation.guestName}
+                      </Link>
+                    ) : (
+                      (reservation.guestName ?? "—")
+                    )}
                     <span className="block text-xs text-slate-500">
                       {[reservation.reference, reservation.guestPhone, reservation.guestEmail].filter(Boolean).join(" · ")}
                     </span>
-                    {reservation.source === "STAFF" && (
-                      <span className="mt-0.5 block w-fit rounded bg-stone-100 px-1.5 py-0.5 text-xs text-slate-700">{t("newReservation.byStaff")}</span>
+                    <span className="mt-0.5 flex flex-wrap gap-1 empty:hidden">
+                      {reservation.source === "STAFF" && (
+                        <span className="rounded bg-stone-100 px-1.5 py-0.5 text-xs text-slate-700">{t("newReservation.byStaff")}</span>
+                      )}
+                      {reservation.occasion && (
+                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-950">{t(`occasion.${reservation.occasion}`)}</span>
+                      )}
+                      {history.visits > 0 && (
+                        <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-xs text-emerald-900">{t("guest.visits", { count: history.visits })}</span>
+                      )}
+                      {history.noShows > 0 && (
+                        <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-900">{t("guest.noShows", { count: history.noShows })}</span>
+                      )}
+                    </span>
+                    {history.note && (
+                      <span className="mt-1 block text-xs text-amber-900">
+                        <strong className="font-semibold">{t("guest.standingNote")}:</strong> {history.note}
+                      </span>
                     )}
-                    {reservation.notes && <span className="block text-xs text-slate-500">{reservation.notes}</span>}
+                    {reservation.staffNotes && (
+                      <span className="mt-1 block text-xs text-slate-700">
+                        <strong className="font-semibold">{t("guest.staffNote")}:</strong> {reservation.staffNotes}
+                      </span>
+                    )}
+                    {reservation.guestNotes && (
+                      <span className="mt-1 block text-xs text-slate-500">
+                        <strong className="font-semibold">{t("guest.guestWrote")}:</strong> {reservation.guestNotes}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2">{reservation.partySize}</td>
                   <td className="px-3 py-2">{t(`booking.${reservation.status}`)}</td>
@@ -264,6 +325,20 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                         />
                       }
                     />
+                    <div className="mt-1.5">
+                      <NoteDialog
+                        action={saveReservationNoteAction.bind(null, reservation.id, returnTo)}
+                        note={reservation.staffNotes ?? ""}
+                        labels={{
+                          button: reservation.staffNotes ? t("guest.editNote") : t("guest.addNote"),
+                          title: t("guest.noteTitle", { guest: reservation.guestName ?? reservation.reference }),
+                          label: t("guest.staffNote"),
+                          hint: t("guest.noteHint"),
+                          confirm: t("guest.saveNote"),
+                          close: t("move.close"),
+                        }}
+                      />
+                    </div>
                     {mayRefund &&
                       (reservation.status === "CANCELLED" || reservation.status === "NO_SHOW") &&
                       reservation.paidCents > reservation.refundedCents && (
@@ -297,10 +372,45 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                       )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
+      )}
+      {waiting.length > 0 && (
+        <section aria-labelledby="waiting-heading" className="print:hidden">
+          <h2 id="waiting-heading" className="mb-1 font-semibold">
+            {t("waiting.title", { count: waiting.length })}
+          </h2>
+          <p className="mb-2 text-sm text-slate-600">{t("waiting.intro")}</p>
+          <ul className="space-y-2 text-sm">
+            {waiting.map((entry) => (
+              <li key={entry.id} className={`${cardClass} flex flex-wrap items-center justify-between gap-2 py-2`}>
+                <span>
+                  <span className="font-medium">{entry.name}</span> · <span className="tabular-nums">{entry.time}</span> ·{" "}
+                  {t("waiting.guests", { count: entry.partySize })}
+                  <span className="block text-xs text-slate-500">{[entry.phone, entry.email].filter(Boolean).join(" · ")}</span>
+                  <span className="block text-xs text-slate-600">
+                    {entry.status === "NOTIFIED" && entry.notifiedAt
+                      ? t("waiting.status.NOTIFIED", { time: zonedTime(entry.notifiedAt, settings.timezone) })
+                      : t(`waiting.status.${entry.status === "BOOKED" ? "BOOKED" : "WAITING"}`)}
+                  </span>
+                </span>
+                {entry.status !== "BOOKED" && (
+                  <span className="flex gap-1.5">
+                    <form action={notifyWaitingAction.bind(null, entry.id, returnTo)}>
+                      <button className={secondaryButton}>{t("waiting.notify")}</button>
+                    </form>
+                    <form action={removeWaitingAction.bind(null, entry.id, returnTo)}>
+                      <button className={`${secondaryButton} text-red-800`}>{t("waiting.remove")}</button>
+                    </form>
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       {blocks.length > 0 && (
         <section aria-labelledby="blocks-heading">

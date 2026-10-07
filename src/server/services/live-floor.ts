@@ -23,7 +23,9 @@ export interface LiveBooking {
   holdExpiresAt: Date | null;
   depositCents: number | null;
   tableFeeCents: number | null;
+  /** The restaurant's note and the guest's, or a walk-in's or block's own. */
   notes: string | null;
+  occasion: schema.Occasion | null;
 }
 
 export interface LiveTable {
@@ -136,7 +138,10 @@ export async function getLiveFloor(db: Db, now = new Date()): Promise<LiveTable[
         holdExpiresAt: row.kind === "HOLD" ? row.expiresAt : null,
         depositCents: row.reservation?.depositCents ?? null,
         tableFeeCents: row.reservation?.tableFeeCents ?? null,
-        notes: row.reservation?.staffNotes ?? row.reservation?.guestNotes ?? row.walkIn?.notes ?? (row.kind === "BLOCK" ? row.reason : null),
+        notes:
+          [row.reservation?.staffNotes, row.reservation?.guestNotes].filter(Boolean).join(" · ") ||
+          (row.walkIn?.notes ?? (row.kind === "BLOCK" ? row.reason : null)),
+        occasion: row.reservation?.occasion ?? null,
       }))
       .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 

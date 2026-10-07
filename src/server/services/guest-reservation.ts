@@ -1,5 +1,8 @@
 import { asc, eq } from "drizzle-orm";
+import { SITE, siteUrl } from "@/config/site";
+import type { CalendarEntry } from "@/domain/calendar";
 import { cancellationOutcome, type CancellationOutcome } from "@/domain/cancellation";
+import { addMinutes } from "@/domain/time";
 import * as schema from "@/server/db/schema";
 import { hashManageToken } from "./booking";
 import { loadSettings, type Db, type ReservationRow, type Settings } from "./context";
@@ -67,5 +70,30 @@ export async function getReservationByToken(db: Db, token: string, now = new Dat
       refundCutoffHours: settings.refundCutoffHours,
       paidCents: row.reservation.totalCents,
     }),
+  };
+}
+
+/**
+ * The reservation as an entry for the guest's own calendar. `t` reads the
+ * "email.calendar" messages in the guest's language.
+ */
+export function calendarEntryFor(
+  found: GuestReservation,
+  locale: string,
+  token: string,
+  t: (key: "title" | "description", values: Record<string, string | number>) => string,
+): CalendarEntry {
+  const { reservation, settings } = found;
+  return {
+    uid: `${reservation.reference}@cavalieriroofgarden`,
+    title: t("title", { name: SITE.name }),
+    description: t("description", {
+      reference: reservation.reference,
+      guests: reservation.partySize,
+      url: `${siteUrl()}/${locale}/reservation/${token}`,
+    }),
+    location: `${SITE.name}, ${SITE.street}, ${SITE.postalCode} ${SITE.city.en}`,
+    startsAt: reservation.startsAt,
+    endsAt: addMinutes(reservation.startsAt, settings.diningMinutes),
   };
 }

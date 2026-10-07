@@ -96,7 +96,25 @@
     "chooseEyebrow": "Or pick it yourself",
     "viewCaption": "The view from this table",
     "viewAlt": "The view from table {number}",
-    "viewNext": "Next photo ({current}/{total})"
+    "viewNext": "Next photo ({current}/{total})",
+    "waiting": {
+      "eyebrow": "Waiting list",
+      "title": "Tell me if a table becomes free",
+      "text": "Leave your details and we will email you if a table for your party becomes free that evening. Nothing is held for you and nothing is paid now. The table goes to whoever books it first.",
+      "name": "Full name",
+      "email": "Email",
+      "phone": "Mobile phone (optional)",
+      "accept": "I agree that my details are used only to tell me about a table for this evening, and are deleted the day after.",
+      "privacy": "Privacy",
+      "join": "Add me to the waiting list",
+      "joinedTitle": "You are on the waiting list",
+      "joined": "We will email you if a table becomes free. To be taken off the list, call or email us.",
+      "error": {
+        "invalid": "Please check your name and email address.",
+        "limit": "Too many requests. Please try again in a few minutes, or call us.",
+        "full": "The waiting list for this evening is full. Please call us."
+      }
+    }
   },
   "price": {
     "deposit": "Deposit (minimum spend)",
@@ -144,7 +162,15 @@
     "refundedTitle": "Your payment was refunded",
     "refundedText": "The payment arrived after the 10 minutes had run out and the table had been released, so we refunded it in full. It can take a few working days to appear on your card. You are welcome to choose a table again.",
     "abandon": "Cancel and change my choice",
-    "abandonHint": "Want a different table, date or time? The table is released straight away."
+    "abandonHint": "Want a different table, date or time? The table is released straight away.",
+    "occasion": "Are you celebrating something? (optional)",
+    "occasionNone": "No special occasion",
+    "occasions": {
+      "BIRTHDAY": "Birthday",
+      "ANNIVERSARY": "Anniversary",
+      "PROPOSAL": "Marriage proposal",
+      "OTHER": "Another celebration"
+    }
   },
   "reservation": {
     "status": {
@@ -183,7 +209,18 @@
     "moveText": "You can move your reservation to another evening or time until {deadline}. You choose a table again. The amount you paid stays as it is.",
     "moveButton": "Choose a new date",
     "moved": "Your reservation has been moved. The details below are the new ones.",
-    "cancelFree": "You can cancel this reservation here. Nothing was paid, so there is nothing to refund."
+    "cancelFree": "You can cancel this reservation here. Nothing was paid, so there is nothing to refund.",
+    "occasion": "Occasion",
+    "occasions": {
+      "BIRTHDAY": "Birthday",
+      "ANNIVERSARY": "Anniversary",
+      "PROPOSAL": "Marriage proposal",
+      "OTHER": "Another celebration"
+    },
+    "calendarTitle": "Add to your calendar",
+    "calendarText": "Save the reservation in your calendar, so the date, the time and the address are at hand.",
+    "calendarGoogle": "Google Calendar",
+    "calendarFile": "Apple Calendar or Outlook"
   },
   "manage": {
     "title": "Cavalieri Roof Garden · Management",
@@ -329,7 +366,8 @@
       "print": "Print this list",
       "done": "The reservation was updated.",
       "chosenByStaff": "set by staff",
-      "searching": "Searching every date. Clear the search to see one day."
+      "searching": "Searching every date. Clear the search to see one day.",
+      "export": "Download (Excel)"
     },
     "notifications": {
       "title": "New ({count})",
@@ -339,7 +377,8 @@
         "CANCELLED": "Cancelled",
         "NO_SHOW": "No-show",
         "RESCHEDULED": "Moved by guest",
-        "CHANGED_BY_STAFF": "Changed by staff"
+        "CHANGED_BY_STAFF": "Changed by staff",
+        "WAITING_JOINED": "Joined the waiting list"
       }
     },
     "footer": {
@@ -431,6 +470,52 @@
       "reason": "Reason (optional)",
       "reasonHint": "For example: broken chair, private event. To keep a table for a guest, use Reserve this table.",
       "confirm": "Close table"
+    },
+    "bell": {
+      "unread": "Unread notifications: {count}",
+      "none": "No new notifications"
+    },
+    "occasion": {
+      "label": "Occasion (optional)",
+      "none": "None",
+      "BIRTHDAY": "Birthday",
+      "ANNIVERSARY": "Anniversary",
+      "PROPOSAL": "Marriage proposal",
+      "OTHER": "Another celebration"
+    },
+    "guest": {
+      "open": "Open the guest's history",
+      "visits": "{count, plural, one {# earlier visit} other {# earlier visits}}",
+      "noShows": "{count, plural, one {# no-show} other {# no-shows}}",
+      "standingNote": "Standing note about the guest",
+      "standingHint": "Shown on every reservation of this guest, now and in future: allergies, preferences, a favourite table. Only staff see it.",
+      "staffNote": "Staff note",
+      "guestWrote": "Guest's note",
+      "addNote": "Add note",
+      "editNote": "Edit note",
+      "noteTitle": "Note on the reservation of {guest}",
+      "noteHint": "For this reservation only. Only staff see it. For something that applies to every visit, open the guest's history.",
+      "saveNote": "Save note",
+      "noteSaved": "The note was saved.",
+      "total": "Reservations",
+      "came": "Visits",
+      "noShowCount": "No-shows",
+      "cancelledCount": "Cancellations",
+      "noContact": "No contact details",
+      "history": "Reservation history",
+      "notes": "Notes"
+    },
+    "waiting": {
+      "title": "Waiting list ({count})",
+      "intro": "Guests who found this evening full. When a table that fits becomes free, the first in line is emailed automatically, and the next one two hours later if the table is still free. Nothing is held for them.",
+      "guests": "{count, plural, one {# guest} other {# guests}}",
+      "status": {
+        "WAITING": "Waiting",
+        "NOTIFIED": "Emailed at {time}",
+        "BOOKED": "Has booked"
+      },
+      "notify": "Email now",
+      "remove": "Remove"
     }
   },
   "config": {
@@ -549,7 +634,11 @@
       "showMenuPrices": "Show menu prices on the website",
       "privacy": "Guest data",
       "privacyNote": "After this many months from a guest's last reservation, their name, email, phone and notes are erased. The reservation figures are kept. Leave empty to keep guest details. Ask your accountant how long records must be kept.",
-      "retentionMonths": "Erase guest details after (months)"
+      "retentionMonths": "Erase guest details after (months)",
+      "reviews": "Reviews",
+      "reviewsNote": "The morning after their visit, guests who came are sent one email of thanks with these links. A guest is asked at most once a year. Leave both empty to send nothing.",
+      "reviewUrlGoogle": "Google review link",
+      "reviewUrlTripadvisor": "Tripadvisor review link"
     },
     "closures": {
       "title": "Closed dates",
@@ -718,11 +807,11 @@
     "intro": "How {company} handles your personal data when you use this website.",
     "collect": {
       "title": "What we collect",
-      "text": "When you reserve a table we collect your name, email address, phone number, the details of your reservation and any notes you add. We do not ask you to create an account."
+      "text": "When you reserve a table we collect your name, email address, phone number, the details of your reservation and any notes you add. We do not ask you to create an account. If you join the waiting list for a full evening, we collect your name, email address and phone number for that purpose. Our staff may also note what helps us look after you, such as an allergy or a preference you have told us about."
     },
     "use": {
       "title": "Why we use it",
-      "text": "We use this information only to manage your reservation: to hold your table, to contact you about it and to handle payment, cancellation and refunds."
+      "text": "We use this information only to manage your reservation: to hold your table, to contact you about it and to handle payment, cancellation and refunds. After your visit we may send you one email to thank you, with a link to leave a review."
     },
     "share": {
       "title": "Who receives it",
@@ -730,7 +819,7 @@
     },
     "keep": {
       "title": "How long we keep it",
-      "text": "Reservation records are kept for as long as tax and accounting law requires and are then deleted or anonymised."
+      "text": "Reservation records are kept for as long as tax and accounting law requires and are then deleted or anonymised. Waiting list entries are deleted the day after the evening they were for."
     },
     "cookies": {
       "title": "Cookies",
@@ -755,7 +844,9 @@
       "total": "Total paid",
       "credit": "Deducted from your bill",
       "guest": "Guest",
-      "phone": "Phone"
+      "phone": "Phone",
+      "occasion": "Occasion",
+      "notes": "Guest's note"
     },
     "policy": {
       "minimum": "The deposit is deducted from your bill and is also the minimum spend. If you order less, the difference is not refunded.",
@@ -803,7 +894,35 @@
       "heading": "Reservation moved by the guest",
       "intro": "{name} moved the reservation to {date} at {time}. Nothing was charged or refunded."
     },
-    "moveLink": "Change the date or time (until {hours} hours before)"
+    "moveLink": "Change the date or time (until {hours} hours before)",
+    "occasion": {
+      "BIRTHDAY": "Birthday",
+      "ANNIVERSARY": "Anniversary",
+      "PROPOSAL": "Marriage proposal",
+      "OTHER": "Another celebration"
+    },
+    "calendar": {
+      "title": "Dinner at {name}",
+      "description": "Reservation {reference}, {guests, plural, one {# guest} other {# guests}}. View, change or cancel: {url}",
+      "google": "Add to Google Calendar",
+      "file": "Add to Apple Calendar or Outlook"
+    },
+    "guest_review": {
+      "subject": "Thank you for dining with us",
+      "heading": "Thank you, {name}",
+      "intro": "It was a pleasure to have you with us on {date}.",
+      "ask": "If you enjoyed your evening, a few words in a review would mean a great deal to us and would help other guests find us.",
+      "once": "This is the only message we send about your visit.",
+      "google": "Review us on Google",
+      "tripadvisor": "Review us on Tripadvisor"
+    },
+    "guest_waiting": {
+      "subject": "A table has become free on {date}",
+      "heading": "A table is free",
+      "intro": "{name}, a table for {guests} has become free on {date} at {time}.",
+      "notHeld": "It is not held for you. The table goes to whoever books first, so please book as soon as you can.",
+      "link": "Book the table"
+    }
   },
   "timeline": {
     "title": "Timeline",
@@ -829,7 +948,9 @@
       "contact": "Contact",
       "reference": "Reservation",
       "heldUntil": "Held until",
-      "noDetails": "No details entered yet"
+      "noDetails": "No details entered yet",
+      "occasion": "Occasion",
+      "notes": "Notes"
     }
   },
   "analytics": {
@@ -866,7 +987,10 @@
     "byWeekday": "Guests by day of the week",
     "chosenTables": "Most chosen tables (times chosen · fees)",
     "feeByCategory": "Table fees by category (fees · reservations)",
-    "tableLabel": "Table {number}"
+    "tableLabel": "Table {number}",
+    "exportReservations": "Download reservations (Excel)",
+    "exportSummary": "Download figures (Excel)",
+    "exportHint": "The files cover the period shown and open in Excel. The reservations file holds guests' contact details, so keep it safe."
   },
   "floorEditor": {
     "title": "Floor plan",
@@ -963,5 +1087,40 @@
       "NOT_FOUND": "We could not find a reservation with those details. Please check the number and the email or phone and try again.",
       "TOO_MANY_ATTEMPTS": "Too many attempts. Please wait a few minutes and try again, or call us."
     }
+  },
+  "export": {
+    "reference": "Reservation",
+    "date": "Date",
+    "time": "Time",
+    "guests": "Guests",
+    "table": "Table",
+    "name": "Name",
+    "phone": "Phone",
+    "email": "Email",
+    "status": "Status",
+    "source": "Taken",
+    "tableChoice": "Table chosen by",
+    "occasion": "Occasion",
+    "deposit": "Deposit (€)",
+    "tableFee": "Table fee (€)",
+    "total": "Total paid (€)",
+    "refunded": "Refunded (€)",
+    "guestNotes": "Guest's note",
+    "staffNotes": "Staff note",
+    "bookedOn": "Booked on",
+    "sourceValue": {
+      "ONLINE": "Online",
+      "STAFF": "By staff"
+    },
+    "choiceValue": {
+      "AUTO": "Restaurant",
+      "CHOSEN": "Guest"
+    },
+    "period": "Period",
+    "averageParty": "Guests per reservation",
+    "noShowRate": "No-show rate",
+    "autoAssigned": "Table chosen by the restaurant",
+    "walkInCovers": "Walk-in guests",
+    "reservationsCount": "Reservations"
   }
 }

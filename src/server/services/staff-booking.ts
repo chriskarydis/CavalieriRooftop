@@ -35,6 +35,7 @@ export interface StaffReservationInput {
   phone?: string;
   email?: string;
   notes?: string;
+  occasion?: schema.Occasion;
   /** Language of the guest's emails. */
   locale: string;
   /** Table ids; empty to take the best free table or tables. */
@@ -112,6 +113,7 @@ export async function createStaffReservation(
           tableSetByStaff: true,
           locale: input.locale,
           staffNotes: input.notes?.trim() || null,
+          occasion: input.occasion ?? null,
           depositPerPersonCents: 0,
           billableSeats: input.partySize,
           depositCents: 0,

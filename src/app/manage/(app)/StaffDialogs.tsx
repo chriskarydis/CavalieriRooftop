@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SITE } from "@/config/site";
+import { OCCASIONS, type Occasion } from "@/server/db/occasions";
 import { BLOCK_HOURS } from "./block-hours";
 import { DateField } from "./DateField";
 import { Window, type SeatingChoice } from "./reservations/ReservationDialogs";
@@ -30,6 +31,9 @@ export interface NewReservationLabels {
   greek: string;
   english: string;
   notes: string;
+  occasion: string;
+  occasionNone: string;
+  occasions: Record<Occasion, string>;
   note: string;
   confirm: string;
   close: string;
@@ -98,6 +102,17 @@ export function NewReservationDialog({
               {seatings.map((seating) => (
                 <option key={seating.value} value={seating.value}>
                   {seating.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block font-medium sm:col-span-2">
+            {labels.occasion}
+            <select name="occasion" defaultValue="" className={inputClass}>
+              <option value="">{labels.occasionNone}</option>
+              {OCCASIONS.map((occasion) => (
+                <option key={occasion} value={occasion}>
+                  {labels.occasions[occasion]}
                 </option>
               ))}
             </select>

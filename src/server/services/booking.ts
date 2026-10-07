@@ -360,6 +360,7 @@ export interface GuestDetails {
   email: string;
   phone?: string;
   notes?: string;
+  occasion?: schema.Occasion;
   marketingConsent?: boolean;
 }
 
@@ -392,7 +393,7 @@ export async function attachGuestDetails(
       .returning({ id: schema.customer.id });
     await tx
       .update(schema.reservation)
-      .set({ customerId: customer.id, guestNotes: details.notes?.trim() || null, updatedAt: now })
+      .set({ customerId: customer.id, guestNotes: details.notes?.trim() || null, occasion: details.occasion ?? null, updatedAt: now })
       .where(eq(schema.reservation.id, reservationId));
   });
 }

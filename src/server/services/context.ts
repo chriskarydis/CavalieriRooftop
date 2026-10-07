@@ -223,7 +223,7 @@ export async function transition(
 }
 
 export async function audit(
-  tx: Tx,
+  tx: Tx | Db,
   entry: { actor: Actor; action: string; entityType: string; entityId: string; before?: unknown; after?: unknown },
 ): Promise<void> {
   await tx.insert(schema.auditLog).values(entry);

@@ -23,6 +23,20 @@ import { notifyReservationEvent } from "@/server/services/notifications";
 import { findReservation } from "@/server/services/find-reservation";
 import { cancelAbandonedPayments, refundPayment } from "@/server/services/payments";
 import { rescheduleReservation } from "@/server/services/reschedule";
+import { joinWaitingList, mayJoin, notifyWaitingList } from "@/server/services/waiting-list";
+import { OCCASIONS } from "@/server/db/schema";
+
+/**
+ * A table may just have become free: guests waiting for that evening are told.
+ * A failure here must never undo the change that freed the table.
+ */
+async function tellWaitingGuests(): Promise<void> {
+  try {
+    await notifyWaitingList(db);
+  } catch (error) {
+    console.error("Waiting list could not be notified", error);
+  }
+}
 
 const holdSchema = z.object({
   locale: z.string(),
@@ -122,6 +136,7 @@ export async function abandonHold(token: string, locale: string): Promise<void> 
     // An unpaid card payment that was started is stopped, so it cannot be completed later.
     const gateway = stripeGateway();
     if (gateway) await cancelAbandonedPayments(db, gateway, [reservation.id]);
+    await tellWaitingGuests();
   }
   const query = new URLSearchParams({
     date: zonedDate(reservation.startsAt, settings.timezone),
@@ -136,6 +151,7 @@ const detailsSchema = z.object({
   email: z.string().trim().email().max(200),
   phone: z.string().trim().min(6).max(40),
   notes: z.string().trim().max(500).optional(),
+  occasion: z.union([z.literal(""), z.enum(OCCASIONS)]).optional(),
   acceptPolicy: z.literal("on"),
 });
 
@@ -150,7 +166,7 @@ export async function submitDetails(token: string, locale: string, _state: Detai
   const found = await getReservationByToken(db, token);
   if (!found) return { error: "HOLD_EXPIRED" };
   try {
-    await attachGuestDetails(db, found.reservation.id, parsed.data);
+    await attachGuestDetails(db, found.reservation.id, { ...parsed.data, occasion: parsed.data.occasion || undefined });
   } catch (error) {
     if (error instanceof BookingError) return { error: "HOLD_EXPIRED" };
     throw error;
@@ -195,6 +211,7 @@ export async function moveByGuest(token: string, formData: FormData): Promise<vo
     return redirect({ href: `/reservation/${token}/move?${query}`, locale: input.locale });
   }
   await notifyReservationEvent(db, found.reservation.id, "RESCHEDULED");
+  await tellWaitingGuests();
   return redirect({ href: `/reservation/${token}?moved=1`, locale: input.locale });
 }
 
@@ -212,6 +229,41 @@ export async function cancelByGuest(token: string, locale: string): Promise<void
       });
     }
     await notifyReservationEvent(db, found.reservation.id, "CANCELLED", { refundCents: outcome.refundCents });
+    await tellWaitingGuests();
   }
   return redirect({ href: `/reservation/${token}`, locale });
+}
+
+const waitingSchema = z.object({
+  locale: z.string(),
+  date: z.string(),
+  time: z.string(),
+  guests: z.coerce.number().int(),
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().max(200),
+  phone: z.string().trim().max(40).optional(),
+  accept: z.literal("on"),
+  // Left empty by people; filled in by scripts that complete every field.
+  website: z.string().max(0).optional(),
+});
+
+/** A guest who found the evening full asks to be told if a table becomes free. */
+export async function joinWaitingListAction(formData: FormData): Promise<void> {
+  const locale = String(formData.get("locale") ?? "en");
+  const slot = { date: String(formData.get("date") ?? ""), time: String(formData.get("time") ?? ""), guests: String(formData.get("guests") ?? "") };
+  const back = (waiting: string) => redirect({ href: { pathname: "/reserve", query: { ...slot, waiting } }, locale });
+
+  const parsed = waitingSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return back("invalid");
+  if (!(await mayJoin(db, await currentIpHash()))) return back("limit");
+  const { date, time, guests, name, email, phone } = parsed.data;
+  try {
+    const result = await joinWaitingList(db, { date, time, partySize: guests, name, email, phone, locale: parsed.data.locale });
+    // A table came free in the meantime: the page shows it.
+    if (!result.joined && result.reason === "AVAILABLE") return redirect({ href: { pathname: "/reserve", query: slot }, locale });
+    return back(result.joined ? "joined" : "full");
+  } catch (error) {
+    if (!(error instanceof BookingError)) throw error;
+    return redirect({ href: { pathname: "/reserve", query: { ...slot, error: error.code } }, locale });
+  }
 }

@@ -38,7 +38,7 @@ export const SITE = {
     },
     {
       // Chosen by the owner, by its Google Maps place.
-      name: { en: "Car park", el: "Πάρκινγκ" },
+      name: { en: "Parking Corfu 2", el: "Parking Corfu 2" },
       note: { en: "Opens in Google Maps.", el: "Ανοίγει στο Google Maps." },
       directionsUrl: "https://www.google.com/maps?ftid=0x135b5d0051217adf:0xd2bb53b1cc27f7be",
     },

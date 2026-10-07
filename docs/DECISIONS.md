@@ -215,3 +215,41 @@ Owner's rules, implemented in `src/server/services/reschedule.ts`:
   marked "taken by staff", is changed only by staff, and behaves like any other otherwise.
 - Closing a table is a window with plain choices: from now or a later date and time, until closing
   time or for a number of hours.
+
+## Notes, guest history, waiting list, occasion, calendar, reviews, downloads (2026-10-07)
+
+The owner asked for all of these; the details below were chosen by the developer and are for the
+owner to confirm.
+
+- **Menu setup page:** one list (dinner, bar, wine) per tab, so the page loads and saves faster.
+- **Bell:** the header of every management page shows the number of unread notifications and plays
+  the new-reservation sound; it asks the server every 20 seconds. The sound switch moved there.
+- **Notes:** staff can write a note on any reservation at any time ("Add note" in the list). A
+  separate standing note belongs to the guest and shows on every reservation of theirs.
+- **Guest history:** every reservation stores its own copy of the guest's details, so the same
+  guest is recognised by email address or by phone number (last 10 digits, at least 8). The list
+  shows earlier visits and no-shows; the guest's name opens their page. Note texts are never
+  written to the audit log, since they may hold health details.
+- **Waiting list:** offered only when nothing is free for that date, time and party. Name, email,
+  optional phone. Nothing is held and nothing is paid. When a fitting table frees (checked after
+  every cancellation, move and released hold, and by the scheduled job) the first in line is
+  emailed; if they have not booked after 2 hours the next is emailed too. Staff see the list under
+  the day's reservations and can email or remove anyone. At most 40 per evening, 5 requests per
+  15 minutes per network address. Entries are deleted the morning after the evening.
+- **Occasion:** optional field at checkout and in the staff's new-reservation window (birthday,
+  anniversary, proposal, other). Shown to staff everywhere the reservation is, and in the
+  restaurant's email.
+- **Calendar:** the confirmation page and email offer Google Calendar and an .ics file (Apple,
+  Outlook). The entry lasts the configured dining time.
+- **Review email:** one thank-you with the review links, to guests who were seated, between 10:00
+  and 20:00 on the days after the visit (at least 10 hours after the reservation time, dropped
+  after 3 days). At most once a year per address. Nothing is sent until the manager enters a
+  Google or Tripadvisor link at /manage/settings.
+- **Downloads:** reservations of a period and the period's figures as CSV for Excel as set up in
+  Greece (semicolons, decimal comma, dd/mm/yyyy, UTF-8 mark). Needs the analytics permission; a
+  period is at most 366 days; each reservations download is recorded in the audit log. Text that
+  starts like a formula is written as plain text.
+- **Privacy page:** three sentences added for the waiting list, staff notes and the review email.
+  The page still needs legal review before launch.
+- **Scheduled job on the free plan:** now 08:00 UTC (11:00 in Corfu in summer), so the daily run
+  falls at a good hour for reminders and the review email.

@@ -1,10 +1,11 @@
-import { MENU_KEYS } from "@/server/db/schema";
 import { asc } from "drizzle-orm";
 import { getLocale, getTranslations } from "next-intl/server";
 import { localized } from "@/i18n/localized";
 import { requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import * as schema from "@/server/db/schema";
+import { MENU_KEYS, type MenuKey } from "@/server/db/schema";
+import Link from "next/link";
 import { getMenu, type MenuCategoryView, type MenuItemView } from "@/server/services/menu";
 import { cardClass, inputClass, Notice, primaryButton } from "../ui";
 import { addMenuCategory, addMenuItem, saveMenuCategory, saveMenuItem } from "./actions";
@@ -118,6 +119,11 @@ export default async function MenuAdminPage({ searchParams }: PageProps<"/manage
     db.select().from(schema.allergen).orderBy(asc(schema.allergen.code)),
   ]);
   const formClass = "mt-3 grid gap-3 text-sm font-medium sm:grid-cols-4";
+  // One list at a time: the three together are about 180 entries, slow to load and to save.
+  const requested = Array.isArray(query.list) ? query.list[0] : query.list;
+  const list: MenuKey = MENU_KEYS.find((key) => key === requested) ?? "FOOD";
+  const shown = menu.filter((category) => category.menu === list);
+  const listField = <input type="hidden" name="list" value={list} />;
 
   return (
     <main className="mx-auto max-w-4xl space-y-6">
@@ -127,18 +133,34 @@ export default async function MenuAdminPage({ searchParams }: PageProps<"/manage
       </header>
       <Notice query={query} />
 
-      {menu.map((category) => (
+      <nav aria-label={t("list")} className="flex gap-1 border-b border-line text-sm font-medium">
+        {MENU_KEYS.map((key) => (
+          <Link
+            key={key}
+            href={`/manage/menu?list=${key}`}
+            aria-current={key === list ? "page" : undefined}
+            className={`-mb-px rounded-t border border-b-0 px-4 py-2 ${key === list ? "border-line bg-white text-slate-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}
+          >
+            {t(`lists.${key}`)}
+            <span className="ml-2 text-xs font-normal text-slate-600">
+              {menu.filter((category) => category.menu === key).reduce((sum, category) => sum + category.items.length, 0)}
+            </span>
+          </Link>
+        ))}
+      </nav>
+
+      {shown.map((category) => (
         <section key={category.id} className={cardClass}>
           <details>
             <summary className="cursor-pointer text-base font-semibold">
               {localized(category.name, locale)}
               <span className="ml-2 text-sm font-normal text-slate-600">
-                {t(`lists.${category.menu}`)} ·{" "}
                 {t("dishCount", { count: category.items.length })}
                 {!category.active && ` · ${t("hidden")}`}
               </span>
             </summary>
             <form action={saveMenuCategory.bind(null, category.id)} className={formClass}>
+              {listField}
               <label>
                 {t("nameEn")}
                 <input name="nameEn" required maxLength={120} defaultValue={category.name.en} className={inputClass} />
@@ -185,6 +207,7 @@ export default async function MenuAdminPage({ searchParams }: PageProps<"/manage
                     {item.active && !item.available && <span className="text-xs text-red-700">{t("unavailable")}</span>}
                   </summary>
                   <form action={saveMenuItem.bind(null, item.id)} className={formClass}>
+              {listField}
                     <ItemFields item={item} categories={menu} allergens={allergens} categoryId={category.id} />
                     <label className="flex items-center gap-2 sm:col-span-2">
                       <input name="available" type="checkbox" defaultChecked={item.available} />
@@ -208,6 +231,7 @@ export default async function MenuAdminPage({ searchParams }: PageProps<"/manage
           <details className="mt-2">
             <summary className="cursor-pointer text-sm font-medium text-slate-700">{t("addDish")}</summary>
             <form action={addMenuItem} className={formClass}>
+              {listField}
               <ItemFields categories={menu} allergens={allergens} categoryId={category.id} />
               <div className="sm:col-span-4">
                 <button type="submit" className={primaryButton}>
@@ -222,6 +246,7 @@ export default async function MenuAdminPage({ searchParams }: PageProps<"/manage
       <section className={cardClass}>
         <h2 className="font-semibold">{t("newCategory")}</h2>
         <form action={addMenuCategory} className={formClass}>
+              {listField}
           <label>
             {t("nameEn")}
             <input name="nameEn" required maxLength={120} className={inputClass} />
@@ -232,7 +257,7 @@ export default async function MenuAdminPage({ searchParams }: PageProps<"/manage
           </label>
           <label>
             {t("list")}
-            <select name="menu" defaultValue="FOOD" className={inputClass}>
+            <select name="menu" defaultValue={list} className={inputClass}>
               {MENU_KEYS.map((key) => (
                 <option key={key} value={key}>
                   {t(`lists.${key}`)}

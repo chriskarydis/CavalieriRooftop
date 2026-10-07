@@ -7,7 +7,7 @@ import * as schema from "@/server/db/schema";
 const TEST_DATABASE = "cavalieri_test";
 
 /** Creates (if needed) and migrates a dedicated test database, then empties it. */
-const ALL_TABLES = `lookup_attempt, menu_item_allergen, menu_item_image, menu_item, menu_category, allergen, audit_log, email_log, notification, refund, payment, stripe_event, reservation_event,
+const ALL_TABLES = `waiting_entry, lookup_attempt, menu_item_allergen, menu_item_image, menu_item, menu_category, allergen, audit_log, email_log, notification, refund, payment, stripe_event, reservation_event,
   table_allocation, reservation, walk_in, customer, combination_pairing, table_combination_member,
   table_combination, dining_table, floor_plan, table_category, closure, restaurant_settings`;
 

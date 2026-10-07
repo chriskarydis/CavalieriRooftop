@@ -6,7 +6,7 @@ import { requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import { getAnalytics } from "@/server/services/analytics";
 import { loadSettings } from "@/server/services/context";
-import { cardClass, inputClass, primaryButton } from "../ui";
+import { cardClass, inputClass, primaryButton, secondaryButton } from "../ui";
 
 const first = (value: string | string[] | undefined): string | undefined => (Array.isArray(value) ? value[0] : value);
 const isDate = (value: string | undefined): value is string => Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value));
@@ -100,7 +100,16 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/manage
         <button type="submit" className={primaryButton}>
           {t("show")}
         </button>
+        <span className="ml-auto flex flex-wrap items-center gap-2 font-normal">
+          <a href={`/manage/export?kind=reservations&from=${from}&to=${to}`} className={secondaryButton}>
+            {t("exportReservations")}
+          </a>
+          <a href={`/manage/export?kind=summary&from=${from}&to=${to}`} className={secondaryButton}>
+            {t("exportSummary")}
+          </a>
+        </span>
       </form>
+      <p className="-mt-3 text-xs text-slate-600">{t("exportHint")}</p>
 
       <section aria-label={t("reservationsGroup")} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Tile label={t("reservations")} value={whole(data.reservations)} />

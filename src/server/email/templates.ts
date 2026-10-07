@@ -1,8 +1,10 @@
 import { createTranslator } from "next-intl";
 import { SITE, siteUrl } from "@/config/site";
-import { zonedTime } from "@/domain/time";
+import { googleCalendarUrl } from "@/domain/calendar";
+import { addMinutes, zonedTime } from "@/domain/time";
 import { formatLongDate, intlLocale } from "@/i18n/intl-locale";
 import { routing } from "@/i18n/routing";
+import type { Occasion } from "@/server/db/occasions";
 import el from "@/messages/el.json";
 import en from "@/messages/en.json";
 
@@ -19,6 +21,7 @@ export type EmailTemplate =
   | "guest_cancellation"
   | "guest_reminder"
   | "guest_rescheduled"
+  | "guest_review"
   | "restaurant_rescheduled"
   | "restaurant_new"
   | "restaurant_cancelled"
@@ -44,6 +47,24 @@ export interface EmailData {
   manageToken: string;
   /** For cancellations: what the policy refunds. */
   refundCents?: number;
+  /** What the party is celebrating, if they said. */
+  occasion?: Occasion | null;
+  guestNotes?: string | null;
+  /** How long the table is expected to be used, for the calendar entry. */
+  diningMinutes?: number;
+  /** Where to leave a review, for the email after the visit. */
+  reviewLinks?: { google?: string | null; tripadvisor?: string | null };
+}
+
+/** A guest on the waiting list is told a table has become free. */
+export interface WaitingEmailData {
+  locale: string;
+  name: string;
+  /** YYYY-MM-DD and HH:mm in the restaurant's timezone. */
+  date: string;
+  time: string;
+  partySize: number;
+  timezone: string;
 }
 
 export interface RenderedEmail {
@@ -72,8 +93,8 @@ function layout(
   paragraphs: string[],
   rows: Array<[string, string]>,
   link?: { href: string; label: string },
-  /** A quieter link under the button. */
-  secondary?: { href: string; label: string },
+  /** Quieter links under the button. */
+  secondary: Array<{ href: string; label: string }> = [],
 ) {
   const html = `<!doctype html><html><body style="margin:0;background:#faf7f2;font-family:Arial,Helvetica,sans-serif;color:#1f2a30">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
@@ -98,11 +119,12 @@ ${
     ? `<tr><td style="padding:16px 24px"><a href="${escapeHtml(link.href)}" style="display:inline-block;background:#1e1b17;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:bold">${escapeHtml(link.label)}</a></td></tr>`
     : ""
 }
-${
-  secondary
-    ? `<tr><td style="padding:0 24px 8px;font-size:15px"><a href="${escapeHtml(secondary.href)}" style="color:#76581c">${escapeHtml(secondary.label)}</a></td></tr>`
-    : ""
-}
+${secondary
+  .map(
+    (item) =>
+      `<tr><td style="padding:0 24px 8px;font-size:15px"><a href="${escapeHtml(item.href)}" style="color:#76581c">${escapeHtml(item.label)}</a></td></tr>`,
+  )
+  .join("\n")}
 <tr><td style="padding:16px 24px 24px;font-size:13px;line-height:1.5;color:#5b6870">${escapeHtml(SITE.name)} · ${escapeHtml(SITE.street)}, ${escapeHtml(SITE.postalCode)} ${escapeHtml(SITE.city.en)}<br>${escapeHtml(SITE.phone)} · ${escapeHtml(SITE.email)}</td></tr>
 </table></td></tr></table></body></html>`;
 
@@ -113,7 +135,7 @@ ${
     "",
     ...rows.map(([label, value]) => `${label}: ${value}`),
     ...(link ? ["", `${link.label}: ${link.href}`] : []),
-    ...(secondary ? [`${secondary.label}: ${secondary.href}`] : []),
+    ...secondary.map((item) => `${item.label}: ${item.href}`),
     "",
     `${SITE.name} · ${SITE.street}, ${SITE.postalCode} ${SITE.city.en}`,
     `${SITE.phone} · ${SITE.email}`,
@@ -133,6 +155,19 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
   const tables = data.tableNumbers.join(" + ") || "—";
   const manageUrl = `${siteUrl()}/${locale}/reservation/${data.manageToken}`;
   const moveLink = { href: `${manageUrl}/move`, label: t("moveLink", { hours: data.refundCutoffHours }) };
+  // The reservation as an entry in the guest's own calendar.
+  const calendarEntry = {
+    uid: `${data.reference}@cavalieriroofgarden`,
+    title: t("calendar.title", { name: SITE.name }),
+    description: t("calendar.description", { reference: data.reference, guests: data.partySize, url: manageUrl }),
+    location: `${SITE.name}, ${SITE.street}, ${SITE.postalCode} ${SITE.city.en}`,
+    startsAt: data.startsAt,
+    endsAt: addMinutes(data.startsAt, data.diningMinutes ?? 120),
+  };
+  const calendarLinks = [
+    { href: googleCalendarUrl(calendarEntry), label: t("calendar.google") },
+    { href: `${manageUrl}/calendar`, label: t("calendar.file") },
+  ];
   const values = {
     reference: data.reference,
     name: data.guestName,
@@ -165,6 +200,8 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
     ...reservationRows,
     [t("row.guest"), data.guestName],
     ...(data.guestPhone ? ([[t("row.phone"), data.guestPhone]] as Array<[string, string]>) : []),
+    ...(data.occasion ? ([[t("row.occasion"), t(`occasion.${data.occasion}`)]] as Array<[string, string]>) : []),
+    ...(data.guestNotes ? ([[t("row.notes"), data.guestNotes]] as Array<[string, string]>) : []),
     [t("row.deposit"), euro(data.depositCents)],
     [t("row.tableFee"), euro(data.tableFeeCents)],
   ];
@@ -184,7 +221,7 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
             : [t("guest_confirmation.intro", values), t("policy.grace", values)],
           data.totalCents > 0 ? [...reservationRows, ...paymentRows] : reservationRows,
           { href: manageUrl, label: t("manageLink") },
-          data.totalCents > 0 ? moveLink : undefined,
+          data.totalCents > 0 ? [moveLink, ...calendarLinks] : calendarLinks,
         ),
       };
     case "guest_reminder":
@@ -203,7 +240,7 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
           [t("guest_rescheduled.intro", values), t("policy.grace", values), t("policy.refund", values)],
           reservationRows,
           { href: manageUrl, label: t("manageLink") },
-          moveLink,
+          [moveLink, ...calendarLinks],
         ),
       };
     case "guest_cancellation":
@@ -215,6 +252,17 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
           reservationRows,
         ),
       };
+    case "guest_review": {
+      // The first place set is the button, the other a link under it.
+      const places = [
+        { href: data.reviewLinks?.google ?? "", label: t("guest_review.google") },
+        { href: data.reviewLinks?.tripadvisor ?? "", label: t("guest_review.tripadvisor") },
+      ].filter((place) => place.href);
+      return {
+        subject,
+        ...layout(heading, [t("guest_review.intro", values), t("guest_review.ask"), t("guest_review.once")], [], places[0], places.slice(1)),
+      };
+    }
     case "restaurant_cancelled":
       return {
         subject,
@@ -223,4 +271,25 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
     default:
       return { subject, ...layout(heading, [t(`${template}.intro`, values)], restaurantRows) };
   }
+}
+
+export function renderWaitingEmail(data: WaitingEmailData): RenderedEmail {
+  const locale: Locale = data.locale in MESSAGES ? (data.locale as Locale) : routing.defaultLocale;
+  const t = createTranslator({ locale, messages: MESSAGES[locale], namespace: "email" });
+  const date = formatLongDate(new Date(`${data.date}T12:00:00Z`), locale, "UTC");
+  const values = { name: data.name, date, time: data.time, guests: data.partySize };
+  const query = new URLSearchParams({ date: data.date, time: data.time, guests: String(data.partySize) });
+  return {
+    subject: t("guest_waiting.subject", values),
+    ...layout(
+      t("guest_waiting.heading"),
+      [t("guest_waiting.intro", values), t("guest_waiting.notHeld")],
+      [
+        [t("row.date"), date],
+        [t("row.time"), data.time],
+        [t("row.guests"), String(data.partySize)],
+      ],
+      { href: `${siteUrl()}/${locale}/reserve?${query}`, label: t("guest_waiting.link") },
+    ),
+  };
 }

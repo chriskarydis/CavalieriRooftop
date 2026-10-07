@@ -41,6 +41,7 @@ const first = (value: string | string[] | undefined): string | undefined => (Arr
 export default async function TimelinePage({ searchParams }: PageProps<"/manage/timeline">) {
   await requirePermission("operations");
   const t = await getTranslations("timeline");
+  const tManage = await getTranslations("manage");
   const settings = await loadSettings(db);
   const query = await searchParams;
   const requested = first(query.date);
@@ -111,6 +112,18 @@ export default async function TimelinePage({ searchParams }: PageProps<"/manage/
               <>
                 <dt className="text-slate-600">{t("detail.reference")}</dt>
                 <dd>{opened.reference}</dd>
+              </>
+            )}
+            {opened.occasion && (
+              <>
+                <dt className="text-slate-600">{t("detail.occasion")}</dt>
+                <dd>{tManage(`occasion.${opened.occasion}`)}</dd>
+              </>
+            )}
+            {opened.notes && (
+              <>
+                <dt className="text-slate-600">{t("detail.notes")}</dt>
+                <dd>{opened.notes}</dd>
               </>
             )}
             {opened.holdExpiresAt && (

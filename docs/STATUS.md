@@ -1,6 +1,6 @@
 # Status and next steps
 
-Last updated: 2026-10-06. Update this file at the end of every working session.
+Last updated: 2026-10-07. Update this file at the end of every working session.
 
 ## Done
 
@@ -30,6 +30,7 @@ Last updated: 2026-10-06. Update this file at the end of every working session.
 | Moving a reservation | Guest moves date or time until 24 hours before, as often as they like, picks a table again, no money moves; staff can do it for a guest at any time, change the party size and pick any table. Emails and dashboard notification |
 | My reservation page | Opens a reservation from its number plus the email or phone, with limited attempts; link in the menu |
 | Other changes that day | Confirmation right after payment without waiting for the webhook; clearer cancelled page; manager sees "refund sent"; blocks for a future date no longer start now; dates written dd/mm/yyyy; map on request, directions and parking on the contact page |
+| Added 2026-10-07 | Notification bell and sound on every management page; staff notes per reservation and per guest; guest history (visits, no-shows) by email or phone; waiting list for full evenings; occasion at booking; add to calendar; thank-you email with review links; CSV downloads for Excel; menu setup in three tabs. See DECISIONS.md |
 | Staff accounts | Developers create accounts, change roles, reset passwords and remove accounts at /manage/staff; anyone can change their own password |
 | Error reporting | One log line per server error and an optional email alert, with secret links and query values removed |
 | Deployment preparation | vercel.json, database client for Neon's pooler, migrations before each build, DEPLOYMENT.md |
@@ -46,7 +47,8 @@ Last updated: 2026-10-06. Update this file at the end of every working session.
    reach guests, not only the account owner.
 4. **Content from the owner:** Greek dish names, view descriptions for paid tables, corrections to
    the home and contact page text, more photographs, the car parks to recommend.
-5. **Before going live:** scheduled job every minute (DEPLOYMENT.md step 6), the restaurant's own
+5. **Before going live:** the Google and Tripadvisor review links at /manage/settings (no review
+   email is sent without them), scheduled job every minute (DEPLOYMENT.md step 6), the restaurant's own
    Stripe keys and a live webhook, legal review of the privacy page, staff accounts for the
    managers, domain cut-over (DEPLOYMENT.md step 7).
 6. **Nice to have:** drag a reservation to another table on the live floor (moving already works

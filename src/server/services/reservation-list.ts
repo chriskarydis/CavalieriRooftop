@@ -19,7 +19,13 @@ export interface ReservationListItem {
   guestName: string | null;
   guestPhone: string | null;
   guestEmail: string | null;
-  notes: string | null;
+  customerId: string | null;
+  /** What the guest wrote when booking. */
+  guestNotes: string | null;
+  /** The restaurant's own note on this reservation. */
+  staffNotes: string | null;
+  occasion: schema.Occasion | null;
+  createdAt: Date;
   depositCents: number;
   tableFeeCents: number;
   totalCents: number;
@@ -116,7 +122,11 @@ export async function listReservations(db: Db, filter: ReservationFilter): Promi
     guestName: customer?.name ?? null,
     guestPhone: customer?.phone ?? null,
     guestEmail: customer?.email ?? null,
-    notes: reservation.staffNotes ?? reservation.guestNotes,
+    customerId: reservation.customerId,
+    guestNotes: reservation.guestNotes,
+    staffNotes: reservation.staffNotes,
+    occasion: reservation.occasion,
+    createdAt: reservation.createdAt,
     depositCents: reservation.depositCents,
     tableFeeCents: reservation.tableFeeCents,
     totalCents: reservation.totalCents,

@@ -111,6 +111,21 @@ export default async function SettingsPage({ searchParams }: PageProps<"/manage/
           </label>
         </section>
 
+        <section className={cardClass}>
+          <h2 className="mb-1 font-semibold">{t("settings.reviews")}</h2>
+          <p className="mb-3 text-sm text-slate-600">{t("settings.reviewsNote")}</p>
+          <div className="grid gap-3 text-sm font-medium sm:grid-cols-2">
+            <label>
+              {t("settings.reviewUrlGoogle")}
+              <input name="reviewUrlGoogle" type="url" maxLength={500} placeholder="https://" defaultValue={settings.reviewUrlGoogle ?? ""} className={inputClass} />
+            </label>
+            <label>
+              {t("settings.reviewUrlTripadvisor")}
+              <input name="reviewUrlTripadvisor" type="url" maxLength={500} placeholder="https://" defaultValue={settings.reviewUrlTripadvisor ?? ""} className={inputClass} />
+            </label>
+          </div>
+        </section>
+
         <button type="submit" className={primaryButton}>
           {t("save")}
         </button>

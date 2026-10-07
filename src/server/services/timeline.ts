@@ -21,6 +21,8 @@ export interface TimelineEntry {
   email: string | null;
   /** For a hold: when the guest's 10 minutes run out. */
   holdExpiresAt: Date | null;
+  occasion: schema.Occasion | null;
+  notes: string | null;
 }
 
 export interface Timeline {
@@ -103,6 +105,8 @@ export async function getTimeline(db: Db, date: string, now = new Date()): Promi
               phone: row.guestPhone ?? null,
               email: row.guestEmail ?? null,
               holdExpiresAt: row.kind === "HOLD" ? row.expiresAt : null,
+              occasion: row.reservation?.occasion ?? null,
+              notes: [row.reservation?.staffNotes, row.reservation?.guestNotes].filter(Boolean).join(" · ") || (row.walkIn?.notes ?? null),
             };
           })
           .filter((entry) => entry.endsAt.getTime() > entry.startsAt.getTime())

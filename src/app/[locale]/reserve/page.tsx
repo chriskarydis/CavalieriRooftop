@@ -11,7 +11,8 @@ import { getAvailability, type Availability } from "@/server/services/booking";
 import { BookingError, loadFloorConfig, loadSettings } from "@/server/services/context";
 import { PageHeader } from "@/ui/PageHeader";
 import { ScrollTarget } from "@/ui/ScrollTarget";
-import { startHold } from "./actions";
+import { Link } from "@/i18n/navigation";
+import { joinWaitingListAction, startHold } from "./actions";
 import { BookingForm } from "./BookingForm";
 import { PriceSummary } from "./PriceSummary";
 import { RESULTS_ID } from "./results";
@@ -37,6 +38,7 @@ export default async function ReservePage({ params, searchParams }: PageProps<"/
   const time = first(query.time);
   const guests = Number(first(query.guests) ?? 2);
   const errorCode = first(query.error);
+  const waiting = first(query.waiting);
   const today = zonedDate(new Date(), settings.timezone);
   const closures = await db.select({ date: schema.closure.date }).from(schema.closure).where(gte(schema.closure.date, today));
 
@@ -89,7 +91,7 @@ export default async function ReservePage({ params, searchParams }: PageProps<"/
           )}
 
           {availability && date && time && (
-            <AvailabilitySection availability={availability} slot={{ date, time, guests }} locale={locale} />
+            <AvailabilitySection availability={availability} slot={{ date, time, guests }} locale={locale} waiting={waiting} />
           )}
         </ScrollTarget>
       )}
@@ -101,10 +103,13 @@ async function AvailabilitySection({
   availability,
   slot,
   locale,
+  waiting,
 }: {
   availability: Availability;
   slot: { date: string; time: string; guests: number };
   locale: string;
+  /** How the request to join the waiting list ended, if one was just made. */
+  waiting?: string;
 }) {
   const t = await getTranslations("reserve");
   const tPlan = await getTranslations("floorPlan");
@@ -129,7 +134,68 @@ async function AvailabilitySection({
   const nothingFree = !availability.auto && groups.length === 0 && tables.every((table) => table.state !== "AVAILABLE");
 
   if (nothingFree) {
-    return <p className="notice notice-info mx-auto max-w-5xl">{t("errors.NO_AVAILABILITY")}</p>;
+    if (waiting === "joined") {
+      return (
+        <section className="panel mx-auto max-w-2xl text-center">
+          <h2 className="text-2xl sm:text-3xl">{t("waiting.joinedTitle")}</h2>
+          <p role="status" className="notice notice-ok mt-4 text-left">
+            {t("waiting.joined")}
+          </p>
+        </section>
+      );
+    }
+    return (
+      <div className="mx-auto max-w-2xl space-y-6">
+        <p className="notice notice-info">{t("errors.NO_AVAILABILITY")}</p>
+        <section className="panel">
+          <p className="eyebrow">{t("waiting.eyebrow")}</p>
+          <h2 className="mt-2 text-2xl sm:text-3xl">{t("waiting.title")}</h2>
+          <p className="mt-2 text-sm text-muted">{t("waiting.text")}</p>
+          {waiting && waiting !== "joined" && (
+            <p role="alert" className="notice notice-error mt-4">
+              {t.has(`waiting.error.${waiting}`) ? t(`waiting.error.${waiting}`) : t("errors.GENERIC")}
+            </p>
+          )}
+          <form action={joinWaitingListAction} className="mt-5 space-y-3">
+            <input type="hidden" name="locale" value={locale} />
+            <input type="hidden" name="date" value={slot.date} />
+            <input type="hidden" name="time" value={slot.time} />
+            <input type="hidden" name="guests" value={slot.guests} />
+            <label className="block text-sm font-medium">
+              {t("waiting.name")}
+              <input name="name" required minLength={2} maxLength={120} autoComplete="name" className="field" />
+            </label>
+            <label className="block text-sm font-medium">
+              {t("waiting.email")}
+              <input name="email" type="email" required maxLength={200} autoComplete="email" className="field" />
+            </label>
+            <label className="block text-sm font-medium">
+              {t("waiting.phone")}
+              <input name="phone" type="tel" maxLength={40} autoComplete="tel" className="field" />
+            </label>
+            {/* Hidden from people; a script that fills every field gives itself away. */}
+            <div aria-hidden className="hidden">
+              <label>
+                Website
+                <input name="website" tabIndex={-1} autoComplete="off" />
+              </label>
+            </div>
+            <label className="flex items-start gap-2 text-sm">
+              <input name="accept" type="checkbox" required className="mt-1" />
+              <span>
+                {t("waiting.accept")}{" "}
+                <Link href="/privacy" className="text-link">
+                  {t("waiting.privacy")}
+                </Link>
+              </span>
+            </label>
+            <button type="submit" className="btn btn-primary w-full">
+              {t("waiting.join")}
+            </button>
+          </form>
+        </section>
+      </div>
+    );
   }
 
   return (

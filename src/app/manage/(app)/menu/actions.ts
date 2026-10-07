@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ForbiddenError, requirePermission } from "@/server/auth/session";
 import { db } from "@/server/db/client";
+import { MENU_KEYS } from "@/server/db/schema";
 import { ConfigError } from "@/server/services/configuration";
 import {
   createMenuCategory,
@@ -20,8 +21,11 @@ const PATH = "/manage/menu";
 const text = (form: FormData, name: string): string => String(form.get(name) ?? "");
 const checked = (form: FormData, name: string): boolean => form.get(name) === "on";
 
-async function menuAction(run: (staffId: string) => Promise<unknown>): Promise<void> {
+/** `form` carries the list (tab) the manager is on, so the page comes back to it. */
+async function menuAction(form: FormData, run: (staffId: string) => Promise<unknown>): Promise<void> {
   const query = new URLSearchParams();
+  const list = text(form, "list");
+  if ((MENU_KEYS as readonly string[]).includes(list)) query.set("list", list);
   try {
     const staff = await requirePermission("configuration");
     await run(staff.id);
@@ -67,17 +71,17 @@ function itemInput(form: FormData): MenuItemInput {
 }
 
 export async function saveMenuCategory(categoryId: string, form: FormData): Promise<void> {
-  await menuAction((staffId) => updateMenuCategory(db, categoryId, categoryInput(form), staffId));
+  await menuAction(form, (staffId) => updateMenuCategory(db, categoryId, categoryInput(form), staffId));
 }
 
 export async function addMenuCategory(form: FormData): Promise<void> {
-  await menuAction((staffId) => createMenuCategory(db, { ...categoryInput(form), active: true }, staffId));
+  await menuAction(form, (staffId) => createMenuCategory(db, { ...categoryInput(form), active: true }, staffId));
 }
 
 export async function saveMenuItem(itemId: string, form: FormData): Promise<void> {
-  await menuAction((staffId) => updateMenuItem(db, itemId, itemInput(form), staffId));
+  await menuAction(form, (staffId) => updateMenuItem(db, itemId, itemInput(form), staffId));
 }
 
 export async function addMenuItem(form: FormData): Promise<void> {
-  await menuAction((staffId) => createMenuItem(db, { ...itemInput(form), active: true, available: true }, staffId));
+  await menuAction(form, (staffId) => createMenuItem(db, { ...itemInput(form), active: true, available: true }, staffId));
 }

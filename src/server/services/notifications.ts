@@ -1,5 +1,5 @@
-import { and, asc, desc, eq, gt, isNull, lt } from "drizzle-orm";
-import { addMinutes } from "@/domain/time";
+import { and, asc, desc, eq, gt, inArray, isNull, lt, sql } from "drizzle-orm";
+import { addMinutes, zonedTime } from "@/domain/time";
 import * as schema from "@/server/db/schema";
 import { renderEmail, type EmailData, type EmailTemplate } from "@/server/email/templates";
 import { sendEmail, type EmailTransport } from "@/server/email/transport";
@@ -31,7 +31,11 @@ const PLAN: Record<
   CREATED_BY_STAFF: { guest: "guest_confirmation", dashboard: false },
 };
 
-async function loadEmailData(db: Db, reservationId: string, refundCents?: number): Promise<(EmailData & { guestEmail: string }) | null> {
+async function loadEmailData(
+  db: Db,
+  reservationId: string,
+  refundCents?: number,
+): Promise<(EmailData & { guestEmail: string; guestErased: boolean }) | null> {
   const [row] = await db
     .select({ reservation: schema.reservation, customer: schema.customer })
     .from(schema.reservation)
@@ -60,6 +64,11 @@ async function loadEmailData(db: Db, reservationId: string, refundCents?: number
     guestName: customer.name,
     guestPhone: customer.phone,
     guestEmail: customer.email,
+    guestErased: customer.anonymisedAt !== null,
+    occasion: reservation.occasion,
+    guestNotes: reservation.guestNotes,
+    diningMinutes: settings.diningMinutes,
+    reviewLinks: { google: settings.reviewUrlGoogle, tripadvisor: settings.reviewUrlTripadvisor },
     depositCents: reservation.depositCents,
     tableFeeCents: reservation.tableFeeCents,
     totalCents: reservation.totalCents,
@@ -180,6 +189,63 @@ export async function sendDueReminders(db: Db, now = new Date(), transport?: Ema
   return sent;
 }
 
+/** The morning after: not before this many hours have passed since the reservation time. */
+export const REVIEW_AFTER_HOURS = 10;
+/** A request that could not go out within this many days is dropped. */
+const REVIEW_WITHIN_DAYS = 3;
+/** Sent during the day only, restaurant time: from this hour until before the other. */
+const REVIEW_HOURS = { from: 10, until: 20 };
+/** A returning guest is not asked again within this many days. */
+export const REVIEW_REPEAT_DAYS = 365;
+
+/**
+ * Scheduled job: thanks guests who came and asks for a review, once per visit
+ * and at most once a year per address. Sends nothing until the manager has
+ * entered at least one review link in the settings.
+ */
+export async function sendReviewRequests(db: Db, now = new Date(), transport?: EmailTransport): Promise<number> {
+  const settings = await loadSettings(db);
+  if (!settings.reviewUrlGoogle && !settings.reviewUrlTripadvisor) return 0;
+  const hour = Number(zonedTime(now, settings.timezone).slice(0, 2));
+  if (hour < REVIEW_HOURS.from || hour >= REVIEW_HOURS.until) return 0;
+
+  const due = await db
+    .select({ id: schema.reservation.id, email: schema.customer.email })
+    .from(schema.reservation)
+    .innerJoin(schema.customer, eq(schema.reservation.customerId, schema.customer.id))
+    .where(
+      and(
+        inArray(schema.reservation.status, ["SEATED", "COMPLETED"]),
+        lt(schema.reservation.startsAt, addMinutes(now, -REVIEW_AFTER_HOURS * 60)),
+        gt(schema.reservation.startsAt, addMinutes(now, -REVIEW_WITHIN_DAYS * 24 * 60)),
+        isNull(schema.customer.anonymisedAt),
+        sql`${schema.customer.email} LIKE '%@%'`,
+      ),
+    )
+    .orderBy(asc(schema.reservation.startsAt));
+
+  let sent = 0;
+  for (const reservation of due) {
+    const asked = await db
+      .select({ id: schema.emailLog.id })
+      .from(schema.emailLog)
+      .where(
+        and(
+          eq(schema.emailLog.template, "guest_review"),
+          eq(schema.emailLog.recipient, reservation.email),
+          gt(schema.emailLog.createdAt, addMinutes(now, -REVIEW_REPEAT_DAYS * 24 * 60)),
+        ),
+      )
+      .limit(1);
+    if (asked.length > 0) continue;
+    const data = await loadEmailData(db, reservation.id);
+    if (!data) continue;
+    await deliver(db, transport ?? sendEmail, reservation.id, "guest_review", data.guestEmail, data);
+    sent++;
+  }
+  return sent;
+}
+
 // ── Dashboard notifications ─────────────────────────────────────────────────
 
 export interface DashboardNotification {
@@ -216,4 +282,14 @@ export async function listUnreadNotifications(db: Db): Promise<DashboardNotifica
 
 export async function markNotificationsRead(db: Db, now = new Date()): Promise<void> {
   await db.update(schema.notification).set({ readAt: now }).where(isNull(schema.notification.readAt));
+}
+
+/** For the bell in the management header: how many are unread, and the newest new reservation among them. */
+export async function notificationSummary(db: Db): Promise<{ count: number; latestId: string }> {
+  const rows = await db
+    .select({ id: schema.notification.id, type: schema.notification.type })
+    .from(schema.notification)
+    .where(isNull(schema.notification.readAt))
+    .orderBy(desc(schema.notification.createdAt));
+  return { count: rows.length, latestId: rows.find((row) => row.type === "CONFIRMED")?.id ?? "" };
 }

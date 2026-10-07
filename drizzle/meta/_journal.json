@@ -71,6 +71,13 @@
       "when": 1791334231562,
       "tag": "0009_table_set_by_staff",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791373206638,
+      "tag": "0010_occasion_waiting_reviews",
+      "breakpoints": true
     }
   ]
 }

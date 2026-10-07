@@ -42,6 +42,7 @@ export function Window({
       {open && (
         <dialog
           ref={dialog}
+          aria-label={title}
           onClose={() => setOpen(false)}
           onClick={(event) => {
             if (event.target === event.currentTarget) event.currentTarget.close();
@@ -160,6 +161,32 @@ export function ChangeReservationDialog({
           </label>
         </div>
         <p className="text-xs text-slate-600">{labels.note}</p>
+        <button type="submit" className={primaryButton}>
+          {labels.confirm}
+        </button>
+      </form>
+    </Window>
+  );
+}
+
+/** The restaurant's own note on a reservation: written, changed or cleared at any time. */
+export function NoteDialog({
+  action,
+  note,
+  labels,
+}: {
+  action: (form: FormData) => Promise<void>;
+  note: string;
+  labels: { button: string; title: string; label: string; hint: string; confirm: string; close: string };
+}) {
+  return (
+    <Window button={labels.button} title={labels.title} closeLabel={labels.close}>
+      <form action={action} className="space-y-4">
+        <label className="block font-medium">
+          {labels.label}
+          <textarea name="note" rows={4} maxLength={1000} defaultValue={note} className={inputClass} />
+          <span className="mt-1 block text-xs font-normal text-slate-500">{labels.hint}</span>
+        </label>
         <button type="submit" className={primaryButton}>
           {labels.confirm}
         </button>

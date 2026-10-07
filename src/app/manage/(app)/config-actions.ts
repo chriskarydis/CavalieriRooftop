@@ -161,6 +161,8 @@ export async function saveSettings(form: FormData): Promise<void> {
         seasonStart: text(form, "seasonStart"),
         seasonEnd: text(form, "seasonEnd"),
         retentionMonths: text(form, "retentionMonths").trim() === "" ? null : number(form, "retentionMonths"),
+        reviewUrlGoogle: text(form, "reviewUrlGoogle"),
+        reviewUrlTripadvisor: text(form, "reviewUrlTripadvisor"),
       },
       staffId,
     );

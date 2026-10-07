@@ -6,7 +6,10 @@ import logoOnDark from "@/assets/photos/logo-on-dark.png";
 import { SITE } from "@/config/site";
 import { requireStaff } from "@/server/auth/session";
 import { StaffLocaleSwitcher } from "../StaffLocaleSwitcher";
+import { db } from "@/server/db/client";
+import { notificationSummary } from "@/server/services/notifications";
 import { NavLinks } from "./NavLinks";
+import { NotificationBell } from "./NotificationBell";
 import { SignOutButton } from "./SignOutButton";
 
 const OPERATIONS = [
@@ -27,6 +30,7 @@ const CONFIGURATION = [
 export default async function ManageAppLayout({ children }: { children: React.ReactNode }) {
   const staff = await requireStaff();
   const t = await getTranslations("manage");
+  const unread = await notificationSummary(db);
   const item = ({ href, key }: { href: string; key: string }, hint = false) => ({
     href,
     label: t(`nav.${key}`),
@@ -51,6 +55,17 @@ export default async function ManageAppLayout({ children }: { children: React.Re
             </span>
           </Link>
           <div className="flex items-center gap-4 text-sm">
+            <NotificationBell
+              initial={unread}
+              labels={{
+                // The count is filled in by the bell as it changes.
+                unread: t.raw("bell.unread") as string,
+                none: t("bell.none"),
+                soundOn: t("chime.on"),
+                soundOff: t("chime.off"),
+                hint: t("chime.hint"),
+              }}
+            />
             <StaffLocaleSwitcher />
             <Link href="/manage/account" className="hover:text-white">
               {staff.name} · {t(`role.${staff.role}`)}

@@ -23,7 +23,10 @@ import {
   seatReservation,
 } from "@/server/services/floor-service";
 import { stripeGateway } from "@/server/payments/gateway";
+import { saveGuestNote, saveReservationNote } from "@/server/services/guest-history";
 import { markNotificationsRead, notifyReservationEvent } from "@/server/services/notifications";
+import { notifyWaitingEntry, notifyWaitingList, removeWaiting } from "@/server/services/waiting-list";
+import { OCCASIONS } from "@/server/db/schema";
 import { discretionaryRefund, refundPayment } from "@/server/services/payments";
 import { rescheduleReservation } from "@/server/services/reschedule";
 import { createStaffReservation } from "@/server/services/staff-booking";
@@ -43,6 +46,18 @@ function errorCode(error: unknown): string {
   if (error instanceof InvalidTransitionError) return "INVALID_TRANSITION";
   if (error instanceof ForbiddenError) return "FORBIDDEN";
   throw error;
+}
+
+/**
+ * A table may just have become free: guests waiting for that evening are told.
+ * A failure here must never undo the change that freed the table.
+ */
+async function tellWaitingGuests(): Promise<void> {
+  try {
+    await notifyWaitingList(db);
+  } catch (error) {
+    console.error("Waiting list could not be notified", error);
+  }
 }
 
 /** Runs one floor action for the signed-in staff member and reports a rule failure on the page. */
@@ -71,6 +86,7 @@ export async function noShowAction(reservationId: string, returnTo: string): Pro
   await floorAction(returnTo, async (staffId) => {
     await markNoShow(db, reservationId, staffId);
     await notifyReservationEvent(db, reservationId, "NO_SHOW");
+    await tellWaitingGuests();
   });
 }
 
@@ -90,6 +106,7 @@ export async function cancelAction(reservationId: string, returnTo: string): Pro
       });
     }
     await notifyReservationEvent(db, reservationId, "CANCELLED", { refundCents: outcome.refundCents });
+    await tellWaitingGuests();
   });
 }
 
@@ -210,7 +227,37 @@ export async function changeReservationAction(reservationId: string, returnTo: s
       { partySize: guests },
     );
     await notifyReservationEvent(db, reservationId, "CHANGED_BY_STAFF");
+    await tellWaitingGuests();
   });
+}
+
+const noteSchema = z.object({ note: z.string().max(1000) });
+
+/** The restaurant's own note on one reservation. */
+export async function saveReservationNoteAction(reservationId: string, returnTo: string, form: FormData): Promise<void> {
+  await listAction(returnTo, async (staffId) => {
+    const parsed = noteSchema.safeParse(Object.fromEntries(form));
+    if (!parsed.success) throw new BookingError("INVALID_SELECTION");
+    await saveReservationNote(db, reservationId, parsed.data.note, staffId);
+  });
+}
+
+/** The standing note about a guest, shown on every reservation of theirs. */
+export async function saveGuestNoteAction(customerId: string, returnTo: string, form: FormData): Promise<void> {
+  await listAction(returnTo, async (staffId) => {
+    const parsed = noteSchema.safeParse(Object.fromEntries(form));
+    if (!parsed.success) throw new BookingError("INVALID_SELECTION");
+    await saveGuestNote(db, customerId, parsed.data.note, staffId);
+  });
+}
+
+export async function removeWaitingAction(entryId: string, returnTo: string): Promise<void> {
+  await listAction(returnTo, (staffId) => removeWaiting(db, entryId, staffId));
+}
+
+/** Staff email one waiting guest that a table is free, whatever their place in the list. */
+export async function notifyWaitingAction(entryId: string, returnTo: string): Promise<void> {
+  await listAction(returnTo, (staffId) => notifyWaitingEntry(db, entryId, staffId));
 }
 
 const staffReservationSchema = z.object({
@@ -223,6 +270,7 @@ const staffReservationSchema = z.object({
   time: z.string().regex(/^\d{2}:\d{2}$/),
   tableIds: z.string().regex(/^([0-9a-f-]{36}(,[0-9a-f-]{36})*)?$/),
   notes: z.string().trim().max(500).optional(),
+  occasion: z.union([z.literal(""), z.enum(OCCASIONS)]).optional(),
 });
 
 /** A reservation taken by hand: no deposit; the guest is emailed only if an address was given. */
@@ -244,6 +292,7 @@ export async function newReservationAction(returnTo: string, form: FormData): Pr
         phone: input.phone,
         email: input.email || undefined,
         notes: input.notes,
+        occasion: input.occasion || undefined,
         locale: input.locale,
         tableIds: input.tableIds ? input.tableIds.split(",") : [],
       },

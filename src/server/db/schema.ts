@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import type { Occasion } from "./occasions";
 import {
   bigint,
   boolean,
@@ -88,6 +89,9 @@ export const restaurantSettings = pgTable(
     seasonEnd: text().notNull(),
     /** Months after a guest's last reservation when their details are erased; null keeps them. */
     retentionMonths: integer(),
+    /** Where guests are asked to leave a review, in the email after their visit; with neither set, no such email is sent. */
+    reviewUrlGoogle: text(),
+    reviewUrlTripadvisor: text(),
     updatedAt: instant().notNull().defaultNow(),
   },
   (t) => [check("restaurant_settings_single_row", sql`${t.id} = 1`)],
@@ -219,6 +223,8 @@ export const combinationPairing = pgTable(
 
 // ── Bookings ────────────────────────────────────────────────────────────────
 
+export { OCCASIONS, type Occasion } from "./occasions";
+
 export const customer = pgTable(
   "customer",
   {
@@ -262,6 +268,8 @@ export const reservation = pgTable(
     locale: text().notNull().default("en"),
     guestNotes: text(),
     staffNotes: text(),
+    /** What the party is celebrating, if the guest said. */
+    occasion: text().$type<Occasion>(),
     // Price snapshot taken at booking; later configuration changes never alter it.
     depositPerPersonCents: integer().notNull(),
     billableSeats: integer().notNull(),
@@ -274,6 +282,33 @@ export const reservation = pgTable(
     updatedAt: instant().notNull().defaultNow(),
   },
   (t) => [index("reservation_starts_at").on(t.startsAt), index("reservation_status").on(t.status)],
+);
+
+export const WAITING_STATUSES = ["WAITING", "NOTIFIED", "BOOKED", "REMOVED"] as const;
+export type WaitingStatus = (typeof WAITING_STATUSES)[number];
+
+/**
+ * A guest who asked to be told if a table frees on a full evening. Nothing is
+ * held or promised for them. Rows are deleted soon after the evening has passed.
+ */
+export const waitingEntry = pgTable(
+  "waiting_entry",
+  {
+    id: id(),
+    /** Service date and time wanted, YYYY-MM-DD and HH:mm in the restaurant's timezone. */
+    date: text().notNull(),
+    time: text().notNull(),
+    partySize: integer().notNull(),
+    name: text().notNull(),
+    email: text().notNull(),
+    phone: text(),
+    locale: text().notNull().default("en"),
+    status: text().$type<WaitingStatus>().notNull().default("WAITING"),
+    /** When the guest was last told a table is free. */
+    notifiedAt: instant(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("waiting_entry_date").on(t.date)],
 );
 
 export const walkIn = pgTable("walk_in", {

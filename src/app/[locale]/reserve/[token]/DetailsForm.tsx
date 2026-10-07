@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useActionState } from "react";
+import { OCCASIONS } from "@/server/db/occasions";
 import { submitDetails, type DetailsState } from "../actions";
 
 const INITIAL: DetailsState = { error: null };
@@ -34,6 +35,17 @@ export function DetailsForm({
       <label className="block text-sm font-medium">
         {t("phone")}
         <input name="phone" type="tel" required minLength={6} maxLength={40} autoComplete="tel" className={inputClass} />
+      </label>
+      <label className="block text-sm font-medium">
+        {t("occasion")}
+        <select name="occasion" defaultValue="" className={inputClass}>
+          <option value="">{t("occasionNone")}</option>
+          {OCCASIONS.map((occasion) => (
+            <option key={occasion} value={occasion}>
+              {t(`occasions.${occasion}`)}
+            </option>
+          ))}
+        </select>
       </label>
       <label className="block text-sm font-medium">
         {t("notes")}

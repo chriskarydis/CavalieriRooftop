@@ -5,6 +5,7 @@ import type { BlockLabels, NewReservationLabels } from "./StaffDialogs";
 export async function newReservationLabels(): Promise<NewReservationLabels> {
   const t = await getTranslations("manage.newReservation");
   const tMove = await getTranslations("manage.move");
+  const tOccasion = await getTranslations("manage.occasion");
   return {
     button: t("button"),
     title: t("title"),
@@ -21,6 +22,14 @@ export async function newReservationLabels(): Promise<NewReservationLabels> {
     greek: t("greek"),
     english: t("english"),
     notes: t("notes"),
+    occasion: tOccasion("label"),
+    occasionNone: tOccasion("none"),
+    occasions: {
+      BIRTHDAY: tOccasion("BIRTHDAY"),
+      ANNIVERSARY: tOccasion("ANNIVERSARY"),
+      PROPOSAL: tOccasion("PROPOSAL"),
+      OTHER: tOccasion("OTHER"),
+    },
     note: t("note"),
     confirm: t("confirm"),
     close: tMove("close"),

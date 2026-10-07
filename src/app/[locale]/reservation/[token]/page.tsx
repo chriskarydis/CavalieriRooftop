@@ -69,6 +69,7 @@ export default async function ManageReservationPage({ params, searchParams }: Pa
             </>
           )}
         </dl>
+        {reservation.totalCents > 0 && (
         <PriceSummary
           price={{
             partySize: reservation.partySize,
@@ -80,6 +81,7 @@ export default async function ManageReservationPage({ params, searchParams }: Pa
             creditTowardBillCents: reservation.creditTowardBillCents,
           }}
         />
+        )}
         {!cancelled && payment && payment.refundedCents > 0 && (
           <p className="notice notice-ok mt-3">
             {t("refunded", { amount: euro(payment.refundedCents) })}
@@ -140,7 +142,9 @@ export default async function ManageReservationPage({ params, searchParams }: Pa
         <section className="panel">
           <h2 className="mb-3 text-2xl">{t("cancelTitle")}</h2>
           <p className="mb-3 text-sm">
-            {cancellation.refundable
+            {reservation.totalCents === 0
+              ? t("cancelFree")
+              : cancellation.refundable
               ? t("cancelRefund", {
                   amount: euro(cancellation.refundCents),
                   deadline: deadline(cancellation.refundDeadline),

@@ -178,10 +178,13 @@ export function renderEmail(template: EmailTemplate, data: EmailData): RenderedE
         subject,
         ...layout(
           heading,
-          [t("guest_confirmation.intro", values), t("policy.minimum"), t("policy.grace", values), t("policy.refund", values)],
-          [...reservationRows, ...paymentRows],
+          // A reservation taken by staff has nothing paid, so no money rows and no refund terms.
+          data.totalCents > 0
+            ? [t("guest_confirmation.intro", values), t("policy.minimum"), t("policy.grace", values), t("policy.refund", values)]
+            : [t("guest_confirmation.intro", values), t("policy.grace", values)],
+          data.totalCents > 0 ? [...reservationRows, ...paymentRows] : reservationRows,
           { href: manageUrl, label: t("manageLink") },
-          moveLink,
+          data.totalCents > 0 ? moveLink : undefined,
         ),
       };
     case "guest_reminder":

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { hasLocale } from "next-intl";
 import { InvalidTransitionError } from "@/domain/reservation-state";
-import { addMinutes, blockStart, zonedTime } from "@/domain/time";
+import { addMinutes, blockStart, zonedDate, zonedTime, zonedToInstant } from "@/domain/time";
 import { STAFF_LOCALE_COOKIE } from "@/i18n/request";
 import { routing } from "@/i18n/routing";
 import { ForbiddenError, requirePermission } from "@/server/auth/session";
@@ -26,6 +26,8 @@ import { stripeGateway } from "@/server/payments/gateway";
 import { markNotificationsRead, notifyReservationEvent } from "@/server/services/notifications";
 import { discretionaryRefund, refundPayment } from "@/server/services/payments";
 import { rescheduleReservation } from "@/server/services/reschedule";
+import { createStaffReservation } from "@/server/services/staff-booking";
+import { SITE } from "@/config/site";
 import { blockTables, moveReservation, releaseBlock } from "@/server/services/table-ops";
 
 const YEAR_SECONDS = 60 * 60 * 24 * 365;
@@ -107,7 +109,11 @@ export async function extendWalkInAction(walkInId: string, returnTo: string): Pr
 }
 
 const blockSchema = z.object({
-  minutes: z.coerce.number().int().min(15).max(24 * 60),
+  /** "now", or "later" with a date and a start time. */
+  when: z.enum(["now", "later"]).default("later"),
+  /** "close": until the end of that evening's service; "hours": for `minutes`. */
+  until: z.enum(["close", "hours"]).default("hours"),
+  minutes: z.coerce.number().int().min(15).max(24 * 60).optional(),
   reason: z.string().max(200).optional(),
   /** YYYY-MM-DD and HH:mm in the restaurant's timezone; both empty means "from now" (see blockStart). */
   date: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional(),
@@ -125,8 +131,19 @@ export async function blockAction(tableId: string, returnTo: string, formData: F
     if (!parsed.success) throw new BookingError("INVALID_SELECTION");
     const input = parsed.data;
     const settings = await loadSettings(db);
-    const from = blockStart(input, settings, new Date());
-    await blockTables(db, { tableIds: [tableId], from, until: addMinutes(from, input.minutes), reason: input.reason }, staffId);
+    const now = new Date();
+    const from = input.when === "now" ? now : blockStart(input, settings, now);
+    let until: Date;
+    if (input.until === "close") {
+      // The end of the evening the block starts in: closing time, the next day when it is after midnight.
+      const day = zonedDate(addMinutes(from, -6 * 60), settings.timezone);
+      until = zonedToInstant(day, SITE.closes, settings.timezone);
+      while (until.getTime() <= from.getTime()) until = addMinutes(until, 24 * 60);
+    } else {
+      if (!input.minutes) throw new BookingError("INVALID_SELECTION");
+      until = addMinutes(from, input.minutes);
+    }
+    await blockTables(db, { tableIds: [tableId], from, until, reason: input.reason }, staffId);
   });
 }
 
@@ -194,6 +211,51 @@ export async function changeReservationAction(reservationId: string, returnTo: s
     );
     await notifyReservationEvent(db, reservationId, "CHANGED_BY_STAFF");
   });
+}
+
+const staffReservationSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  phone: z.string().trim().max(40).optional(),
+  email: z.union([z.literal(""), z.string().trim().email().max(200)]).optional(),
+  guests: z.coerce.number().int().min(1).max(60),
+  locale: z.enum(["el", "en"]),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().regex(/^\d{2}:\d{2}$/),
+  tableIds: z.string().regex(/^([0-9a-f-]{36}(,[0-9a-f-]{36})*)?$/),
+  notes: z.string().trim().max(500).optional(),
+});
+
+/** A reservation taken by hand: no deposit; the guest is emailed only if an address was given. */
+export async function newReservationAction(returnTo: string, form: FormData): Promise<void> {
+  const target = new URL(returnTo.startsWith("/manage") ? returnTo : "/manage/reservations", "http://local");
+  for (const key of ["error", "done", "created", "refunded"]) target.searchParams.delete(key);
+  try {
+    const staff = await requirePermission("operations");
+    const parsed = staffReservationSchema.safeParse(Object.fromEntries(form));
+    if (!parsed.success) throw new BookingError("INVALID_SELECTION");
+    const input = parsed.data;
+    const created = await createStaffReservation(
+      db,
+      {
+        date: input.date,
+        time: input.time,
+        partySize: input.guests,
+        name: input.name,
+        phone: input.phone,
+        email: input.email || undefined,
+        notes: input.notes,
+        locale: input.locale,
+        tableIds: input.tableIds ? input.tableIds.split(",") : [],
+      },
+      staff.id,
+    );
+    if (input.email) await notifyReservationEvent(db, created.reservationId, "CREATED_BY_STAFF");
+    target.searchParams.set("created", created.reference);
+  } catch (error) {
+    target.searchParams.set("error", errorCode(error));
+  }
+  revalidatePath("/manage", "layout");
+  redirect(target.pathname + target.search);
 }
 
 const refundSchema = z.object({ amount: z.coerce.number().positive().max(100_000), reason: z.string().trim().min(3).max(300) });

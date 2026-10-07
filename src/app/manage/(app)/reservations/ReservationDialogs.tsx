@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DateField } from "../DateField";
 import { inputClass, primaryButton, secondaryButton } from "../styles";
 
@@ -11,40 +11,54 @@ export interface SeatingChoice {
 }
 
 /** A button that opens a small window over the page, for a change made on the spot. */
-function Window({
+export function Window({
   button,
   title,
   closeLabel,
   children,
+  buttonClassName = secondaryButton,
+  wide = false,
 }: {
   button: string;
   title: string;
   closeLabel: string;
   children: ReactNode;
+  buttonClassName?: string;
+  wide?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  // The form is only in the page while its window is open: a list has one window per row.
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && dialog.current && !dialog.current.open) dialog.current.showModal();
+  }, [open]);
+
   return (
     <>
-      <button type="button" onClick={() => dialog.current?.showModal()} className={secondaryButton}>
+      <button type="button" onClick={() => setOpen(true)} className={buttonClassName}>
         {button}
       </button>
-      <dialog
-        ref={dialog}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) event.currentTarget.close();
-        }}
-        className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-lg border border-line bg-white p-0 text-left text-sm text-slate-900 shadow-xl backdrop:bg-night/60"
-      >
-        <div className="space-y-4 p-5">
-          <div className="flex items-start justify-between gap-3">
-            <h2 className="text-base">{title}</h2>
-            <button type="button" aria-label={closeLabel} title={closeLabel} onClick={() => dialog.current?.close()} className="-mt-1 text-xl leading-none text-slate-500 hover:text-slate-900">
-              <span aria-hidden>×</span>
-            </button>
+      {open && (
+        <dialog
+          ref={dialog}
+          onClose={() => setOpen(false)}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) event.currentTarget.close();
+          }}
+          className={`m-auto ${wide ? "w-[min(36rem,calc(100vw-2rem))]" : "w-[min(28rem,calc(100vw-2rem))]"} max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-lg border border-line bg-white p-0 text-left text-sm text-slate-900 shadow-xl backdrop:bg-night/60`}
+        >
+          <div className="space-y-4 p-5">
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-base">{title}</h2>
+              <button type="button" aria-label={closeLabel} title={closeLabel} onClick={() => dialog.current?.close()} className="-mt-1 text-xl leading-none text-slate-500 hover:text-slate-900">
+                <span aria-hidden>×</span>
+              </button>
+            </div>
+            {children}
           </div>
-          {children}
-        </div>
-      </dialog>
+        </dialog>
+      )}
     </>
   );
 }

@@ -205,3 +205,13 @@ Owner's rules, implemented in `src/server/services/reschedule.ts`:
 - On the reservations list, "Change table" and "Change date or time" open a window on the page and
   apply at once. Staff are not bound by the guest's limits; nothing is charged or refunded; the guest
   is emailed the new details. The live floor keeps its own move preview for drags.
+
+## Reservations taken by staff (2026-10-07)
+
+- Staff can take a reservation by hand ("New reservation" on the reservations list and live floor,
+  "Reserve this table" in a table's details): name, phone, optional email, guests, date, any quarter
+  hour, a table or the best free one. Owner's rules: no deposit and nothing paid online; with an
+  email address the guest gets a confirmation and can cancel from its link. Such a reservation is
+  marked "taken by staff", is changed only by staff, and behaves like any other otherwise.
+- Closing a table is a window with plain choices: from now or a later date and time, until closing
+  time or for a number of hours.

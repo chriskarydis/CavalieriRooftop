@@ -1,8 +1,7 @@
-import { DateField } from "./DateField";
 import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 import type { LiveTableState } from "@/domain/table-state";
-import { zonedTime } from "@/domain/time";
+import { zonedDate, zonedTime } from "@/domain/time";
 import { formatDate } from "@/i18n/intl-locale";
 import { localized } from "@/i18n/localized";
 import { requirePermission } from "@/server/auth/session";
@@ -21,12 +20,15 @@ import {
   extendWalkInAction,
   markNotificationsReadAction,
   moveAction,
+  newReservationAction,
   moveWalkInAction,
   unblockAction,
 } from "../actions";
 import { AutoRefresh } from "./AutoRefresh";
 import { LiveFloorPlan } from "./LiveFloorPlan";
 import { NewReservationChime } from "./NewReservationChime";
+import { BlockTableDialog, NewReservationDialog } from "./StaffDialogs";
+import { blockLabels, newReservationLabels } from "./staff-labels";
 import { ReservationActions } from "./ReservationActions";
 import { cardClass, inputClass, primaryButton, secondaryButton } from "./ui";
 import { WalkInForm, type SeatingOption } from "./WalkInForm";
@@ -43,8 +45,6 @@ const STATE_COLOR: Record<LiveTableState, string> = {
   INACTIVE: "#c5ccd0",
 };
 
-const BLOCK_DURATIONS = [60, 120, 180, 360, 720] as const;
-const HOUR_MINUTES = 60;
 
 interface Row extends LiveBooking {
   tables: number[];
@@ -158,6 +158,13 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
         </h1>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
           <p>{t("dragHint")}</p>
+          <NewReservationDialog
+            action={newReservationAction.bind(null, "/manage")}
+            date={zonedDate(new Date(), settings.timezone)}
+            seatings={seatings}
+            labels={await newReservationLabels()}
+            buttonClassName={primaryButton}
+          />
           <NewReservationChime
             latestId={notifications.find((notification) => notification.type === "CONFIRMED")?.id ?? ""}
             labels={{ on: t("chime.on"), off: t("chime.off"), test: t("chime.hint") }}
@@ -312,6 +319,22 @@ export default async function LiveFloorPage({ searchParams }: PageProps<"/manage
             view={plan.tables.find((table) => table.id === selectedTableId)}
             categories={plan.categories}
             time={time}
+            controls={
+              <div className="flex flex-wrap gap-2">
+                <NewReservationDialog
+                  action={newReservationAction.bind(null, `/manage?table=${selectedTableId}`)}
+                  date={zonedDate(new Date(), settings.timezone)}
+                  tableId={selectedTableId}
+                  seatings={seatings}
+                  labels={{ ...(await newReservationLabels()), button: t("newReservation.atTable") }}
+                />
+                <BlockTableDialog
+                  action={blockAction.bind(null, selectedTableId, `/manage?table=${selectedTableId}`)}
+                  date={zonedDate(new Date(), settings.timezone)}
+                  labels={await blockLabels()}
+                />
+              </div>
+            }
           />
         )}
 
@@ -424,11 +447,14 @@ async function TableDetails({
   view,
   categories,
   time,
+  controls,
 }: {
   table: LiveTable;
   view: FloorPlanView["tables"][number] | undefined;
   categories: FloorPlanView["categories"];
   time: (instant: Date) => string;
+  /** New reservation and block, for a table in use. */
+  controls: React.ReactNode;
 }) {
   const t = await getTranslations("manage");
   const locale = await getLocale();
@@ -503,36 +529,7 @@ async function TableDetails({
         ))}
       </ul>
 
-      {usable && (
-        <form action={blockAction.bind(null, table.tableId, returnTo)} className="mt-4 flex flex-wrap items-end gap-3 text-sm font-medium">
-          <label>
-            {t("details.blockDate")}
-            <DateField name="date" className={inputClass} />
-          </label>
-          <label>
-            {t("details.blockStart")}
-            <input name="start" type="time" className={inputClass} />
-          </label>
-          <label>
-            {t("details.blockFor")}
-            <select name="minutes" defaultValue={BLOCK_DURATIONS[1]} className={inputClass}>
-              {BLOCK_DURATIONS.map((minutes) => (
-                <option key={minutes} value={minutes}>
-                  {t("details.hours", { hours: minutes / HOUR_MINUTES })}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="min-w-40 flex-1">
-            {t("details.reason")}
-            <input name="reason" maxLength={200} className={inputClass} />
-          </label>
-          <button type="submit" className={secondaryButton}>
-            {t("details.block")}
-          </button>
-          <p className="basis-full text-xs font-normal text-slate-600">{t("details.blockHint")}</p>
-        </form>
-      )}
+      {usable && <div className="mt-4">{controls}</div>}
     </section>
   );
 }

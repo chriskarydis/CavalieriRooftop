@@ -32,11 +32,15 @@ test.describe("staff", () => {
     await page.goto("/manage");
     await page.getByRole("button", { name: /^Table 30, 2 seats/ }).click();
     await expect(page.getByRole("heading", { name: "Table 30" })).toBeVisible();
-    await page.getByLabel("From date").fill(DATE);
-    await page.getByLabel("From time").fill("20:00");
-    await page.getByLabel("Block from now for").selectOption({ label: "3 hours" });
-    await page.getByLabel("Reason (optional)").fill("Papadopoulos, by phone");
-    await page.getByRole("button", { name: "Block table" }).click();
+    await page.getByRole("button", { name: "Close this table" }).click();
+    const window = page.getByRole("dialog");
+    await window.getByLabel("Another date or time").check();
+    await window.getByPlaceholder("dd/mm/yyyy").fill(DATE);
+    await window.locator('select[name="start"]').selectOption("20:00");
+    await window.getByRole("radio", { name: "For a number of hours" }).check();
+    await window.locator('select[name="minutes"]').selectOption({ label: "3 hours" });
+    await window.getByLabel("Reason (optional)").fill("Papadopoulos, by phone");
+    await window.getByRole("button", { name: "Close table" }).click();
     await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
 
     const guest = await browser.newPage({ storageState: undefined });

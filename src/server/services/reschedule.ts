@@ -55,7 +55,9 @@ export function moveDeadline(reservation: Pick<ReservationRow, "status" | "start
   }).refundDeadline;
 }
 
-export function canMove(reservation: Pick<ReservationRow, "status" | "startsAt" | "totalCents">, settings: Settings, now: Date): boolean {
+export function canMove(reservation: Pick<ReservationRow, "status" | "startsAt" | "totalCents" | "source">, settings: Settings, now: Date): boolean {
+  // A reservation taken by staff is changed by staff: the guest calls.
+  if (reservation.source === "STAFF") return false;
   const deadline = moveDeadline(reservation, settings);
   return deadline !== null && now.getTime() <= deadline.getTime();
 }

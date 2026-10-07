@@ -8,8 +8,10 @@ import { loadFloorConfig, loadSettings } from "@/server/services/context";
 import { listReservations } from "@/server/services/reservation-list";
 import { listBlocks } from "@/server/services/table-ops";
 import { hasPermission } from "@/domain/permissions";
-import { changeReservationAction, moveFromListAction, refundAction, unblockAction } from "../../actions";
+import { changeReservationAction, moveFromListAction, newReservationAction, refundAction, unblockAction } from "../../actions";
 import { PrintButton } from "../PrintButton";
+import { NewReservationDialog } from "../StaffDialogs";
+import { newReservationLabels } from "../staff-labels";
 import { ChangeReservationDialog, MoveTableDialog, type SeatingChoice } from "./ReservationDialogs";
 import { ReservationFilters } from "./ReservationFilters";
 import { ReservationActions } from "../ReservationActions";
@@ -35,6 +37,7 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
   const error = first(query.error);
   const justRefunded = Number(first(query.refunded) ?? 0);
   const done = first(query.done) === "1";
+  const created = first(query.created);
   const searching = search.trim() !== "";
 
   const dayStart = zonedToInstant(date, "00:00", settings.timezone);
@@ -92,7 +95,16 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
           {t("reservations.title")}
           {!searching && <span className="ml-3 hidden text-base print:inline">{formatCalendarDate(date)}</span>}
         </h1>
-        <PrintButton label={t("reservations.print")} className={`${primaryButton} print:hidden`} />
+        <div className="flex gap-2 print:hidden">
+          <NewReservationDialog
+            action={newReservationAction.bind(null, returnTo)}
+            date={date}
+            seatings={seatings}
+            labels={await newReservationLabels()}
+            buttonClassName={primaryButton}
+          />
+          <PrintButton label={t("reservations.print")} className={secondaryButton} />
+        </div>
       </div>
 
       <div className={`${cardClass} print:hidden`}>
@@ -114,6 +126,12 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
       {justRefunded > 0 && !error && (
         <p role="status" className="rounded border border-emerald-300 bg-emerald-50 p-3 font-medium text-emerald-900">
           {t("reservations.refundDone", { amount: format.number(justRefunded / 100, { style: "currency", currency: "EUR" }) })}
+        </p>
+      )}
+
+      {created && !error && (
+        <p role="status" className="rounded border border-emerald-300 bg-emerald-50 p-3 font-medium text-emerald-900">
+          {t("newReservation.created", { reference: created })}
         </p>
       )}
 
@@ -178,6 +196,9 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                     <span className="block text-xs text-slate-500">
                       {[reservation.reference, reservation.guestPhone, reservation.guestEmail].filter(Boolean).join(" · ")}
                     </span>
+                    {reservation.source === "STAFF" && (
+                      <span className="mt-0.5 block w-fit rounded bg-stone-100 px-1.5 py-0.5 text-xs text-slate-700">{t("newReservation.byStaff")}</span>
+                    )}
                     {reservation.notes && <span className="block text-xs text-slate-500">{reservation.notes}</span>}
                   </td>
                   <td className="px-3 py-2">{reservation.partySize}</td>

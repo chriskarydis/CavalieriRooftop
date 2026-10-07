@@ -106,8 +106,10 @@ test("manager blocks a table from its details and removes the block", async ({ p
   await openDashboard(page);
   await page.getByRole("button", { name: "Table 22, 2 seats, Available" }).click();
   await expect(page.getByRole("heading", { name: "Table 22" })).toBeVisible();
-  await page.getByLabel("Reason (optional)").fill("Wobbly");
-  await page.getByRole("button", { name: "Block table" }).click();
+  await page.getByRole("button", { name: "Close this table" }).click();
+  const block = page.getByRole("dialog");
+  await block.getByLabel("Reason (optional)").fill("Wobbly");
+  await block.getByRole("button", { name: "Close table" }).click();
   await expect(page.getByRole("button", { name: "Table 22, 2 seats, Blocked" })).toBeVisible();
   await expect(page.getByText("Wobbly").first()).toBeVisible();
 
@@ -167,4 +169,30 @@ test("settings: a closed date stops online booking, in Greek too", async ({ page
   await page.getByRole("button", { name: "Ελληνικά" }).click();
   await expect(page.getByRole("heading", { name: "Ρυθμίσεις κρατήσεων" })).toBeVisible();
   await page.getByRole("button", { name: "English" }).click();
+});
+
+test("manager takes a reservation by phone, with no deposit", async ({ page }) => {
+  const date = "2027-08-26";
+  await page.goto(`/manage/reservations?date=${date}`);
+  await page.getByRole("button", { name: "New reservation" }).click();
+  const window = page.getByRole("dialog");
+  await window.getByLabel("Guest's name").fill("Petros Phone");
+  await window.getByLabel("Phone").fill("+30 690 123 0000");
+  await window.getByLabel("Guests").fill("4");
+  await window.getByLabel("Time").selectOption("21:15");
+  await window.getByLabel("Table").selectOption({ label: "13 (4)" });
+  await window.getByRole("button", { name: "Create reservation" }).click();
+
+  await expect(page.getByRole("status")).toContainText(/Reservation CRG-\d+ created\./);
+  const row = page.getByRole("row", { name: /Petros Phone/ });
+  await expect(row).toContainText("21:15");
+  await expect(row).toContainText("13");
+  await expect(row).toContainText("taken by staff");
+  await expect(row).toContainText("€0 / €0");
+
+  // Online guests no longer see table 13 free at that time.
+  const guest = await page.context().browser()!.newPage();
+  await guest.goto(`/en/reserve?date=${date}&time=21:00&guests=4`);
+  await expect(guest.getByRole("img", { name: /^Table 13, 4 seats, Standard, unavailable/ })).toBeVisible();
+  await guest.close();
 });

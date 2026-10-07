@@ -180,7 +180,8 @@
     "moveTitle": "Change date or time",
     "moveText": "You can move your reservation to another evening or time until {deadline}. You choose a table again. The amount you paid stays as it is.",
     "moveButton": "Choose a new date",
-    "moved": "Your reservation has been moved. The details below are the new ones."
+    "moved": "Your reservation has been moved. The details below are the new ones.",
+    "cancelFree": "You can cancel this reservation here. Nothing was paid, so there is nothing to refund."
   },
   "manage": {
     "title": "Cavalieri Roof Garden · Management",
@@ -305,13 +306,6 @@
       "settings": "Table settings",
       "meta": "{capacity} seats (up to {max})",
       "noBookings": "Nothing booked on this table in the next 12 hours.",
-      "blockFor": "Block from now for",
-      "hours": "{hours, plural, one {# hour} other {# hours}}",
-      "reason": "Reason (optional)",
-      "block": "Block table",
-      "blockDate": "From date",
-      "blockStart": "From time",
-      "blockHint": "Leave date and time empty to block from now. A date without a time starts at opening time that day. To keep a table for a guest by hand (no online reservation, no deposit), block it for that date and time and write the guest's name as the reason.",
       "holdTitle": "A guest is reserving this table now",
       "holdUntil": "held until {time}",
       "holdNoDetails": "No details entered yet"
@@ -397,6 +391,42 @@
       "menu": "Dishes, drinks and wines",
       "settings": "Deposit, times, season and closed dates",
       "staff": "Who can sign in"
+    },
+    "newReservation": {
+      "button": "New reservation",
+      "atTable": "Reserve this table",
+      "title": "New reservation (no deposit)",
+      "name": "Guest's name",
+      "phone": "Phone",
+      "email": "Email (optional)",
+      "emailHint": "With an address, the guest gets a confirmation with a link to cancel.",
+      "guests": "Guests",
+      "date": "Date",
+      "time": "Time",
+      "table": "Table",
+      "auto": "Best free table",
+      "language": "Language of emails",
+      "notes": "Notes (only staff see them)",
+      "note": "No deposit is taken. The table is kept for the usual time and can be changed later from the list.",
+      "confirm": "Create reservation",
+      "created": "Reservation {reference} created.",
+      "byStaff": "taken by staff"
+    },
+    "block": {
+      "button": "Close this table",
+      "title": "Close the table",
+      "from": "From",
+      "now": "Now",
+      "later": "Another date or time",
+      "date": "Date",
+      "time": "Time",
+      "until": "Until",
+      "closing": "Closing time",
+      "forHours": "For a number of hours",
+      "hours": "{hours, plural, one {# hour} other {# hours}}",
+      "reason": "Reason (optional)",
+      "reasonHint": "For example: broken chair, private event. To keep a table for a guest, use Reserve this table.",
+      "confirm": "Close table"
     }
   },
   "config": {

@@ -13,7 +13,7 @@ import { loadSettings, type Db } from "./context";
  * committed. A failure here is recorded and never undoes the reservation.
  */
 
-export type ReservationEventKind = "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "REMINDER" | "RESCHEDULED" | "CHANGED_BY_STAFF";
+export type ReservationEventKind = "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "REMINDER" | "RESCHEDULED" | "CHANGED_BY_STAFF" | "CREATED_BY_STAFF";
 
 const PLAN: Record<
   ReservationEventKind,
@@ -27,6 +27,8 @@ const PLAN: Record<
   RESCHEDULED: { guest: "guest_rescheduled", restaurant: "restaurant_rescheduled", dashboard: true, repeatable: true },
   // Staff made the change themselves: the guest is told, the restaurant needs no email about its own action.
   CHANGED_BY_STAFF: { guest: "guest_rescheduled", dashboard: true, repeatable: true },
+  // Taken by staff themselves: only the guest needs telling.
+  CREATED_BY_STAFF: { guest: "guest_confirmation", dashboard: false },
 };
 
 async function loadEmailData(db: Db, reservationId: string, refundCents?: number): Promise<(EmailData & { guestEmail: string }) | null> {
@@ -133,7 +135,8 @@ export async function notifyReservationEvent(
     });
   }
   const occurrence = plan.repeatable ? `:${data.startsAt.toISOString()}:${data.tableNumbers.join("+")}` : "";
-  if (plan.guest) await deliver(db, transport, reservationId, plan.guest, data.guestEmail, data, occurrence);
+  // Reservations taken by hand may have no address.
+  if (plan.guest && data.guestEmail) await deliver(db, transport, reservationId, plan.guest, data.guestEmail, data, occurrence);
 
   const restaurantAddress = process.env.RESTAURANT_NOTIFICATION_EMAIL;
   if (plan.restaurant && restaurantAddress) {

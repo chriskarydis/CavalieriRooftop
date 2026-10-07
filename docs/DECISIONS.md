@@ -264,8 +264,8 @@ owner to confirm.
   stays whole. Reservations already made for those days are never cancelled: the table is closed
   around them and the page says how many there are, so staff can contact the guests and cancel or
   refund as they decide.
-- **Review links:** the owner's Tripadvisor address is the default. The Google one opens the
-  restaurant on Google Maps for now; the proper "write a review" link comes from the restaurant's
-  Google Business Profile ("Ask for reviews") and goes in /manage/settings.
+- **Review links:** the owner's Tripadvisor address is the default. The Google one is the
+  reviews page the owner sent, kept without its session parameters. Both can be changed at
+  /manage/settings.
 - **Times:** every time on the site is written by our own 24-hour formatter and chosen from lists,
   never typed into a browser time field, so no am/pm appears anywhere. Checked on 2026-10-07.

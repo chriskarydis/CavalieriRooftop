@@ -265,7 +265,7 @@ owner to confirm.
   around them and the page says how many there are, so staff can contact the guests and cancel or
   refund as they decide.
 - **Review links:** the owner's Tripadvisor address is the default. The Google one is the
-  reviews page the owner sent, kept without its session parameters. Both can be changed at
+  owner's link to the restaurant's own listing (an earlier one pointed at the hotel). Both can be changed at
   /manage/settings.
 - **Times:** every time on the site is written by our own 24-hour formatter and chosen from lists,
   never typed into a browser time field, so no am/pm appears anywhere. Checked on 2026-10-07.

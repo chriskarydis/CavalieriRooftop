@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/policy">
   return { title: t("title"), description: t("intro") };
 }
 
-const SECTIONS = ["reservations", "deposit", "tables", "arrival", "cancellation", "payment"] as const;
+const SECTIONS = ["reservations", "deposit", "tables", "arrival", "cancellation", "closure", "payment"] as const;
 
 /** The reservation policy, stated from the live settings so the page can never disagree with the system. */
 export default async function PolicyPage({ params }: PageProps<"/[locale]/policy">) {

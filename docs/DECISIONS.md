@@ -276,3 +276,6 @@ owner to confirm.
   guest that the restaurant is closed. The Tables page then warns and asks once more before
   closing. It needs the refunds permission. A refund that cannot be made is reported to staff and
   the guest's email promises no date for it. Parties already seated are never touched.
+- **Reservation policy (owner, 2026-10-07):** a section was added: if the restaurant has to stay
+  closed, for example because of the weather, guests are contacted and refunded everything they
+  paid. Greek wording of the home page and policy agreed with the owner; "ταράτσα" is no longer used.

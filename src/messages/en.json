@@ -817,7 +817,11 @@
     },
     "cancellation": {
       "title": "Cancellation",
-      "text": "If you cancel at least {hours} hours before your reservation, everything you paid online is refunded. If you cancel later, the amount paid is not refunded. Until the same time you can also move your reservation to another evening or time, as often as you like. You choose a table again and no money is refunded or charged for the change. You can cancel or move from the link in your confirmation."
+      "text": "If you cancel at least {hours} hours before your reservation, everything you paid online is refunded. If you cancel later, the amount paid is not refunded. Until the same time you can also move your reservation to another evening or time, as often as you like. You choose a table again and no money is refunded or charged for the change. You can cancel or move from the link in your confirmation email, or from the \"My reservation\" page with your confirmation number."
+    },
+    "closure": {
+      "title": "If the restaurant cannot open",
+      "text": "If the restaurant has to stay closed, for example because of the weather, we will contact you and refund everything you paid."
     },
     "payment": {
       "title": "Payment",

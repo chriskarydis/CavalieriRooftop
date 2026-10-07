@@ -32,10 +32,10 @@ export const DEFAULT_SETTINGS = {
   seasonEnd: "10-10",
   /**
    * Where the thank-you email sends guests to leave a review; editable at /manage/settings.
-   * Both addresses are the owner's. The Google one opens the restaurant's own listing (not the
-   * hotel's) with the review window; the two numbers after "lrd=" identify the listing.
+   * The Tripadvisor address is the owner's. The Google one is Google's own "write a review"
+   * address for the restaurant's listing (not the hotel's), checked by the owner.
    */
-  reviewUrlGoogle: "https://www.google.com/search?q=cavalieri+roof+garden#lrd=0x135b5ddda559420b:0x3e80b8d6a763436a,3,,,,",
+  reviewUrlGoogle: "https://search.google.com/local/writereview?placeid=ChIJC0JZpd1dWxMRakNjp9a4gD4",
   reviewUrlTripadvisor: "https://www.tripadvisor.com.gr/UserReviewEdit-g189458-d4363305-Cavalieri_Roof_Garden-Corfu_Ionian_Islands.html",
 } as const;
 

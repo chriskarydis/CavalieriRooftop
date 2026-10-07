@@ -64,6 +64,13 @@
       "when": 1791320156941,
       "tag": "0008_bill_by_seats",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791334231562,
+      "tag": "0009_table_set_by_staff",
+      "breakpoints": true
     }
   ]
 }

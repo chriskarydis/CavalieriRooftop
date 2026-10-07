@@ -15,6 +15,7 @@ export interface ReservationListItem {
   status: ReservationStatus;
   source: "ONLINE" | "STAFF";
   selectionMode: "AUTO" | "CHOSEN";
+  tableSetByStaff: boolean;
   guestName: string | null;
   guestPhone: string | null;
   guestEmail: string | null;
@@ -107,6 +108,7 @@ export async function listReservations(db: Db, filter: ReservationFilter): Promi
     status: reservation.status,
     source: reservation.source,
     selectionMode: reservation.selectionMode,
+    tableSetByStaff: reservation.tableSetByStaff,
     guestName: customer?.name ?? null,
     guestPhone: customer?.phone ?? null,
     guestEmail: customer?.email ?? null,

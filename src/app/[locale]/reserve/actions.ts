@@ -4,8 +4,6 @@ import { createHmac, randomUUID } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { redirect } from "@/i18n/navigation";
-import { hasPermission } from "@/domain/permissions";
-import { getStaff } from "@/server/auth/session";
 import { db } from "@/server/db/client";
 import { stripeGateway } from "@/server/payments/gateway";
 import { simulatedPaymentsEnabled } from "@/server/payments/mode";
@@ -148,8 +146,8 @@ export async function simulatePayment(token: string, locale: string): Promise<vo
 }
 
 /**
- * Moves a confirmed reservation to another date or time, from the guest's manage link: by the guest,
- * or by a signed-in member of staff on the guest's behalf.
+ * The guest moves their confirmed reservation to another date or time, from their manage link.
+ * Staff make such changes from the reservations list instead.
  */
 export async function moveByGuest(token: string, formData: FormData): Promise<void> {
   const input = holdSchema.parse(Object.fromEntries(formData));
@@ -162,22 +160,11 @@ export async function moveByGuest(token: string, formData: FormData): Promise<vo
     selection = { mode: "GROUP", combinationIds: z.array(z.string().uuid()).parse(input.combinationIds.split(",")) };
   } else selection = { mode: "AUTO" };
 
-  // A signed-in member of staff changing it for the guest is not bound by the guest's limits.
-  const staff = await getStaff();
-  const byStaff = staff !== null && hasPermission(staff.role, "operations");
   try {
-    await rescheduleReservation(
-      db,
-      found.reservation.id,
-      { date: input.date, time: input.time, selection },
-      byStaff ? staff.id : GUEST,
-      new Date(),
-      byStaff ? { partySize: input.guests } : undefined,
-    );
+    await rescheduleReservation(db, found.reservation.id, { date: input.date, time: input.time, selection });
   } catch (error) {
     if (!(error instanceof BookingError)) throw error;
     const query = new URLSearchParams({ date: input.date, time: input.time, error: error.code });
-    if (byStaff) query.set("guests", String(input.guests));
     return redirect({ href: `/reservation/${token}/move?${query}`, locale: input.locale });
   }
   await notifyReservationEvent(db, found.reservation.id, "RESCHEDULED");

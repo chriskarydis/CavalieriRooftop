@@ -172,8 +172,10 @@ export default async function ReservationsPage({ searchParams }: PageProps<"/man
                   <td className="px-3 py-2 tabular-nums">{zonedTime(reservation.startsAt, settings.timezone)}</td>
                   <td className="px-3 py-2">
                     {reservation.tableNumbers.join(" + ") || "—"}
-                    {reservation.selectionMode === "CHOSEN" && reservation.tableNumbers.length > 0 && (
-                      <span className="block text-xs text-slate-500">{t("reservations.chosen")}</span>
+                    {reservation.tableNumbers.length > 0 && (reservation.tableSetByStaff || reservation.selectionMode === "CHOSEN") && (
+                      <span className="block text-xs text-slate-500">
+                        {reservation.tableSetByStaff ? t("reservations.chosenByStaff") : t("reservations.chosen")}
+                      </span>
                     )}
                   </td>
                   <td className="px-3 py-2">

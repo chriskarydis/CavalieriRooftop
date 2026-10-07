@@ -331,7 +331,8 @@
       "refundConfirm": "Refund to the guest's card",
       "refundDone": "Refund of {amount} sent to the guest's card.",
       "print": "Print this list",
-      "done": "The reservation was changed."
+      "done": "The reservation was changed.",
+      "chosenByStaff": "set by staff"
     },
     "notifications": {
       "title": "New ({count})",
@@ -340,7 +341,8 @@
         "CONFIRMED": "New reservation",
         "CANCELLED": "Cancelled",
         "NO_SHOW": "No-show",
-        "RESCHEDULED": "Moved by guest"
+        "RESCHEDULED": "Moved by guest",
+        "CHANGED_BY_STAFF": "Changed by staff"
       }
     },
     "footer": {
@@ -900,9 +902,7 @@
     "noCharge": "Nothing more to pay.",
     "cheaper": "This table costs less than you paid. The difference is not refunded.",
     "confirm": "Move my reservation here",
-    "policy": "After the move, free cancellation counts from the new date.",
-    "staffBanner": "Staff: you are changing this reservation for the guest. You may change the date, the time and the number of guests, at any time before the reservation, and choose any free table. Nothing is charged or refunded.",
-    "staffNoCharge": "Nothing is charged or refunded, whatever the table."
+    "policy": "After the move, free cancellation counts from the new date."
   },
   "find": {
     "title": "My reservation",

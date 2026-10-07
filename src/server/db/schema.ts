@@ -257,6 +257,8 @@ export const reservation = pgTable(
     status: reservationStatus().notNull(),
     source: reservationSource().notNull(),
     selectionMode: selectionMode().notNull(),
+    /** The table it has now was given by staff (a move or a change), not picked by the guest. */
+    tableSetByStaff: boolean().notNull().default(false),
     locale: text().notNull().default("en"),
     guestNotes: text(),
     staffNotes: text(),

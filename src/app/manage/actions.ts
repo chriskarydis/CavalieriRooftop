@@ -192,7 +192,7 @@ export async function changeReservationAction(reservationId: string, returnTo: s
       new Date(),
       { partySize: guests },
     );
-    await notifyReservationEvent(db, reservationId, "RESCHEDULED");
+    await notifyReservationEvent(db, reservationId, "CHANGED_BY_STAFF");
   });
 }
 

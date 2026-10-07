@@ -220,7 +220,7 @@ export async function moveReservation(
       });
       await tx
         .update(schema.reservation)
-        .set({ updatedAt: sql`now()` })
+        .set({ updatedAt: sql`now()`, tableSetByStaff: true })
         .where(eq(schema.reservation.id, reservationId));
       await audit(tx, {
         actor,

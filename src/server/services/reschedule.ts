@@ -176,7 +176,14 @@ export async function rescheduleReservation(
       // The money columns are left exactly as paid.
       await tx
         .update(schema.reservation)
-        .set({ startsAt: slot.startsAt, partySize, selectionMode: mode, updatedAt: now })
+        // A change by staff leaves the record of what the guest chose and paid for as it was.
+        .set({
+          startsAt: slot.startsAt,
+          partySize,
+          selectionMode: staff ? reservation.selectionMode : mode,
+          tableSetByStaff: Boolean(staff),
+          updatedAt: now,
+        })
         .where(eq(schema.reservation.id, reservationId));
 
       const numberOf = (ids: string[]): number[] => ids.map((id) => tableById.get(id)?.number ?? 0).sort((a, b) => a - b);

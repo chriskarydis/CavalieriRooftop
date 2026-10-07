@@ -13,7 +13,7 @@ import { loadSettings, type Db } from "./context";
  * committed. A failure here is recorded and never undoes the reservation.
  */
 
-export type ReservationEventKind = "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "REMINDER" | "RESCHEDULED";
+export type ReservationEventKind = "CONFIRMED" | "CANCELLED" | "NO_SHOW" | "REMINDER" | "RESCHEDULED" | "CHANGED_BY_STAFF";
 
 const PLAN: Record<
   ReservationEventKind,
@@ -25,6 +25,8 @@ const PLAN: Record<
   NO_SHOW: { restaurant: "restaurant_no_show", dashboard: true },
   REMINDER: { guest: "guest_reminder", dashboard: false },
   RESCHEDULED: { guest: "guest_rescheduled", restaurant: "restaurant_rescheduled", dashboard: true, repeatable: true },
+  // Staff made the change themselves: the guest is told, the restaurant needs no email about its own action.
+  CHANGED_BY_STAFF: { guest: "guest_rescheduled", dashboard: true, repeatable: true },
 };
 
 async function loadEmailData(db: Db, reservationId: string, refundCents?: number): Promise<(EmailData & { guestEmail: string }) | null> {

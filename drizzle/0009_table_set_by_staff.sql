@@ -1,0 +1,1 @@
+ALTER TABLE "reservation" ADD COLUMN "table_set_by_staff" boolean DEFAULT false NOT NULL;

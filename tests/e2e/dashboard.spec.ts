@@ -56,6 +56,9 @@ test("manager finds a reservation, moves it with a price warning, and cancels it
   await page.goto(`/manage/reservations?date=${DATE}`);
   const moved = page.getByRole("row", { name: /Maria Mover/ });
   await expect(moved.getByRole("cell").nth(1)).toContainText("1");
+  // The table was given by the manager, and the list says so.
+  await expect(moved.getByRole("cell").nth(1)).toContainText("set by staff");
+  await expect(moved).not.toContainText("chosen by guest");
   await expect(moved).toContainText("€60 / €0");
 
   // Change the time and the number of guests in the other window: straight away, still on this page.

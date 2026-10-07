@@ -67,8 +67,6 @@ export function TablePicker({
     action: (formData: FormData) => Promise<void>;
     paidCents: number;
     initialTableId: string | null;
-    /** A member of staff is making the change: no note about the price difference. */
-    staff?: boolean;
   };
 }) {
   const t = useTranslations("reserve");
@@ -211,8 +209,8 @@ export function TablePicker({
               )}
               {move ? (
                 <>
-                  <p>{move.staff ? tMove("staffNoCharge") : tMove("noCharge")}</p>
-                  {!move.staff && price.totalCents < move.paidCents && <p className="notice notice-warn">{tMove("cheaper")}</p>}
+                  <p>{tMove("noCharge")}</p>
+                  {price.totalCents < move.paidCents && <p className="notice notice-warn">{tMove("cheaper")}</p>}
                 </>
               ) : (
                 <PriceSummary price={price} />

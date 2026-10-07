@@ -33,7 +33,7 @@ describe("analytics, timeline and floor administration", () => {
   const id = (number: number): string => tables.get(number)!.id;
   const book = async (partySize: number, selection: Selection, time = "20:00", date = DATE) => {
     const held = await createHold(ctx.db, { date, time, partySize, selection, locale: "en" }, BOOKED_AT);
-    await attachGuestDetails(ctx.db, held.reservationId, { name: `Guest ${held.reference}`, email: "guest@example.com" }, BOOKED_AT);
+    await attachGuestDetails(ctx.db, held.reservationId, { name: `Guest ${held.reference}`, email: `${held.reference.toLowerCase()}@example.com` }, BOOKED_AT);
     await confirmReservation(ctx.db, held.reservationId, "system", BOOKED_AT);
     return held;
   };

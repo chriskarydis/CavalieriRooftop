@@ -156,7 +156,7 @@ const detailsSchema = z.object({
 });
 
 export interface DetailsState {
-  error: "INVALID" | "HOLD_EXPIRED" | null;
+  error: "INVALID" | "HOLD_EXPIRED" | "TOO_MANY_RESERVATIONS" | null;
 }
 
 /** Step 3: who the table is for. */
@@ -168,7 +168,7 @@ export async function submitDetails(token: string, locale: string, _state: Detai
   try {
     await attachGuestDetails(db, found.reservation.id, { ...parsed.data, occasion: parsed.data.occasion || undefined });
   } catch (error) {
-    if (error instanceof BookingError) return { error: "HOLD_EXPIRED" };
+    if (error instanceof BookingError) return { error: error.code === "TOO_MANY_RESERVATIONS" ? "TOO_MANY_RESERVATIONS" : "HOLD_EXPIRED" };
     throw error;
   }
   return redirect({ href: `/reserve/${token}`, locale });

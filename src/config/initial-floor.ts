@@ -30,6 +30,8 @@ export const DEFAULT_SETTINGS = {
   closedWeekdays: [1],
   seasonStart: "05-01",
   seasonEnd: "10-10",
+  /** Guests' details are erased this long after their last reservation (owner: five years). */
+  retentionMonths: 60,
   /**
    * Where the thank-you email sends guests to leave a review; editable at /manage/settings.
    * The Tripadvisor address is the owner's. The Google one is Google's own "write a review"

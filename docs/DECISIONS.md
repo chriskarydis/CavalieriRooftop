@@ -279,3 +279,15 @@ owner to confirm.
 - **Reservation policy (owner, 2026-10-07):** a section was added: if the restaurant has to stay
   closed, for example because of the weather, guests are contacted and refunded everything they
   paid. Greek wording of the home page and policy agreed with the owner; "ταράτσα" is no longer used.
+- **Two online reservations per guest per evening (owner, 2026-10-07):** a guest, recognised by
+  email address or phone number, can hold at most two online reservations for the same evening.
+  Checked when they enter their details; cancelled reservations do not count; reservations taken
+  by staff are not bound by it. Until now there was no such limit (only one unpaid hold at a time,
+  which still applies). The policy page states it.
+- **Retention (owner, 2026-10-07):** guests' details are erased five years after their last
+  reservation (`retention_months` = 60, editable at /manage/settings). The privacy page says so.
+- **Privacy page:** now also mentions the 30-day browser cookie, the coded network address and
+  providers based in the United States. **For the lawyer to check before launch:** the sentence on
+  transfers outside the EEA (it names the EU-US Data Privacy Framework and standard contractual
+  clauses without confirming which applies to each provider), the five-year period, and the
+  thank-you email with review links.

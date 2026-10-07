@@ -159,6 +159,45 @@ describe("notes, history, waiting list, reviews and exports", () => {
     });
   });
 
+  describe("two online reservations per guest per evening", () => {
+    const codeOf = async (attempt: Promise<unknown>) => {
+      try {
+        await attempt;
+      } catch (error) {
+        if (error instanceof BookingError) return error.code;
+        throw error;
+      }
+      return null;
+    };
+
+    it("lets a guest book a second table the same evening and refuses a third, by email or by phone", async () => {
+      await book({ email: "anna@example.com", phone: "+30 690 111 2222" }, { table: 1 });
+      await book({ email: "anna@example.com", phone: "+30 690 111 2222" }, { table: 2, time: "21:00" });
+      expect(await codeOf(book({ email: "ANNA@example.com" }, { table: 3 }))).toBe("TOO_MANY_RESERVATIONS");
+      // Another address but the same mobile is the same guest.
+      expect(await codeOf(book({ email: "other@example.com", phone: "690 111 2222" }, { table: 4 }))).toBe("TOO_MANY_RESERVATIONS");
+      // Someone else, and the same guest on another evening, are not affected.
+      expect(await codeOf(book({ email: "someone@example.com", phone: "6999999999" }, { table: 5 }))).toBeNull();
+      expect(await codeOf(book({ email: "anna@example.com" }, { table: 1, date: "2027-08-13" }))).toBeNull();
+    });
+
+    it("does not count a cancelled reservation, and does not bind the restaurant", async () => {
+      const first = await book({ email: "anna@example.com" }, { table: 1 });
+      await book({ email: "anna@example.com" }, { table: 2 });
+      await cancelReservation(ctx.db, first.reservationId, "guest", NOW, "Cancelled by guest");
+      expect(await codeOf(book({ email: "anna@example.com" }, { table: 3 }))).toBeNull();
+      // Two stand again; staff can still take a third for the same guest by hand.
+      expect(await codeOf(book({ email: "anna@example.com" }, { table: 4 }))).toBe("TOO_MANY_RESERVATIONS");
+      const byStaff = await createStaffReservation(
+        ctx.db,
+        { date: DATE, time: "21:00", partySize: 2, name: "Anna Guest", email: "anna@example.com", locale: "en", tableIds: [] },
+        MANAGER,
+        NOW,
+      );
+      expect(byStaff.reference).toMatch(/^CRG-/);
+    });
+  });
+
   describe("waiting list", () => {
     const join = (email: string, now = NOW, extra: Partial<Parameters<typeof joinWaitingList>[1]> = {}) =>
       joinWaitingList(ctx.db, { date: DATE, time: "20:00", partySize: 2, name: "Waiting Guest", email, locale: "en", ...extra }, now);

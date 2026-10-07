@@ -30,6 +30,8 @@ export type BookingErrorCode =
   | "DETAILS_REQUIRED"
   /** Too close to the reservation (or not confirmed) for the guest to move it. */
   | "TOO_LATE_TO_MOVE"
+  /** The guest already has the most reservations allowed for that evening. */
+  | "TOO_MANY_RESERVATIONS"
   /** The chosen table costs more than the guest has paid. */
   | "COSTS_MORE";
 

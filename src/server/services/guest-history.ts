@@ -36,6 +36,14 @@ export const phoneKey = (phone: string | null | undefined): string => {
 const phoneKeySql = sql<string>`right(regexp_replace(coalesce(${schema.customer.phone}, ''), '[^0-9]', '', 'g'), ${PHONE_KEY_DIGITS})`;
 const emailKeySql = sql<string>`lower(${schema.customer.email})`;
 
+/** Matches every customer record with this email address or this phone number; undefined when neither can be used. */
+export function sameGuest(contact: GuestContact) {
+  const email = emailKey(contact.email);
+  const phone = phoneKey(contact.phone);
+  if (!email && !phone) return undefined;
+  return or(email ? eq(emailKeySql, email) : undefined, phone ? eq(phoneKeySql, phone) : undefined);
+}
+
 export interface GuestReservationRow {
   reservationId: string;
   customerId: string;

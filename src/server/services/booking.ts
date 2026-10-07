@@ -2,9 +2,10 @@ import { createHash, createHmac, randomUUID } from "node:crypto";
 import { and, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import { findCandidates, type Candidate } from "@/domain/allocation";
 import { price, smallestSuitableCapacity, type PriceBreakdown } from "@/domain/pricing";
-import { addMinutes, closedReason, toRange, zonedToInstant } from "@/domain/time";
+import { addMinutes, closedReason, toRange, zonedDate, zonedToInstant } from "@/domain/time";
 import type { DomainTable } from "@/domain/types";
 import * as schema from "@/server/db/schema";
+import { sameGuest } from "./guest-history";
 import {
   BookingError,
   busyTables,
@@ -364,6 +365,14 @@ export interface GuestDetails {
   marketingConsent?: boolean;
 }
 
+/**
+ * The owner's rule: one guest may hold at most this many online reservations
+ * for the same evening. A guest is recognised by email address or phone number.
+ * Larger needs go through the restaurant, which is not bound by it.
+ */
+export const MAX_RESERVATIONS_PER_GUEST_PER_EVENING = 2;
+const DAY_MINUTES = 24 * 60;
+
 /** Stores who the held table is for. Required before payment. */
 export async function attachGuestDetails(
   db: Db,
@@ -380,6 +389,27 @@ export async function attachGuestDetails(
     if (!reservation) throw new BookingError("NOT_FOUND");
     const expired = !reservation.holdExpiresAt || reservation.holdExpiresAt.getTime() <= now.getTime();
     if (reservation.status !== "PENDING_PAYMENT" || expired) throw new BookingError("HOLD_EXPIRED");
+
+    const guest = sameGuest({ email: details.email, phone: details.phone ?? null });
+    if (guest) {
+      const settings = await loadSettings(tx);
+      const dayStart = zonedToInstant(zonedDate(reservation.startsAt, settings.timezone), "00:00", settings.timezone);
+      const [{ count }] = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(schema.reservation)
+        .innerJoin(schema.customer, eq(schema.reservation.customerId, schema.customer.id))
+        .where(
+          and(
+            guest,
+            inArray(schema.reservation.status, ["CONFIRMED", "LATE", "SEATED", "COMPLETED"]),
+            sql`${schema.reservation.startsAt} >= ${dayStart.toISOString()}::timestamptz`,
+            sql`${schema.reservation.startsAt} < ${addMinutes(dayStart, DAY_MINUTES).toISOString()}::timestamptz`,
+          ),
+        );
+      if (count >= MAX_RESERVATIONS_PER_GUEST_PER_EVENING) {
+        throw new BookingError("TOO_MANY_RESERVATIONS", { max: MAX_RESERVATIONS_PER_GUEST_PER_EVENING });
+      }
+    }
 
     const [customer] = await tx
       .insert(schema.customer)

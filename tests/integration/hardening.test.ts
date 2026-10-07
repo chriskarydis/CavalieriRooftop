@@ -58,7 +58,8 @@ describe("retention and walk-in extension", () => {
   });
 
   describe("guest data retention", () => {
-    it("does nothing until a retention period is set", async () => {
+    it("does nothing while no retention period is set", async () => {
+      await ctx.db.update(schema.restaurantSettings).set({ retentionMonths: null });
       const old = await book("2027-08-12", "old@example.com");
       expect(await anonymiseOldGuests(ctx.db, new Date("2035-01-01T00:00:00Z"))).toBe(0);
       expect((await customerOf(old.reservationId)).customer.email).toBe("old@example.com");

@@ -18,6 +18,8 @@ export async function newReservationLabels(): Promise<NewReservationLabels> {
     table: t("table"),
     auto: t("auto"),
     language: t("language"),
+    greek: t("greek"),
+    english: t("english"),
     notes: t("notes"),
     note: t("note"),
     confirm: t("confirm"),

@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { SITE } from "@/config/site";
 import { BLOCK_HOURS } from "./block-hours";
 import { DateField } from "./DateField";
 import { Window, type SeatingChoice } from "./reservations/ReservationDialogs";
 import { inputClass, primaryButton } from "./styles";
 
-/** Every quarter of an hour from midday to midnight, for times staff pick by hand. */
-const QUARTERS = Array.from({ length: 48 }, (_, index) => {
-  const minutes = 12 * 60 + index * 15;
+/** Every quarter of an hour the restaurant is open, from opening time until just before midnight. */
+const OPENS = Number(SITE.opens.slice(0, 2)) * 60 + Number(SITE.opens.slice(3));
+const QUARTERS = Array.from({ length: Math.ceil((24 * 60 - OPENS) / 15) }, (_, index) => {
+  const minutes = OPENS + index * 15;
   return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 });
 
@@ -25,6 +27,8 @@ export interface NewReservationLabels {
   table: string;
   auto: string;
   language: string;
+  greek: string;
+  english: string;
   notes: string;
   note: string;
   confirm: string;
@@ -71,8 +75,8 @@ export function NewReservationDialog({
           <label className="block font-medium">
             {labels.language}
             <select name="locale" defaultValue="el" className={inputClass}>
-              <option value="el">Ελληνικά</option>
-              <option value="en">English</option>
+              <option value="el">{labels.greek}</option>
+              <option value="en">{labels.english}</option>
             </select>
           </label>
           <label className="block font-medium">
@@ -146,7 +150,7 @@ export function BlockTableDialog({
   const [forHours, setForHours] = useState(false);
   const choice = "flex items-center gap-2 font-normal";
   return (
-    <Window button={labels.button} title={labels.title} closeLabel={labels.close} buttonClassName={buttonClassName}>
+    <Window button={labels.button} title={labels.title} closeLabel={labels.close} buttonClassName={buttonClassName} wide>
       <form action={action} className="space-y-4">
         <fieldset className="space-y-1.5">
           <legend className="mb-1 font-medium">{labels.from}</legend>

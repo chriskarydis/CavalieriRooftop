@@ -410,7 +410,9 @@
       "note": "No deposit is taken. The table is kept for the usual time and can be changed later from the list.",
       "confirm": "Create reservation",
       "created": "Reservation {reference} created.",
-      "byStaff": "taken by staff"
+      "byStaff": "taken by staff",
+      "greek": "Greek",
+      "english": "English"
     },
     "block": {
       "button": "Close this table",

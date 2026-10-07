@@ -19,6 +19,10 @@ function toIso(text: string): string {
   return real ? `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
 }
 
+/** Size of the calendar on screen, in pixels, for placing it. */
+const CALENDAR_WIDTH = 312;
+const CALENDAR_HEIGHT = 390;
+
 const pad = (value: number): string => String(value).padStart(2, "0");
 /** Today in the browser's own calendar, as YYYY-MM-DD. */
 const todayIso = (): string => {
@@ -34,7 +38,10 @@ function Calendar({
   value,
   onPick,
   onClose,
+  place,
 }: {
+  /** Where on the screen to put it. */
+  place: { top: number; left: number };
   value: string;
   onPick: (iso: string) => void;
   onClose: () => void;
@@ -66,7 +73,8 @@ function Calendar({
       onKeyDown={(event) => {
         if (event.key === "Escape") onClose();
       }}
-      className="absolute top-full left-0 z-30 mt-2 w-[19.5rem] rounded-lg border border-line bg-white p-4 shadow-xl"
+      style={place}
+      className="fixed z-50 w-[19.5rem] rounded-lg border border-line bg-white p-4 text-left text-sm font-normal text-slate-900 shadow-xl"
     >
       <div className="flex items-center justify-between">
         <button type="button" aria-label={t("previousMonth")} onClick={() => shift(-1)} className={arrow}>
@@ -143,7 +151,20 @@ export function DateField({
   const [text, setText] = useState(toDisplay(defaultValue));
   const [iso, setIso] = useState(defaultValue);
   const [open, setOpen] = useState(false);
+  const [place, setPlace] = useState({ top: 0, left: 0 });
   const box = useRef<HTMLSpanElement>(null);
+
+  /** Below the field when there is room, otherwise above it; always inside the screen. */
+  const show = () => {
+    const field = box.current?.getBoundingClientRect();
+    if (field) {
+      const below = field.bottom + 8;
+      const top = below + CALENDAR_HEIGHT <= window.innerHeight ? below : Math.max(8, field.top - CALENDAR_HEIGHT - 8);
+      const left = Math.max(8, Math.min(field.left, window.innerWidth - CALENDAR_WIDTH - 8));
+      setPlace({ top, left });
+    }
+    setOpen(true);
+  };
 
   // A click anywhere else closes the calendar.
   useEffect(() => {
@@ -151,8 +172,18 @@ export function DateField({
     const away = (event: PointerEvent) => {
       if (!box.current?.contains(event.target as Node)) setOpen(false);
     };
+    // It does not follow the field when the page or a window is scrolled, so it closes instead.
+    const scrolled = (event: Event) => {
+      if (!(event.target instanceof Node) || !box.current?.contains(event.target)) setOpen(false);
+    };
     document.addEventListener("pointerdown", away);
-    return () => document.removeEventListener("pointerdown", away);
+    document.addEventListener("scroll", scrolled, true);
+    window.addEventListener("resize", scrolled);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("scroll", scrolled, true);
+      window.removeEventListener("resize", scrolled);
+    };
   }, [open]);
 
   const type = (input: HTMLInputElement) => {
@@ -181,7 +212,7 @@ export function DateField({
         required={required}
         value={text}
         onChange={(event) => type(event.currentTarget)}
-        onClick={() => setOpen(true)}
+        onClick={show}
         onKeyDown={(event) => {
           if (event.key === "Escape") setOpen(false);
         }}
@@ -194,7 +225,7 @@ export function DateField({
         aria-label={t("pickDate")}
         aria-expanded={open}
         title={t("pickDate")}
-        onClick={() => setOpen(!open)}
+        onClick={() => (open ? setOpen(false) : show())}
         className="absolute right-1.5 bottom-1 flex size-8 items-center justify-center rounded text-slate-600 hover:bg-stone-100 hover:text-slate-900"
       >
         <svg viewBox="0 0 24 24" aria-hidden className="size-[1.1rem]" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -202,7 +233,7 @@ export function DateField({
           <path d="M3.5 10h17M8 3v4M16 3v4" />
         </svg>
       </button>
-      {open && <Calendar value={iso} onPick={pick} onClose={() => setOpen(false)} />}
+      {open && <Calendar value={iso} onPick={pick} onClose={() => setOpen(false)} place={place} />}
     </span>
   );
 }
